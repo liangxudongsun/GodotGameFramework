@@ -1,0 +1,21 @@
+Cd /d %~dp0
+echo %CD%
+
+set WORKSPACE=../..
+set LUBAN_DLL=%WORKSPACE%\Tools\Luban\Luban.dll
+set CONF_ROOT=.
+set DATA_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/DataTables/
+set CODE_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/
+
+copy /y "%CONF_ROOT%\CustomTemplate\ExternalTypeUtil.cs" "%WORKSPACE%\Godot\GodotProject\TheGame\GameScripts\GameProto\ExternalTypeUtil.cs"
+
+dotnet %LUBAN_DLL% ^
+    -t client ^
+    -c cs-bin ^
+    -d bin^
+    --conf %CONF_ROOT%\luban.conf ^
+    -x code.lineEnding=crlf ^
+    -x outputCodeDir=%CODE_OUTPATH% ^
+    -x outputDataDir=%DATA_OUTPATH% 
+if not defined AI_MODE pause
+

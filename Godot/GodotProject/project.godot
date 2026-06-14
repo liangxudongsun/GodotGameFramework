@@ -1,0 +1,38 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="GodotProject"
+run/main_scene="uid://bggentry001"
+config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+config/icon="res://icon.svg"
+
+[dotnet]
+
+project/assembly_name="GodotProject"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/Resources/plugin.cfg", "res://addons/TopMenu/plugin.cfg")
+
+[file_customization]
+
+folder_colors={
+"res://Framework/GodotGameFrameworkCore/": "orange"
+}
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"

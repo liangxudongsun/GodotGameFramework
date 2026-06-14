@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://bggentry001"]
+
+[ext_resource type="Script" uid="uid://dy40qx6wyrv8g" path="res://Framework/GodotGameFrameworkCore/Base/GameEntry.cs" id="1_781av"]
+[ext_resource type="Script" uid="uid://yk6hi8dq3v4k" path="res://Framework/GodotGameFrameworkCore/Base/BaseComponent.cs" id="2_781av"]
+[ext_resource type="Script" uid="uid://xp0bm5th5yki" path="res://Framework/GodotGameFrameworkCore/Event/EventComponent.cs" id="3_353g6"]
+[ext_resource type="Script" uid="uid://cgmgsagnrr8o2" path="res://Framework/GodotGameFrameworkCore/Fsm/FsmComponent.cs" id="4_ynwf7"]
+[ext_resource type="Script" uid="uid://chpprc2tan5wv" path="res://Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs" id="5_qii40"]
+[ext_resource type="Script" uid="uid://cbq1w80o80jck" path="res://Framework/GodotGameFrameworkCore/Setting/SettingComponent.cs" id="6_set"]
+[ext_resource type="Script" uid="uid://d38me50ncc6v7" path="res://Framework/GodotGameFrameworkCore/Config/ConfigComponent.cs" id="7_cfg"]
+[ext_resource type="Script" uid="uid://b1rixcpdvl3ij" path="res://Framework/GodotGameFrameworkCore/DataTable/DataTableComponent.cs" id="8_dt"]
+[ext_resource type="Script" uid="uid://bohum5g5jh5j" path="res://Framework/GodotGameFrameworkCore/DataNode/DataNodeComponent.cs" id="9_dn"]
+[ext_resource type="Script" uid="uid://dlo8s74qn554q" path="res://Framework/GodotGameFrameworkCore/ObjectPool/ObjectPoolComponent.cs" id="10_op"]
+[ext_resource type="Script" uid="uid://wi0iwoylkik" path="res://Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs" id="11_res"]
+[ext_resource type="Script" uid="uid://bn3yo4hor113j" path="res://Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs" id="12_entity"]
+[ext_resource type="Script" uid="uid://cqufcdar6i425" path="res://Framework/GodotGameFrameworkCore/UI/UIComponent.cs" id="13_ui"]
+[ext_resource type="Script" uid="uid://4blpnjncpj6y" path="res://Framework/GodotGameFrameworkCore/Sound/SoundComponent.cs" id="14_snd"]
+[ext_resource type="Script" uid="uid://utpdibg2iugi" path="res://Framework/GodotGameFrameworkCore/Localization/LocalizationComponent.cs" id="15_loc"]
+
+[node name="GameFramework" type="Node" unique_id=134030765]
+script = ExtResource("1_781av")
+
+[node name="Base" type="Node" parent="." unique_id=611780270]
+script = ExtResource("2_781av")
+
+[node name="Resource" type="Node" parent="." unique_id=553100123]
+script = ExtResource("11_res")
+
+[node name="Event" type="Node" parent="." unique_id=355543369]
+script = ExtResource("3_353g6")
+
+[node name="Fsm" type="Node" parent="." unique_id=423859323]
+script = ExtResource("4_ynwf7")
+
+[node name="Procedure" type="Node" parent="." unique_id=1553213140]
+script = ExtResource("5_qii40")
+AvailableProcedureTypeNames = PackedStringArray("ProcedureLaunch", "TestMenuProcedure", "TestGameProcedure")
+EntranceProcedureTypeName = "ProcedureLaunch"
+
+[node name="Setting" type="Node" parent="." unique_id=22776590]
+script = ExtResource("6_set")
+
+[node name="Config" type="Node" parent="." unique_id=1975195748]
+script = ExtResource("7_cfg")
+
+[node name="DataTable" type="Node" parent="." unique_id=447100413]
+script = ExtResource("8_dt")
+
+[node name="DataNode" type="Node" parent="." unique_id=921753914]
+script = ExtResource("9_dn")
+
+[node name="ObjectPool" type="Node" parent="." unique_id=92156474]
+script = ExtResource("10_op")
+
+[node name="Entity" type="Node" parent="." unique_id=777100001]
+script = ExtResource("12_entity")
+
+[node name="UI" type="Node" parent="." unique_id=274540037]
+script = ExtResource("13_ui")
+
+[node name="Sound" type="Node" parent="." unique_id=334327208]
+script = ExtResource("14_snd")
+
+[node name="Localization" type="Node" parent="." unique_id=445100001]
+script = ExtResource("15_loc")
