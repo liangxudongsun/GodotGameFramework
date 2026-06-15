@@ -5,10 +5,9 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
-using GameFramework.Sound;
 using Godot;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Sound
 {
     /// <summary>
     /// 默认声音组辅助器。
@@ -26,7 +25,7 @@ namespace GodotGameFramework
     /// </code>
     ///
     /// </summary>
-    public sealed partial class DefaultSoundGroupHelper : Node, ISoundGroupHelper
+    public sealed partial class DefaultSoundGroupHelper : SoundGroupHelperBase
     {
     }
 }

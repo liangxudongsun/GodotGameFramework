@@ -18,6 +18,7 @@ public partial class Tables
     public TbUIGroupConfig TbUIGroupConfig {get; }
     public Entity.TbEntityGroupConfig TbEntityGroupConfig {get; }
     public Entity.TbEntityConfig TbEntityConfig {get; }
+    public Sound.TbSoundConfig TbSoundConfig {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
@@ -26,6 +27,7 @@ public partial class Tables
         TbUIGroupConfig = new TbUIGroupConfig(loader("tbuigroupconfig"));
         TbEntityGroupConfig = new Entity.TbEntityGroupConfig(loader("entity_tbentitygroupconfig"));
         TbEntityConfig = new Entity.TbEntityConfig(loader("entity_tbentityconfig"));
+        TbSoundConfig = new Sound.TbSoundConfig(loader("sound_tbsoundconfig"));
         ResolveRef();
     }
     
@@ -36,6 +38,7 @@ public partial class Tables
         TbUIGroupConfig.ResolveRef(this);
         TbEntityGroupConfig.ResolveRef(this);
         TbEntityConfig.ResolveRef(this);
+        TbSoundConfig.ResolveRef(this);
     }
 }
 

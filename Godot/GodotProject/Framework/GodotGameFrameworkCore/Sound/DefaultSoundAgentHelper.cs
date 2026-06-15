@@ -10,7 +10,7 @@ using GameFramework.Sound;
 using Godot;
 using System;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Sound
 {
     /// <summary>
     /// 默认声音代理辅助器。
@@ -35,7 +35,7 @@ namespace GodotGameFramework
     /// - 自然完成通过 Finished 信号检测（比 _Process 轮询更高效）
     ///
     /// </summary>
-    public sealed class DefaultSoundAgentHelper : ISoundAgentHelper
+    public sealed partial class DefaultSoundAgentHelper : SoundAgentHelperBase
     {
         // ================================================================
         //  常量
@@ -55,7 +55,8 @@ namespace GodotGameFramework
         /// 被封装的 AudioStreamPlayer 节点。
         /// 每个 Agent 对应一个独立的 AudioStreamPlayer 实例。
         /// </summary>
-        private AudioStreamPlayer m_AudioStreamPlayer;
+        public override AudioStreamPlayer AudioStreamPlayer { get; set; }
+
 
         /// <summary>
         /// 静音状态。
@@ -134,42 +135,6 @@ namespace GodotGameFramework
         private event EventHandler<ResetSoundAgentEventArgs> m_ResetSoundAgent;
 
         // ================================================================
-        //  构造函数
-        // ================================================================
-
-        /// <summary>
-        /// 初始化默认声音代理辅助器的新实例。
-        ///
-        /// 接收一个 AudioStreamPlayer 节点作为底层播放器。
-        /// 该 AudioStreamPlayer 应该已经添加到场景树中（作为 DefaultSoundGroupHelper 的子节点）。
-        /// </summary>
-        /// <param name="audioStreamPlayer">要封装的 AudioStreamPlayer 节点。</param>
-        public DefaultSoundAgentHelper(AudioStreamPlayer audioStreamPlayer)
-        {
-            if (audioStreamPlayer == null)
-            {
-                throw new GameFrameworkException("Audio stream player is invalid.");
-            }
-
-            m_AudioStreamPlayer = audioStreamPlayer;
-            m_Mute = false;
-            m_Volume = 1f;
-            m_Priority = 0;
-            m_PanStereo = 0f;
-            m_SpatialBlend = 0f;
-            m_MaxDistance = 100f;
-            m_DopplerLevel = 1f;
-            m_PausedPosition = 0f;
-            m_IsPaused = false;
-            m_FadeTween = null;
-            m_IsFadingOut = false;
-
-            // 连接 AudioStreamPlayer 的 Finished 信号，用于检测自然播放完成
-            // 当非循环声音播放到末尾时，Godot 会自动触发此信号
-            m_AudioStreamPlayer.Finished += OnAudioStreamPlayerFinished;
-        }
-
-        // ================================================================
         //  ISoundAgentHelper 属性实现
         // ================================================================
 
@@ -177,9 +142,9 @@ namespace GodotGameFramework
         /// 获取当前是否正在播放。
         /// 直接委托给 AudioStreamPlayer.Playing。
         /// </summary>
-        public bool IsPlaying
+        public override bool IsPlaying
         {
-            get { return m_AudioStreamPlayer.Playing; }
+            get { return AudioStreamPlayer.Playing; }
         }
 
         /// <summary>
@@ -192,11 +157,11 @@ namespace GodotGameFramework
         /// - AudioStreamMP3 → GetLength()
         /// 其他类型返回 0。
         /// </summary>
-        public float Length
+        public override float Length
         {
             get
             {
-                AudioStream stream = m_AudioStreamPlayer.Stream;
+                AudioStream stream = AudioStreamPlayer.Stream;
                 if (stream == null)
                 {
                     return 0f;
@@ -224,10 +189,10 @@ namespace GodotGameFramework
         /// 获取或设置播放位置（秒）。
         /// 委托给 AudioStreamPlayer 的 GetPlaybackPosition()/Seek()。
         /// </summary>
-        public float Time
+        public override float Time
         {
-            get { return m_AudioStreamPlayer.GetPlaybackPosition(); }
-            set { m_AudioStreamPlayer.Seek(value); }
+            get { return AudioStreamPlayer.GetPlaybackPosition(); }
+            set { AudioStreamPlayer.Seek(value); }
         }
 
         /// <summary>
@@ -236,7 +201,7 @@ namespace GodotGameFramework
         /// Godot 的 AudioStreamPlayer 没有原生 Mute 属性。
         /// 实现方式：静音时将 VolumeDb 设为 -80db（人耳几乎听不到）。
         /// </summary>
-        public bool Mute
+        public override bool Mute
         {
             get { return m_Mute; }
             set
@@ -258,19 +223,19 @@ namespace GodotGameFramework
         /// 注意：不是所有 AudioStream 子类型都支持循环。
         /// 常见的 AudioStreamWav、AudioStreamOggVorbis、AudioStreamMP3 都支持。
         /// </summary>
-        public bool Loop
+        public override bool Loop
         {
             get
             {
-                if (m_AudioStreamPlayer.Stream is AudioStreamWav wav)
+                if (AudioStreamPlayer.Stream is AudioStreamWav wav)
                 {
                     return wav.LoopMode != AudioStreamWav.LoopModeEnum.Disabled;
                 }
-                if (m_AudioStreamPlayer.Stream is AudioStreamOggVorbis ogg)
+                if (AudioStreamPlayer.Stream is AudioStreamOggVorbis ogg)
                 {
                     return ogg.Loop;
                 }
-                if (m_AudioStreamPlayer.Stream is AudioStreamMP3 mp3)
+                if (AudioStreamPlayer.Stream is AudioStreamMP3 mp3)
                 {
                     return mp3.Loop;
                 }
@@ -278,15 +243,15 @@ namespace GodotGameFramework
             }
             set
             {
-                if (m_AudioStreamPlayer.Stream is AudioStreamWav wav)
+                if (AudioStreamPlayer.Stream is AudioStreamWav wav)
                 {
                     wav.LoopMode = value ? AudioStreamWav.LoopModeEnum.Forward : AudioStreamWav.LoopModeEnum.Disabled;
                 }
-                else if (m_AudioStreamPlayer.Stream is AudioStreamOggVorbis ogg)
+                else if (AudioStreamPlayer.Stream is AudioStreamOggVorbis ogg)
                 {
                     ogg.Loop = value;
                 }
-                else if (m_AudioStreamPlayer.Stream is AudioStreamMP3 mp3)
+                else if (AudioStreamPlayer.Stream is AudioStreamMP3 mp3)
                 {
                     mp3.Loop = value;
                 }
@@ -301,7 +266,7 @@ namespace GodotGameFramework
         /// 在 GGF 中，Priority 直接使用核心框架的语义（0=最低），不做反转。
         /// 此值仅在 SoundComponent 的优先级抢占算法中使用。
         /// </summary>
-        public int Priority
+        public override int Priority
         {
             get { return m_Priority; }
             set { m_Priority = value; }
@@ -314,7 +279,7 @@ namespace GodotGameFramework
         /// Godot 的 AudioStreamPlayer.VolumeDb 是分贝值。
         /// 通过 Mathf.LinearToDb() 进行转换。
         /// </summary>
-        public float Volume
+        public override float Volume
         {
             get { return m_Volume; }
             set
@@ -328,10 +293,10 @@ namespace GodotGameFramework
         /// 获取或设置声音音调（播放速率）。
         /// 映射到 AudioStreamPlayer.PitchScale（1.0=原始速率）。
         /// </summary>
-        public float Pitch
+        public override float Pitch
         {
-            get { return m_AudioStreamPlayer.PitchScale; }
-            set { m_AudioStreamPlayer.PitchScale = Mathf.Clamp(value, 0.01f, 4f); }
+            get { return AudioStreamPlayer.PitchScale; }
+            set { AudioStreamPlayer.PitchScale = Mathf.Clamp(value, 0.01f, 4f); }
         }
 
         /// <summary>
@@ -339,7 +304,7 @@ namespace GodotGameFramework
         /// AudioStreamPlayer 不支持此属性，仅存储。
         /// 如需立体声声相，可使用 AudioStreamPlayer2D（PanningStrength）。
         /// </summary>
-        public float PanStereo
+        public override float PanStereo
         {
             get { return m_PanStereo; }
             set { m_PanStereo = value; }
@@ -350,7 +315,7 @@ namespace GodotGameFramework
         /// AudioStreamPlayer 不支持此属性，仅存储。
         /// 如需空间混合，可使用 AudioStreamPlayer2D 或 AudioStreamPlayer3D。
         /// </summary>
-        public float SpatialBlend
+        public override float SpatialBlend
         {
             get { return m_SpatialBlend; }
             set { m_SpatialBlend = value; }
@@ -360,7 +325,7 @@ namespace GodotGameFramework
         /// 获取或设置声音最大距离（3D 空间音频参数）。
         /// AudioStreamPlayer 不支持此属性，仅存储。
         /// </summary>
-        public float MaxDistance
+        public override float MaxDistance
         {
             get { return m_MaxDistance; }
             set { m_MaxDistance = value; }
@@ -370,7 +335,7 @@ namespace GodotGameFramework
         /// 获取或设置声音多普勒效应等级。
         /// AudioStreamPlayer 不支持此属性，仅存储。
         /// </summary>
-        public float DopplerLevel
+        public override float DopplerLevel
         {
             get { return m_DopplerLevel; }
             set { m_DopplerLevel = value; }
@@ -385,7 +350,7 @@ namespace GodotGameFramework
         /// 检测到 !IsPlaying && clip != null 时触发 ResetSoundAgent。
         /// GGF 改用 Finished 信号实现，更高效。
         /// </summary>
-        public event EventHandler<ResetSoundAgentEventArgs> ResetSoundAgent
+        public override event EventHandler<ResetSoundAgentEventArgs> ResetSoundAgent
         {
             add { m_ResetSoundAgent += value; }
             remove { m_ResetSoundAgent -= value; }
@@ -404,7 +369,7 @@ namespace GodotGameFramework
         ///
         /// </summary>
         /// <param name="fadeInSeconds">声音淡入时间，以秒为单位。</param>
-        public void Play(float fadeInSeconds)
+        public override void Play(float fadeInSeconds)
         {
             // 取消任何进行中的淡入淡出
             KillFadeTween();
@@ -412,7 +377,7 @@ namespace GodotGameFramework
             m_IsPaused = false;
 
             // 开始播放
-            m_AudioStreamPlayer.Play();
+            AudioStreamPlayer.Play();
 
             // 如果需要淡入
             if (fadeInSeconds > 0f)
@@ -431,10 +396,10 @@ namespace GodotGameFramework
         ///
         /// </summary>
         /// <param name="fadeOutSeconds">声音淡出时间，以秒为单位。</param>
-        public void Stop(float fadeOutSeconds)
+        public override void Stop(float fadeOutSeconds)
         {
             // 如果既不在播放也不在暂停，无需操作
-            if (!m_AudioStreamPlayer.Playing && !m_IsPaused)
+            if (!AudioStreamPlayer.Playing && !m_IsPaused)
             {
                 return;
             }
@@ -443,19 +408,19 @@ namespace GodotGameFramework
             KillFadeTween();
 
             // 如果需要淡出且当前正在播放
-            if (fadeOutSeconds > 0f && m_AudioStreamPlayer.Playing)
+            if (fadeOutSeconds > 0f && AudioStreamPlayer.Playing)
             {
                 FadeOut(fadeOutSeconds, onComplete: () =>
                 {
                     // 淡出完成后停止播放
-                    m_AudioStreamPlayer.Stop();
+                    AudioStreamPlayer.Stop();
                     m_IsPaused = false;
                 });
             }
             else
             {
                 // 立即停止
-                m_AudioStreamPlayer.Stop();
+                AudioStreamPlayer.Stop();
                 m_IsPaused = false;
             }
         }
@@ -473,16 +438,16 @@ namespace GodotGameFramework
         ///
         /// </summary>
         /// <param name="fadeOutSeconds">声音淡出时间，以秒为单位。</param>
-        public void Pause(float fadeOutSeconds)
+        public override void Pause(float fadeOutSeconds)
         {
             // 如果不在播放或已经暂停，无需操作
-            if (!m_AudioStreamPlayer.Playing || m_IsPaused)
+            if (!AudioStreamPlayer.Playing || m_IsPaused)
             {
                 return;
             }
 
             // 保存当前播放位置，用于恢复时定位
-            m_PausedPosition = m_AudioStreamPlayer.GetPlaybackPosition();
+            m_PausedPosition = AudioStreamPlayer.GetPlaybackPosition();
             m_IsPaused = true;
 
             // 取消任何进行中的淡入淡出
@@ -493,13 +458,13 @@ namespace GodotGameFramework
                 // 淡出后停止
                 FadeOut(fadeOutSeconds, onComplete: () =>
                 {
-                    m_AudioStreamPlayer.Stop();
+                    AudioStreamPlayer.Stop();
                 });
             }
             else
             {
                 // 立即停止
-                m_AudioStreamPlayer.Stop();
+                AudioStreamPlayer.Stop();
             }
         }
 
@@ -515,7 +480,7 @@ namespace GodotGameFramework
         ///
         /// </summary>
         /// <param name="fadeInSeconds">声音淡入时间，以秒为单位。</param>
-        public void Resume(float fadeInSeconds)
+        public override void Resume(float fadeInSeconds)
         {
             // 如果不在暂停状态，无需操作
             if (!m_IsPaused)
@@ -527,7 +492,7 @@ namespace GodotGameFramework
             KillFadeTween();
 
             // 从暂停位置恢复播放
-            m_AudioStreamPlayer.Play(m_PausedPosition);
+            AudioStreamPlayer.Play(m_PausedPosition);
             m_IsPaused = false;
 
             // 如果需要淡入
@@ -549,20 +514,20 @@ namespace GodotGameFramework
         /// 注意：不重新订阅 Finished 信号（因为 AudioStreamPlayer 节点是复用的）。
         ///
         /// </summary>
-        public void Reset()
+        public override void Reset()
         {
             // 取消进行中的淡入淡出
             KillFadeTween();
 
             // 停止播放并清除资源
-            m_AudioStreamPlayer.Stop();
-            m_AudioStreamPlayer.Stream = null;
+            AudioStreamPlayer.Stop();
+            AudioStreamPlayer.Stream = null;
 
             // 重置所有参数到默认值
             m_Mute = false;
             m_Volume = 1f;
-            m_AudioStreamPlayer.VolumeDb = 0f;
-            m_AudioStreamPlayer.PitchScale = 1f;
+            AudioStreamPlayer.VolumeDb = 0f;
+            AudioStreamPlayer.PitchScale = 1f;
             m_Priority = 0;
             m_PanStereo = 0f;
             m_SpatialBlend = 0f;
@@ -583,7 +548,7 @@ namespace GodotGameFramework
         /// </summary>
         /// <param name="soundAsset">声音资源（必须是 AudioStream 类型）。</param>
         /// <returns>是否设置成功。</returns>
-        public bool SetSoundAsset(object soundAsset)
+        public override bool SetSoundAsset(object soundAsset)
         {
             AudioStream audioStream = soundAsset as AudioStream;
             if (audioStream == null)
@@ -591,7 +556,7 @@ namespace GodotGameFramework
                 return false;
             }
 
-            m_AudioStreamPlayer.Stream = audioStream;
+            AudioStreamPlayer.Stream = audioStream;
             return true;
         }
 
@@ -612,11 +577,11 @@ namespace GodotGameFramework
         {
             if (m_Mute)
             {
-                m_AudioStreamPlayer.VolumeDb = MuteVolumeDb;
+                AudioStreamPlayer.VolumeDb = MuteVolumeDb;
             }
             else
             {
-                m_AudioStreamPlayer.VolumeDb = Mathf.LinearToDb(m_Volume);
+                AudioStreamPlayer.VolumeDb = Mathf.LinearToDb(m_Volume);
             }
         }
 
@@ -637,10 +602,10 @@ namespace GodotGameFramework
             KillFadeTween();
 
             // 先设为静音
-            m_AudioStreamPlayer.VolumeDb = MuteVolumeDb;
+            AudioStreamPlayer.VolumeDb = MuteVolumeDb;
 
             // 获取 SceneTree 来创建 Tween
-            SceneTree tree = m_AudioStreamPlayer.GetTree();
+            SceneTree tree = AudioStreamPlayer.GetTree();
             if (tree == null)
             {
                 // 节点不在场景树中，直接设为目标音量
@@ -653,7 +618,7 @@ namespace GodotGameFramework
 
             // 创建 Tween 动画：从 -80db 渐变到目标分贝值
             m_FadeTween = tree.CreateTween();
-            m_FadeTween.TweenProperty(m_AudioStreamPlayer, "volume_db", targetDb, duration);
+            m_FadeTween.TweenProperty(AudioStreamPlayer, "volume_db", targetDb, duration);
             m_FadeTween.TweenCallback(Callable.From(() =>
             {
                 m_FadeTween = null;
@@ -675,7 +640,7 @@ namespace GodotGameFramework
             m_IsFadingOut = true;
 
             // 获取 SceneTree 来创建 Tween
-            SceneTree tree = m_AudioStreamPlayer.GetTree();
+            SceneTree tree = AudioStreamPlayer.GetTree();
             if (tree == null)
             {
                 // 节点不在场景树中，直接静音并执行回调
@@ -686,7 +651,7 @@ namespace GodotGameFramework
 
             // 创建 Tween 动画：从当前分贝值渐变到 -80db
             m_FadeTween = tree.CreateTween();
-            m_FadeTween.TweenProperty(m_AudioStreamPlayer, "volume_db", MuteVolumeDb, duration);
+            m_FadeTween.TweenProperty(AudioStreamPlayer, "volume_db", MuteVolumeDb, duration);
             m_FadeTween.TweenCallback(Callable.From(() =>
             {
                 m_IsFadingOut = false;
@@ -755,5 +720,31 @@ namespace GodotGameFramework
                 ReferencePool.Release(resetArgs);
             }
         }
+
+        public override void SetAudioStreamPlayer(AudioStreamPlayer audioStreamPlayer)
+        {
+            if (audioStreamPlayer == null)
+            {
+                throw new GameFrameworkException("Audio stream player is invalid.");
+            }
+
+            AudioStreamPlayer = audioStreamPlayer;
+            m_Mute = false;
+            m_Volume = 1f;
+            m_Priority = 0;
+            m_PanStereo = 0f;
+            m_SpatialBlend = 0f;
+            m_MaxDistance = 100f;
+            m_DopplerLevel = 1f;
+            m_PausedPosition = 0f;
+            m_IsPaused = false;
+            m_FadeTween = null;
+            m_IsFadingOut = false;
+
+            // 连接 AudioStreamPlayer 的 Finished 信号，用于检测自然播放完成
+            // 当非循环声音播放到末尾时，Godot 会自动触发此信号
+            AudioStreamPlayer.Finished += OnAudioStreamPlayerFinished;
+        }
+
     }
 }

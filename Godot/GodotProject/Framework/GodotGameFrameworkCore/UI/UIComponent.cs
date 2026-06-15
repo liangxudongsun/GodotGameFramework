@@ -59,12 +59,12 @@ namespace GodotGameFramework.UI
         private Node m_InstanceRoot = null;
 
         [Export]
-        private string m_UIFormHelperTypeName = "GodotGameFramework.DefaultUIFormHelper";
+        private string m_UIFormHelperTypeName = "GodotGameFramework.UI.DefaultUIFormHelper";
 
         private UIFormHelperBase m_CustomUIFormHelper = null;
 
         [Export]
-        private string m_UIGroupHelperTypeName = "GodotGameFramework.DefaultUIGroupHelper";
+        private string m_UIGroupHelperTypeName = "GodotGameFramework.UI.DefaultUIGroupHelper";
 
 
         /// <summary>

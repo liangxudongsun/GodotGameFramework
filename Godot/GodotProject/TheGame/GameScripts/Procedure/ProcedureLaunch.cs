@@ -55,7 +55,7 @@ public class ProcedureLaunch : ProcedureBase
         LoadLocalization();
         LoadUIGroup();
         LoadEntityGroup();
-
+        LoadSoundGroup();
         ChangeState<ProcedureGame>(procedureOwner);
 
     }
@@ -81,6 +81,18 @@ public class ProcedureLaunch : ProcedureBase
         for (int i = 0; i < groups.Count; i++)
         {
             if (!GF.Entity.AddEntityGroup(groups[i].Name, groups[i].ReleaseInterval, groups[i].Capacity, groups[i].ExpireTime, groups[i].Priority))
+            {
+                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
+                continue;
+            }
+        }
+    }
+    private void LoadSoundGroup()
+    {
+        var groups = GF.DataTable.TbSoundConfig.DataList;
+        for (int i = 0; i < groups.Count; i++)
+        {
+            if (!GF.Sound.AddSoundGroup(groups[i].Name, groups[i].AgentCounts, groups[i].AvoidBeingReplacedBySamePriority))
             {
                 Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
                 continue;

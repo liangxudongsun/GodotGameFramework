@@ -15,83 +15,35 @@ using System.Text;
 namespace GodotGameFramework
 {
     /// <summary>
-    /// GGF 内置版本资源列表序列化器。
-    ///
-    /// 从 UGF 的 BuiltinVersionListSerializer 适配而来。
-    /// 提供 Package 模式版本列表的序列化和反序列化回调。
-    ///
-    /// 版本列表格式说明：
-    /// - 文件头：3 字节标识 'G','F','P' + 1 字节版本号
-    /// - 版本 0 (V0)：旧格式，资源内嵌 Asset 名称
-    /// - 版本 1 (V1)：独立 Asset/Resource 数组，无 FileSystem 节
-    /// - 版本 2 (V2)：完整格式，包含 Assets、Resources、FileSystems、ResourceGroups
-    ///
-    /// GGF 的版本列表构建工具（GGFResourceBuilder）始终生成 V2 格式。
-    /// 注册 V0/V1 反序列化回调仅为兼容旧版版本列表文件。
-    ///
-    /// 使用方式：
-    /// <code>
-    /// // 在 ResourceComponent._Ready() 中注册回调
-    /// GGFBuiltinVersionListSerializer.RegisterPackageDeserializeCallbacks(
-    ///     m_ResourceManager.PackageVersionListSerializer);
-    ///
-    /// // 编辑器模式下还需注册序列化回调
-    /// GGFBuiltinVersionListSerializer.RegisterPackageSerializeCallbacks(
-    ///     m_ResourceManager.PackageVersionListSerializer);
-    /// </code>
+    /// 内置版本资源列表序列化器。
+    /// 版本列表文件头：3 字节 'G','F','P' + 1 字节版本号。
+    /// V0：旧格式，Asset 内嵌在 Resource 中；
+    /// V1：Asset/Resource 分离，7 位编码整数；
+    /// V2（当前）：完整格式，包含 Assets、Resources、FileSystems、ResourceGroups。
     /// </summary>
-    public static class GGFBuiltinVersionListSerializer
+    public static class GDFBuiltinVersionListSerializer
     {
         private const string DefaultExtension = "dat";
         private const int CachedHashBytesLength = 4;
         private static readonly byte[] s_CachedHashBytes = new byte[CachedHashBytesLength];
 
-        /// <summary>
-        /// 注册 Package 模式版本列表的反序列化回调。
-        ///
-        /// 必须在调用 ResourceManager.InitResources() 之前注册。
-        /// </summary>
-        /// <param name="serializer">Package 版本列表序列化器实例。</param>
+        /// <summary>注册 Package 模式版本列表的反序列化回调（V0/V1/V2）。需在 InitResources 前调用。</summary>
         public static void RegisterPackageDeserializeCallbacks(PackageVersionListSerializer serializer)
         {
-            if (serializer == null)
-            {
-                throw new GameFrameworkException("Serializer is invalid.");
-            }
-
+            if (serializer == null) throw new GameFrameworkException("Serializer is invalid.");
             serializer.RegisterDeserializeCallback(0, PackageVersionListDeserializeCallback_V0);
             serializer.RegisterDeserializeCallback(1, PackageVersionListDeserializeCallback_V1);
             serializer.RegisterDeserializeCallback(2, PackageVersionListDeserializeCallback_V2);
         }
 
-        /// <summary>
-        /// 注册 Package 模式版本列表的序列化回调。
-        ///
-        /// 仅在编辑器模式下需要（构建工具生成版本列表时使用）。
-        /// </summary>
-        /// <param name="serializer">Package 版本列表序列化器实例。</param>
+        /// <summary>注册 Package 模式版本列表的序列化回调（V2）。编辑器模式下使用。</summary>
         public static void RegisterPackageSerializeCallbacks(PackageVersionListSerializer serializer)
         {
-            if (serializer == null)
-            {
-                throw new GameFrameworkException("Serializer is invalid.");
-            }
-
+            if (serializer == null) throw new GameFrameworkException("Serializer is invalid.");
             serializer.RegisterSerializeCallback(2, PackageVersionListSerializeCallback_V2);
         }
 
-        // ================================================================
-        //  反序列化回调
-        // ================================================================
-
-        /// <summary>
-        /// 反序列化单机模式版本资源列表（版本 0）回调函数。
-        ///
-        /// V0 格式特点：Asset 名称内嵌在 Resource 中，需要排序后二分查找来建立索引。
-        /// 这是最旧的格式，仅为向后兼容而保留。
-        /// </summary>
-        /// <param name="stream">指定流。</param>
-        /// <returns>反序列化的单机模式版本资源列表。</returns>
+        /// <summary>反序列化 V0 版本列表。Asset 名称内嵌在 Resource 中，排序后二分查找建立索引。</summary>
         public static PackageVersionList PackageVersionListDeserializeCallback_V0(Stream stream)
         {
             using (BinaryReader binaryReader = new BinaryReader(stream, Encoding.UTF8))
@@ -122,10 +74,7 @@ namespace GodotGameFramework
                         int dependencyAssetNameCount = binaryReader.ReadInt32();
                         string[] dependencyAssetNames = dependencyAssetNameCount > 0 ? new string[dependencyAssetNameCount] : null;
                         for (int k = 0; k < dependencyAssetNameCount; k++)
-                        {
                             dependencyAssetNames[k] = binaryReader.ReadEncryptedString(s_CachedHashBytes);
-                        }
-
                         assetNameToDependencyAssetNames.Add(new KeyValuePair<string, string[]>(assetNames[j], dependencyAssetNames));
                     }
 
@@ -142,25 +91,18 @@ namespace GodotGameFramework
                     {
                         int[] dependencyAssetIndexes = new int[i.Value.Length];
                         for (int j = 0; j < i.Value.Length; j++)
-                        {
                             dependencyAssetIndexes[j] = GetAssetNameIndex(assetNameToDependencyAssetNames, i.Value[j]);
-                        }
-
                         assets[index++] = new PackageVersionList.Asset(i.Key, dependencyAssetIndexes);
                     }
                     else
-                    {
                         assets[index++] = new PackageVersionList.Asset(i.Key, null);
-                    }
                 }
 
                 for (int i = 0; i < resources.Length; i++)
                 {
                     int[] assetIndexes = resources[i].GetAssetIndexes();
                     for (int j = 0; j < assetIndexes.Length; j++)
-                    {
                         assetIndexes[j] = GetAssetNameIndex(assetNameToDependencyAssetNames, resourceToAssetNames[i][j]);
-                    }
                 }
 
                 int resourceGroupCount = binaryReader.ReadInt32();
@@ -171,10 +113,7 @@ namespace GodotGameFramework
                     int resourceIndexCount = binaryReader.ReadInt32();
                     int[] resourceIndexes = resourceIndexCount > 0 ? new int[resourceIndexCount] : null;
                     for (int j = 0; j < resourceIndexCount; j++)
-                    {
                         resourceIndexes[j] = binaryReader.ReadUInt16();
-                    }
-
                     resourceGroups[i] = new PackageVersionList.ResourceGroup(name, resourceIndexes);
                 }
 
@@ -182,13 +121,7 @@ namespace GodotGameFramework
             }
         }
 
-        /// <summary>
-        /// 反序列化单机模式版本资源列表（版本 1）回调函数。
-        ///
-        /// V1 格式特点：Asset 和 Resource 分离，使用 7 位编码整数，无 FileSystem 节。
-        /// </summary>
-        /// <param name="stream">指定流。</param>
-        /// <returns>反序列化的单机模式版本资源列表。</returns>
+        /// <summary>反序列化 V1 版本列表。Asset/Resource 分离，7 位编码整数，无 FileSystem。</summary>
         public static PackageVersionList PackageVersionListDeserializeCallback_V1(Stream stream)
         {
             using (BinaryReader binaryReader = new BinaryReader(stream, Encoding.UTF8))
@@ -204,10 +137,7 @@ namespace GodotGameFramework
                     int dependencyAssetCount = binaryReader.Read7BitEncodedInt32();
                     int[] dependencyAssetIndexes = dependencyAssetCount > 0 ? new int[dependencyAssetCount] : null;
                     for (int j = 0; j < dependencyAssetCount; j++)
-                    {
                         dependencyAssetIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     assets[i] = new PackageVersionList.Asset(name, dependencyAssetIndexes);
                 }
 
@@ -224,10 +154,7 @@ namespace GodotGameFramework
                     int assetIndexCount = binaryReader.Read7BitEncodedInt32();
                     int[] assetIndexes = assetIndexCount > 0 ? new int[assetIndexCount] : null;
                     for (int j = 0; j < assetIndexCount; j++)
-                    {
                         assetIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     resources[i] = new PackageVersionList.Resource(name, variant, extension, loadType, length, hashCode, assetIndexes);
                 }
 
@@ -239,10 +166,7 @@ namespace GodotGameFramework
                     int resourceIndexCount = binaryReader.Read7BitEncodedInt32();
                     int[] resourceIndexes = resourceIndexCount > 0 ? new int[resourceIndexCount] : null;
                     for (int j = 0; j < resourceIndexCount; j++)
-                    {
                         resourceIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     resourceGroups[i] = new PackageVersionList.ResourceGroup(name, resourceIndexes);
                 }
 
@@ -250,14 +174,7 @@ namespace GodotGameFramework
             }
         }
 
-        /// <summary>
-        /// 反序列化单机模式版本资源列表（版本 2）回调函数。
-        ///
-        /// V2 是当前使用的格式，包含完整的 Assets、Resources、FileSystems、ResourceGroups 四个数组。
-        /// GGF 的 GGFResourceBuilder 始终生成此格式的版本列表。
-        /// </summary>
-        /// <param name="stream">指定流。</param>
-        /// <returns>反序列化的单机模式版本资源列表。</returns>
+        /// <summary>反序列化 V2 版本列表（当前格式）。完整 Assets/Resources/FileSystems/ResourceGroups。</summary>
         public static PackageVersionList PackageVersionListDeserializeCallback_V2(Stream stream)
         {
             using (BinaryReader binaryReader = new BinaryReader(stream, Encoding.UTF8))
@@ -273,10 +190,7 @@ namespace GodotGameFramework
                     int dependencyAssetCount = binaryReader.Read7BitEncodedInt32();
                     int[] dependencyAssetIndexes = dependencyAssetCount > 0 ? new int[dependencyAssetCount] : null;
                     for (int j = 0; j < dependencyAssetCount; j++)
-                    {
                         dependencyAssetIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     assets[i] = new PackageVersionList.Asset(name, dependencyAssetIndexes);
                 }
 
@@ -293,10 +207,7 @@ namespace GodotGameFramework
                     int assetIndexCount = binaryReader.Read7BitEncodedInt32();
                     int[] assetIndexes = assetIndexCount > 0 ? new int[assetIndexCount] : null;
                     for (int j = 0; j < assetIndexCount; j++)
-                    {
                         assetIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     resources[i] = new PackageVersionList.Resource(name, variant, extension, loadType, length, hashCode, assetIndexes);
                 }
 
@@ -308,10 +219,7 @@ namespace GodotGameFramework
                     int resourceIndexCount = binaryReader.Read7BitEncodedInt32();
                     int[] resourceIndexes = resourceIndexCount > 0 ? new int[resourceIndexCount] : null;
                     for (int j = 0; j < resourceIndexCount; j++)
-                    {
                         resourceIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     fileSystems[i] = new PackageVersionList.FileSystem(name, resourceIndexes);
                 }
 
@@ -323,10 +231,7 @@ namespace GodotGameFramework
                     int resourceIndexCount = binaryReader.Read7BitEncodedInt32();
                     int[] resourceIndexes = resourceIndexCount > 0 ? new int[resourceIndexCount] : null;
                     for (int j = 0; j < resourceIndexCount; j++)
-                    {
                         resourceIndexes[j] = binaryReader.Read7BitEncodedInt32();
-                    }
-
                     resourceGroups[i] = new PackageVersionList.ResourceGroup(name, resourceIndexes);
                 }
 
@@ -334,25 +239,10 @@ namespace GodotGameFramework
             }
         }
 
-        // ================================================================
-        //  序列化回调
-        // ================================================================
-
-        /// <summary>
-        /// 序列化单机模式版本资源列表（版本 2）回调函数。
-        ///
-        /// GGF 的 GGFResourceBuilder 使用此方法将版本列表写入 GameFrameworkVersion.dat。
-        /// V2 格式包含完整的 Assets、Resources、FileSystems、ResourceGroups 四个数组。
-        /// </summary>
-        /// <param name="stream">目标流。</param>
-        /// <param name="versionList">要序列化的单机模式版本资源列表。</param>
-        /// <returns>是否序列化成功。</returns>
+        /// <summary>序列化 V2 版本列表。供 GDFResourceBuilder 生成 GameFrameworkVersion.dat。</summary>
         public static bool PackageVersionListSerializeCallback_V2(Stream stream, PackageVersionList versionList)
         {
-            if (!versionList.IsValid)
-            {
-                return false;
-            }
+            if (!versionList.IsValid) return false;
 
             Utility.Random.GetRandomBytes(s_CachedHashBytes);
             using (BinaryWriter binaryWriter = new BinaryWriter(stream, Encoding.UTF8))
@@ -368,9 +258,7 @@ namespace GodotGameFramework
                     int[] dependencyAssetIndexes = asset.GetDependencyAssetIndexes();
                     binaryWriter.Write7BitEncodedInt32(dependencyAssetIndexes.Length);
                     foreach (int dependencyAssetIndex in dependencyAssetIndexes)
-                    {
                         binaryWriter.Write7BitEncodedInt32(dependencyAssetIndex);
-                    }
                 }
 
                 PackageVersionList.Resource[] resources = versionList.GetResources();
@@ -386,9 +274,7 @@ namespace GodotGameFramework
                     int[] assetIndexes = resource.GetAssetIndexes();
                     binaryWriter.Write7BitEncodedInt32(assetIndexes.Length);
                     foreach (int assetIndex in assetIndexes)
-                    {
                         binaryWriter.Write7BitEncodedInt32(assetIndex);
-                    }
                 }
 
                 PackageVersionList.FileSystem[] fileSystems = versionList.GetFileSystems();
@@ -399,9 +285,7 @@ namespace GodotGameFramework
                     int[] resourceIndexes = fileSystem.GetResourceIndexes();
                     binaryWriter.Write7BitEncodedInt32(resourceIndexes.Length);
                     foreach (int resourceIndex in resourceIndexes)
-                    {
                         binaryWriter.Write7BitEncodedInt32(resourceIndex);
-                    }
                 }
 
                 PackageVersionList.ResourceGroup[] resourceGroups = versionList.GetResourceGroups();
@@ -412,9 +296,7 @@ namespace GodotGameFramework
                     int[] resourceIndexes = resourceGroup.GetResourceIndexes();
                     binaryWriter.Write7BitEncodedInt32(resourceIndexes.Length);
                     foreach (int resourceIndex in resourceIndexes)
-                    {
                         binaryWriter.Write7BitEncodedInt32(resourceIndex);
-                    }
                 }
             }
 
@@ -422,41 +304,17 @@ namespace GodotGameFramework
             return true;
         }
 
-        // ================================================================
-        //  辅助方法（V0 反序列化专用）
-        // ================================================================
-
-        private static int AssetNameToDependencyAssetNamesComparer(KeyValuePair<string, string[]> a, KeyValuePair<string, string[]> b)
+        // V0 辅助方法：二分查找 Asset 名称索引
+        private static int AssetNameToDependencyAssetNamesComparer(KeyValuePair<string, string[]> a, KeyValuePair<string, string[]> b) => a.Key.CompareTo(b.Key);
+        private static int GetAssetNameIndex(List<KeyValuePair<string, string[]>> list, string name) => GetAssetNameIndexWithBinarySearch(list, name, 0, list.Count - 1);
+        private static int GetAssetNameIndexWithBinarySearch(List<KeyValuePair<string, string[]>> list, string name, int left, int right)
         {
-            return a.Key.CompareTo(b.Key);
-        }
-
-        private static int GetAssetNameIndex(List<KeyValuePair<string, string[]>> assetNameToDependencyAssetNames, string assetName)
-        {
-            return GetAssetNameIndexWithBinarySearch(assetNameToDependencyAssetNames, assetName, 0, assetNameToDependencyAssetNames.Count - 1);
-        }
-
-        private static int GetAssetNameIndexWithBinarySearch(List<KeyValuePair<string, string[]>> assetNameToDependencyAssetNames, string assetName, int leftIndex, int rightIndex)
-        {
-            if (leftIndex > rightIndex)
-            {
-                return -1;
-            }
-
-            int middleIndex = (leftIndex + rightIndex) / 2;
-            if (assetNameToDependencyAssetNames[middleIndex].Key == assetName)
-            {
-                return middleIndex;
-            }
-
-            if (assetNameToDependencyAssetNames[middleIndex].Key.CompareTo(assetName) > 0)
-            {
-                return GetAssetNameIndexWithBinarySearch(assetNameToDependencyAssetNames, assetName, leftIndex, middleIndex - 1);
-            }
-            else
-            {
-                return GetAssetNameIndexWithBinarySearch(assetNameToDependencyAssetNames, assetName, middleIndex + 1, rightIndex);
-            }
+            if (left > right) return -1;
+            int mid = (left + right) / 2;
+            if (list[mid].Key == name) return mid;
+            return list[mid].Key.CompareTo(name) > 0
+                ? GetAssetNameIndexWithBinarySearch(list, name, left, mid - 1)
+                : GetAssetNameIndexWithBinarySearch(list, name, mid + 1, right);
         }
     }
 }

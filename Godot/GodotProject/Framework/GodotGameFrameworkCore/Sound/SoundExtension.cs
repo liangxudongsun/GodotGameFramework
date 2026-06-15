@@ -12,7 +12,7 @@
 // 振动和冷却逻辑属于游戏特定逻辑，不移植）。
 //------------------------------------------------------------
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Sound
 {
     /// <summary>
     /// 音频组件扩展方法。

@@ -6,6 +6,7 @@ using Godot;
 using GodotGameFramework.Entity;
 using GodotGameFramework.Localization;
 using GodotGameFramework.Resource;
+using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 
 namespace GodotGameFramework
