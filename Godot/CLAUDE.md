@@ -97,7 +97,8 @@ Godot 组件均通过 `GameFrameworkEntry.GetModule<T>()` 获取核心 Manager �
 
 ## Key Patterns
 
-- **组件委托模式**：`UIComponent`/`EntityComponent` 等 Godot 组件持有核心 Manager 引用（`IUIManager`/`IEntityManager`），注册事件转发到 `EventComponent`，所有操作委托给核心 Manager，不重复实现内部状态
+- **组件委托模式**：`UIComponent`/`EntityComponent`/`SoundComponent` 等 Godot 组件持有核心 Manager 引用（`IUIManager`/`IEntityManager`/`ISoundManager`），所有操作委托给核心 Manager，不重复实现内部状态
+- **Helper 基类模式**：每个组件系统定义 `XXHelperBase : GodotComponent, IXXHelper` 抽象基类，支持通过 `Helper.CreateHelper()` 创建和自定义。已有：`UIFormHelperBase`/`UIGroupHelperBase`、`EntityHelperBase`/`EntityGroupHelperBase`、`SoundHelperBase`/`SoundGroupHelperBase`/`SoundAgentHelperBase`
 - **GF 门面**：`GF.Entity.ShowEntity<T>()`、`GF.UI.OpenUIForm()`、`GF.Sound.PlayMusic()`、`GF.Event.Fire()`、`GF.Localization.GetString()`、`GF.DataNode.SetData()`
 - **GodotComponent**：自定义节点继承此类获得完整的生命周期虚方法（`OnInit`/`OnEnter`/`OnUpdate`/`OnPhysicsUpdate`/`OnExitTree` + 输入系统 + 通知 + 属性系统）
 - **Entity**：继承 `GodotComponent`，既有 `IEntity` 框架生命周期也有 Godot 节点生命周期
