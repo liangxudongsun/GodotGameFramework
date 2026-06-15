@@ -36,7 +36,6 @@ namespace GodotGameFramework
     /// fsmComp.DestroyFsm&lt;MyOwner&gt;();
     /// </code>
     ///
-    /// 对应 Unity 版本中的 FsmComponent。
     /// </summary>
     public sealed partial class FsmComponent : GameFrameworkComponent
     {

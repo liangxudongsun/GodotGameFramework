@@ -34,7 +34,6 @@ namespace GodotGameFramework
     /// - AudioStreamPlayer 不支持空间音频（PanStereo/SpatialBlend/MaxDistance/DopplerLevel 存储但 no-op）
     /// - 自然完成通过 Finished 信号检测（比 _Process 轮询更高效）
     ///
-    /// 对应 Unity 版本中的 DefaultSoundAgentHelper（MonoBehaviour 包装 AudioSource）。
     /// </summary>
     public sealed class DefaultSoundAgentHelper : ISoundAgentHelper
     {
@@ -67,14 +66,12 @@ namespace GodotGameFramework
 
         /// <summary>
         /// 音量值（线性 0-1）。
-        /// 对应 UGF AudioSource.volume 和核心框架的 Volume 属性。
         /// 实际应用到 AudioStreamPlayer 时会通过 Mathf.LinearToDb 转换为分贝。
         /// </summary>
         private float m_Volume;
 
         /// <summary>
         /// 优先级。
-        /// 对应 UGF AudioSource.priority（经过 128-value 反转）。
         /// 在 GGF 中直接存储核心框架的优先级值（0=最低），不做反转。
         /// </summary>
         private int m_Priority;
@@ -133,7 +130,6 @@ namespace GodotGameFramework
         /// 重置声音代理事件。
         /// 当声音自然播放完成（非循环声音播到末尾）时触发。
         /// SoundComponent 订阅此事件来回收 Agent。
-        /// 对应 UGF 中 DefaultSoundAgentHelper.Update() 检测自然完成后触发的事件。
         /// </summary>
         private event EventHandler<ResetSoundAgentEventArgs> m_ResetSoundAgent;
 
@@ -386,7 +382,6 @@ namespace GodotGameFramework
         /// 当声音自然播放完成时（非循环声音播到末尾），触发此事件。
         /// SoundComponent 通过此事件得知 Agent 已空闲，可分配给新的播放请求。
         ///
-        /// 对应 UGF 中 DefaultSoundAgentHelper.Update() 中的逻辑：
         /// 检测到 !IsPlaying && clip != null 时触发 ResetSoundAgent。
         /// GGF 改用 Finished 信号实现，更高效。
         /// </summary>
@@ -407,7 +402,6 @@ namespace GodotGameFramework
         /// 如果指定了淡入时间（fadeInSeconds > 0），先从静音开始播放，
         /// 然后通过 Tween 渐变到目标音量。
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.Play(float fadeInSeconds)。
         /// </summary>
         /// <param name="fadeInSeconds">声音淡入时间，以秒为单位。</param>
         public void Play(float fadeInSeconds)
@@ -435,7 +429,6 @@ namespace GodotGameFramework
         ///
         /// 停止后重置播放位置到开头，并清除暂停状态。
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.Stop(float fadeOutSeconds)。
         /// </summary>
         /// <param name="fadeOutSeconds">声音淡出时间，以秒为单位。</param>
         public void Stop(float fadeOutSeconds)
@@ -478,7 +471,6 @@ namespace GodotGameFramework
         /// 如果指定了淡出时间，先渐变到静音再停止。
         /// 恢复时通过 Resume() 从保存的位置继续播放。
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.Pause(float fadeOutSeconds)。
         /// </summary>
         /// <param name="fadeOutSeconds">声音淡出时间，以秒为单位。</param>
         public void Pause(float fadeOutSeconds)
@@ -521,7 +513,6 @@ namespace GodotGameFramework
         ///
         /// 如果指定了淡入时间，先从静音开始播放，然后渐变到目标音量。
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.Resume(float fadeInSeconds)。
         /// </summary>
         /// <param name="fadeInSeconds">声音淡入时间，以秒为单位。</param>
         public void Resume(float fadeInSeconds)
@@ -557,7 +548,6 @@ namespace GodotGameFramework
         ///
         /// 注意：不重新订阅 Finished 信号（因为 AudioStreamPlayer 节点是复用的）。
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.Reset()。
         /// </summary>
         public void Reset()
         {
@@ -589,7 +579,6 @@ namespace GodotGameFramework
         /// 将 AudioStream 资源赋值给底层 AudioStreamPlayer。
         /// 如果传入的对象不是 AudioStream 类型，返回 false。
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.SetSoundAsset(object soundAsset)
         /// 中将 AudioClip 赋值给 AudioSource.clip 的逻辑。
         /// </summary>
         /// <param name="soundAsset">声音资源（必须是 AudioStream 类型）。</param>
@@ -641,7 +630,6 @@ namespace GodotGameFramework
         /// 将音量从静音（-80db）渐变到当前目标音量。
         /// 使用 Godot 的 Tween API 实现，比手动 _Process 跟踪更高效。
         ///
-        /// 对应 UGF 中的 FadeToVolume(AudioSource, volume, fadeInSeconds) 协程。
         /// </summary>
         /// <param name="duration">淡入持续时间（秒）。</param>
         private void FadeIn(float duration)
@@ -677,7 +665,6 @@ namespace GodotGameFramework
         ///
         /// 将音量从当前值渐变到静音（-80db），完成后执行回调。
         ///
-        /// 对应 UGF 中的 FadeToVolume(AudioSource, 0f, fadeOutSeconds) 协程。
         /// </summary>
         /// <param name="duration">淡出持续时间（秒）。</param>
         /// <param name="onComplete">淡出完成后的回调。</param>
@@ -712,7 +699,6 @@ namespace GodotGameFramework
         /// 终止当前进行中的淡入淡出动画。
         ///
         /// 在新的 Play/Stop/Pause/Resume 调用时，需要先终止上一个未完成的动画。
-        /// 对应 UGF 中的 StopAllCoroutines()。
         /// </summary>
         private void KillFadeTween()
         {
@@ -739,7 +725,6 @@ namespace GodotGameFramework
         /// - 淡出过程中不应触发（避免 Stop 时重复处理）
         /// - 暂停状态下不应触发
         ///
-        /// 对应 UGF DefaultSoundAgentHelper.Update() 中检测自然完成的逻辑：
         /// <code>
         /// if (!m_ApplicationPauseFlag && !IsPlaying && m_AudioSource.clip != null)
         /// {

@@ -11,10 +11,14 @@
 // 特效/浮文创建等逻辑不移植，只保留通用便捷方法）。
 //------------------------------------------------------------
 
+using GameConfig.Entity;
 using GameFramework.Entity;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 实体组件扩展方法。
@@ -22,7 +26,6 @@ namespace GodotGameFramework
     /// 提供 EntityComponent 的常用便捷方法，
     /// 包括通过 EntityLogic 类型获取实体、安全隐藏、子实体查询等。
     ///
-    /// 对应 Unity 版本中游戏项目的 EntityExtension。
     /// </summary>
     public static class EntityExtension
     {
@@ -50,6 +53,49 @@ namespace GodotGameFramework
 
             return null;
         }
+        #region 显示实体
+        public static int ShowEntity<TLogic>(this EntityComponent entityComponent, EntityId entityId, object userData = null)
+            where TLogic : EntityLogic, new()
+        {
+            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            if (cfg == null)
+            {
+                Log.Error($"Entity {entityId} not found in EntityConfig");
+                return -1;
+            }
+
+            int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
+            entityComponent.ShowEntity<TLogic>(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            return ser;
+        }
+        public static int ShowEntity(this EntityComponent entityComponent, EntityId entityId, object userData = null)
+        {
+            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            if (cfg == null)
+            {
+                Log.Error($"Entity {entityId} not found in EntityConfig");
+                return -1;
+            }
+
+            int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
+            entityComponent.ShowEntity(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            return ser;
+        }
+
+        public static async Task<IEntity> ShowEntityAsync<TLogic>(this EntityComponent entityComponent, EntityId entityId, object userData = null)
+            where TLogic : EntityLogic, new()
+        {
+            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            if (cfg == null)
+            {
+                Log.Error($"Entity {entityId} not found in EntityConfig");
+                return null;
+            }
+
+            int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
+            return await entityComponent.ShowEntityAsync<TLogic>(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+        }
+        #endregion
 
         /// <summary>
         /// 通过实体资源名获取所有匹配的 EntityLogic 子类列表。

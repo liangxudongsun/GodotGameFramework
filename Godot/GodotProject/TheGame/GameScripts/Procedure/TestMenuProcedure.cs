@@ -9,6 +9,8 @@ using Godot;
 using GodotGameFramework;
 using GameFramework.Localization;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
+using GodotGameFramework.Localization;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 菜单流程。
@@ -99,7 +101,7 @@ public class TestMenuProcedure : ProcedureBase
                         "TestMenuProcedure", "TestGameProcedure"));
                 }
 
-                ChangeState<TestGameProcedure>(procedureOwner);
+                ChangeState<ProcedureGame>(procedureOwner);
             }
         }
     }

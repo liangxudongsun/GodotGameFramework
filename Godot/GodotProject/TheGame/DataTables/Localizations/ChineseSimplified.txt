@@ -1,0 +1,15 @@
+﻿##var	id	Key	Value
+##var			
+##type	int	string	string
+##group			
+##	index	键	值
+	1	ClickBlock	点击块
+	2	Demo	测试版
+
+
+
+		
+
+			
+			
+			

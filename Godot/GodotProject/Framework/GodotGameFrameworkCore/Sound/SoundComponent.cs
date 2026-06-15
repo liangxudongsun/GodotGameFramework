@@ -8,6 +8,7 @@
 using GameFramework;
 using GameFramework.Sound;
 using Godot;
+using GodotGameFramework.Resource;
 using System;
 using System.Collections.Generic;
 
@@ -65,7 +66,6 @@ namespace GodotGameFramework
     /// soundComp.ResumeAllLoadedSounds();
     /// </code>
     ///
-    /// 对应 Unity 版本中的 SoundComponent。
     /// </summary>
     public sealed partial class SoundComponent : GameFrameworkComponent
     {

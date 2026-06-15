@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GameConfig;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面组件扩展方法。
@@ -24,7 +24,6 @@ namespace GodotGameFramework
     /// 提供 UIComponent 的常用便捷方法，
     /// 包括通过 UIFormLogic 类型获取 UI、关闭指定组所有 UI、获取顶层 UI 等。
     ///
-    /// 对应 Unity 版本中游戏项目的 UIExtension。
     /// </summary>
     public static class UIExtension
     {

@@ -8,7 +8,7 @@
 using GameFramework;
 using GameFramework.Event;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 打开界面更新事件。

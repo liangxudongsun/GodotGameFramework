@@ -11,58 +11,20 @@ using GameFramework.Resource;
 using Godot;
 using System;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Resource
 {
     /// <summary>
     /// 默认加载资源代理辅助器。
-    ///
-    /// 实现 ILoadResourceAgentHelper 接口，提供 Godot 引擎下的资源加载代理功能。
-    /// 该辅助器被核心框架的 LoadResourceAgent 调用，负责实际的文件读取和资源加载操作。
-    ///
-    /// 工作流程：
-    /// 1. LoadResourceAgent 调用 ReadFile/ReadBytes 读取文件内容
-    /// 2. 读取完成后触发对应事件，将数据返回给 Agent
-    /// 3. Agent 根据加载类型决定下一步操作（ParseBytes 或 LoadAsset）
-    /// 4. LoadAsset 使用 ResourceLoader.Load 加载实际资源
-    /// 5. 加载完成后触发 LoadComplete 事件
-    ///
-    /// 对应 Unity 版本中的 DefaultLoadResourceAgentHelper。
     /// </summary>
-    public sealed class DefaultLoadResourceAgentHelper : ILoadResourceAgentHelper
+    public sealed partial class DefaultLoadResourceAgentHelper : LoadResourceAgentHelperBase
     {
-        /// <summary>
-        /// 加载资源代理辅助器异步加载资源更新事件。
-        /// </summary>
-        public event EventHandler<LoadResourceAgentHelperUpdateEventArgs> LoadResourceAgentHelperUpdate;
+        public override event EventHandler<LoadResourceAgentHelperUpdateEventArgs> LoadResourceAgentHelperUpdate;
+        public override event EventHandler<LoadResourceAgentHelperReadFileCompleteEventArgs> LoadResourceAgentHelperReadFileComplete;
+        public override event EventHandler<LoadResourceAgentHelperReadBytesCompleteEventArgs> LoadResourceAgentHelperReadBytesComplete;
+        public override event EventHandler<LoadResourceAgentHelperParseBytesCompleteEventArgs> LoadResourceAgentHelperParseBytesComplete;
+        public override event EventHandler<LoadResourceAgentHelperLoadCompleteEventArgs> LoadResourceAgentHelperLoadComplete;
+        public override event EventHandler<LoadResourceAgentHelperErrorEventArgs> LoadResourceAgentHelperError;
 
-        /// <summary>
-        /// 加载资源代理辅助器异步读取资源文件完成事件。
-        /// </summary>
-        public event EventHandler<LoadResourceAgentHelperReadFileCompleteEventArgs>
-            LoadResourceAgentHelperReadFileComplete;
-
-        /// <summary>
-        /// 加载资源代理辅助器异步读取资源二进制流完成事件。
-        /// </summary>
-        public event EventHandler<LoadResourceAgentHelperReadBytesCompleteEventArgs>
-            LoadResourceAgentHelperReadBytesComplete;
-
-        /// <summary>
-        /// 加载资源代理辅助器异步将资源二进制流转换为加载对象完成事件。
-        /// </summary>
-        public event EventHandler<LoadResourceAgentHelperParseBytesCompleteEventArgs>
-            LoadResourceAgentHelperParseBytesComplete;
-
-        /// <summary>
-        /// 加载资源代理辅助器异步加载资源完成事件。
-        /// </summary>
-        public event EventHandler<LoadResourceAgentHelperLoadCompleteEventArgs>
-            LoadResourceAgentHelperLoadComplete;
-
-        /// <summary>
-        /// 加载资源代理辅助器错误事件。
-        /// </summary>
-        public event EventHandler<LoadResourceAgentHelperErrorEventArgs> LoadResourceAgentHelperError;
 
         /// <summary>
         /// 通过加载资源代理辅助器开始异步读取资源文件。
@@ -71,7 +33,7 @@ namespace GodotGameFramework
         /// 将文件内容加载为 Godot Resource 对象。
         /// </summary>
         /// <param name="fullPath">要加载资源的完整路径名。</param>
-        public void ReadFile(string fullPath)
+        public override void ReadFile(string fullPath)
         {
             try
             {
@@ -109,7 +71,7 @@ namespace GodotGameFramework
         /// </summary>
         /// <param name="fileSystem">要加载资源的文件系统。</param>
         /// <param name="name">要加载资源的名称。</param>
-        public void ReadFile(IFileSystem fileSystem, string name)
+        public override void ReadFile(IFileSystem fileSystem, string name)
         {
             OnError(LoadResourceStatus.NotExist,
                 "Load from file system is not supported in current mode.");
@@ -121,7 +83,7 @@ namespace GodotGameFramework
         /// 使用 Godot 的 FileAccess API 读取文件内容为字节数组。
         /// </summary>
         /// <param name="fullPath">要加载资源的完整路径名。</param>
-        public void ReadBytes(string fullPath)
+        public override void ReadBytes(string fullPath)
         {
             try
             {
@@ -162,7 +124,7 @@ namespace GodotGameFramework
         /// </summary>
         /// <param name="fileSystem">要加载资源的文件系统。</param>
         /// <param name="name">要加载资源的名称。</param>
-        public void ReadBytes(IFileSystem fileSystem, string name)
+        public override void ReadBytes(IFileSystem fileSystem, string name)
         {
             OnError(LoadResourceStatus.NotExist,
                 "Load bytes from file system is not supported in current mode.");
@@ -176,7 +138,7 @@ namespace GodotGameFramework
         /// 此处将 bytes 作为资源对象传递。
         /// </summary>
         /// <param name="bytes">要加载资源的二进制流。</param>
-        public void ParseBytes(byte[] bytes)
+        public override void ParseBytes(byte[] bytes)
         {
             // 在 Godot 单机模式下，字节流本身就是"资源"
             // 触发解析完成事件，将 bytes 作为资源对象传递
@@ -193,7 +155,7 @@ namespace GodotGameFramework
         /// <param name="assetName">要加载的资源名称（路径）。</param>
         /// <param name="assetType">要加载资源的类型。</param>
         /// <param name="isScene">要加载的资源是否是场景。</param>
-        public void LoadAsset(object resource, string assetName, Type assetType, bool isScene)
+        public override void LoadAsset(object resource, string assetName, Type assetType, bool isScene)
         {
             try
             {
@@ -238,7 +200,7 @@ namespace GodotGameFramework
         ///
         /// 重置内部状态，为下一次加载任务做准备。
         /// </summary>
-        public void Reset()
+        public override void Reset()
         {
             // 当前无需重置的内部状态
         }

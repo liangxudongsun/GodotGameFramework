@@ -24,7 +24,6 @@ namespace GodotGameFramework
     /// 提供 Node 类型的常用便捷方法，
     /// 包括获取/添加子节点、按类型查找节点、批量操作等。
     ///
-    /// 对应 Unity 版本中的 TransformExtension（DoBlinkScale、FindWithTag 等）
     /// 和 UnityExtension（GetOrAddComponent 等）。
     /// </summary>
     public static class NodeExtension

@@ -1,0 +1,7 @@
+﻿##var	id	Key	Value
+##var			
+##type	int	string	string
+##group			
+##	index	键	值
+	1	ClickBlock	Click The Blocks!
+	2	Demo	GGF Demo Game

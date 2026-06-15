@@ -5,6 +5,7 @@
 
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Entity;
 
 /// <summary>
 /// 测试用实体逻辑。

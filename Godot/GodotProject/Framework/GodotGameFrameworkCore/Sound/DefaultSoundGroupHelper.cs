@@ -25,7 +25,6 @@ namespace GodotGameFramework
     ///       └── AudioStreamPlayer "Agent 1"
     /// </code>
     ///
-    /// 对应 Unity 版本中的 DefaultSoundGroupHelper（MonoBehaviour）。
     /// </summary>
     public sealed partial class DefaultSoundGroupHelper : Node, ISoundGroupHelper
     {

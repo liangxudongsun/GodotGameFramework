@@ -24,6 +24,9 @@ script = ExtResource("2_781av")
 
 [node name="Resource" type="Node" parent="." unique_id=553100123]
 script = ExtResource("11_res")
+ReadOnlyPath = "res://"
+ReadWritePath = "user://"
+metadata/_edit_pinned_properties_ = [&"ReadOnlyPath", &"ReadWritePath"]
 
 [node name="Event" type="Node" parent="." unique_id=355543369]
 script = ExtResource("3_353g6")
@@ -33,7 +36,7 @@ script = ExtResource("4_ynwf7")
 
 [node name="Procedure" type="Node" parent="." unique_id=1553213140]
 script = ExtResource("5_qii40")
-AvailableProcedureTypeNames = PackedStringArray("ProcedureLaunch", "TestMenuProcedure", "TestGameProcedure")
+AvailableProcedureTypeNames = PackedStringArray("ProcedureLaunch", "ProcedureGame")
 EntranceProcedureTypeName = "ProcedureLaunch"
 
 [node name="Setting" type="Node" parent="." unique_id=22776590]

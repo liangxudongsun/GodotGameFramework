@@ -5,6 +5,7 @@
 
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Entity;
 
 /// <summary>
 /// 方块逻辑基类。

@@ -1,3 +1,4 @@
+using GameFramework;
 using Godot;
 using System;
 namespace GodotGameFramework
@@ -12,12 +13,12 @@ namespace GodotGameFramework
 		{
 			ChildEnteredTree += OnChildEnteredTree;
 			ChildExitingTree += OnChildExitingTree;
-			OnEnter();
+			OnInit();
 		}
 
 		public override void _Ready()
 		{
-			OnInit();
+			OnEnter();
 		}
 
 		public override void _Process(double delta)
@@ -336,21 +337,28 @@ namespace GodotGameFramework
 		}
 		#endregion
 
-		public static GodotComponent Create<T>(Node parent = null) where T : GodotComponent
+		public static Node Create<T>(Node parent = null) where T : Node
 		{
-			var node = Activator.CreateInstance(typeof(T)) as GodotComponent;
+			var node = Activator.CreateInstance(typeof(T)) as Node;
 			if (parent != null)
 				parent.AddChild(node);
 			return node;
 		}
-		public static GodotComponent Create(Type type, Node parent = null)
+		public static Node Create(Type type, Node parent = null)
 		{
-			var node = Activator.CreateInstance(type) as GodotComponent;
+			var node = Activator.CreateInstance(type) as Node;
 			if (parent != null)
 				parent.AddChild(node);
 			return node;
 		}
-		public static void Destroy(GodotComponent node)
+		public static Node Create(string type, Node parent = null)
+		{
+			var node = Activator.CreateInstance(Utility.Assembly.GetType(type)) as Node;
+			if (parent != null)
+				parent.AddChild(node);
+			return node;
+		}
+		public static void Destroy(Node node)
 		{
 			node.QueueFree();
 		}

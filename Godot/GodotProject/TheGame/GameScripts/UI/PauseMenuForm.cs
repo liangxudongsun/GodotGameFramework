@@ -7,6 +7,8 @@
 using GameFramework.Localization;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Localization;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 暂停菜单界面逻辑。

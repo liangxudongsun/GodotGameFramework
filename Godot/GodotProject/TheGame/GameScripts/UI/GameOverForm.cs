@@ -9,6 +9,8 @@ using GameFramework.DataNode;
 using GameFramework.Localization;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Localization;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 游戏结束界面逻辑。

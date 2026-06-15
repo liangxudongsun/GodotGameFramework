@@ -13,29 +13,6 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// 事件组件。
-    ///
-    /// 这是全局事件总线的封装组件，直接透传核心层的 IEventManager。
-    /// 所谓"透传"是指这个组件只是核心层的薄包装，不添加额外的逻辑。
-    ///
-    /// 使用方式：
-    /// <code>
-    /// // 订阅事件
-    /// GF.Event.Subscribe(MyEvent.EventId, OnMyEvent);
-    ///
-    /// // 触发事件
-    /// GF.Event.Fire(this, MyEvent.CreateEventArgs());
-    ///
-    /// // 取消订阅
-    /// GF.Event.Unsubscribe(MyEvent.EventId, OnMyEvent);
-    /// </code>
-    ///
-    /// 事件系统的工作原理：
-    /// 1. 每种事件有一个唯一的 int 类型的 ID
-    /// 2. 使用 EventHandler&lt;GameEventArgs&gt; 委托类型作为事件处理器
-    /// 3. Fire() 是线程安全的，事件会在下一帧分发
-    /// 4. FireNow() 是立即模式，事件立刻分发（非线程安全）
-    ///
-    /// 对应 Unity 版本中的 EventComponent。
     /// </summary>
     public sealed partial class EventComponent : GameFrameworkComponent
     {

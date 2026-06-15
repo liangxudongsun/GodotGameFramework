@@ -14,7 +14,7 @@ using System;
 using System.Collections.Generic;
 using GameConfig;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面组件。
@@ -66,9 +66,6 @@ namespace GodotGameFramework
         [Export]
         private string m_UIGroupHelperTypeName = "GodotGameFramework.DefaultUIGroupHelper";
 
-        private UIGroupHelperBase m_CustomUIGroupHelper = null;
-
-        private List<UIGroupConfig> m_UIGroups;
 
         /// <summary>
         /// 获取界面组数量。
@@ -191,10 +188,6 @@ namespace GodotGameFramework
                 return;
             }
 
-            // 初始化 UIManager 的资源管理器、对象池管理器等。
-            // 此时 ResourceComponent.OnInit() 已在当前节点之前执行完毕，
-            // 因此 GameFrameworkEntry.GetModule<IResourceManager>() 和
-            // GameFrameworkEntry.GetModule<IObjectPoolManager>() 都可正常返回。
             m_UIManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
             m_UIManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
             m_UIManager.InstanceAutoReleaseInterval = m_InstanceAutoReleaseInterval;
@@ -208,7 +201,8 @@ namespace GodotGameFramework
                 Log.Error("Can not create UI form helper.");
                 return;
             }
-
+            uiFormHelper.Name = m_UIFormHelperTypeName;
+            m_CustomUIFormHelper = uiFormHelper;
             AddChild(uiFormHelper);
             m_UIManager.SetUIFormHelper(uiFormHelper);
 
@@ -221,22 +215,6 @@ namespace GodotGameFramework
                     m_InstanceRoot.Name = "InstanceRoot";
                     AddChild(m_InstanceRoot);
                 }
-            }
-
-
-            m_UIGroups = GF.DataTable.TbUIGroupConfig.DataList;
-            for (int i = 0; i < m_UIGroups.Count; i++)
-            {
-                if (!AddUIGroup(m_UIGroups[i].Name, m_UIGroups[i].Depth))
-                {
-                    Log.Warning("Add UI group '{0}' failure.", m_UIGroups[i].Name);
-                    continue;
-                }
-            }
-
-            if (m_UIManager.UIGroupCount == 0)
-            {
-                AddUIGroup("Default", 0);
             }
         }
 
@@ -301,13 +279,13 @@ namespace GodotGameFramework
                 return false;
             }
 
-            UIGroupHelperBase uiGroupHelper = Helper.CreateHelper(m_UIGroupHelperTypeName, m_CustomUIGroupHelper, UIGroupCount);
+            UIGroupHelperBase uiGroupHelper = Create(m_UIGroupHelperTypeName) as UIGroupHelperBase;
             if (uiGroupHelper == null)
             {
                 Log.Error("Can not create UI group helper.");
                 return false;
             }
-            uiGroupHelper.Name = Utility.Text.Format("UI Group - {0}", uiGroupName);
+            uiGroupHelper.Name = Utility.Text.Format("{0}-{1}", m_UIGroupHelperTypeName, uiGroupName);
             m_InstanceRoot.AddChild(uiGroupHelper);
             return m_UIManager.AddUIGroup(uiGroupName, depth, uiGroupHelper);
         }

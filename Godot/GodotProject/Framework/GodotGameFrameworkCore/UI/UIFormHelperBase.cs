@@ -7,7 +7,7 @@
 
 using GameFramework.UI;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面辅助器基类。

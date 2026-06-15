@@ -22,7 +22,6 @@ namespace GodotGameFramework
     /// - 每次格式化时复用同一个 StringBuilder，减少 GC 压力
     /// - 初始容量为 1024 字符，按需自动扩容
     ///
-    /// 对应 Unity 版本中的 DefaultTextHelper。
     /// </summary>
     public class DefaultTextHelper : Utility.Text.ITextHelper
     {

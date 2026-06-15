@@ -8,19 +8,11 @@
 using GameFramework.Localization;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 主菜单界面逻辑。
-///
-/// 显示游戏标题、操作说明和开始按钮。
-/// Phase 7: 所有文本通过 LocalizationComponent.GetString() 获取，
-/// 支持运行时语言切换。
-///
-/// 框架特性展示：
-/// - UIFormLogic.OnInit：获取子节点引用（仅在首次创建时调用）
-/// - UIFormLogic.OnOpen：每次打开时重置状态并刷新本地化文本
-/// - LocalizationComponent.GetString：获取翻译文本
-/// - 运行时语言切换：点击按钮即时切换中文/英文
+/// 
 /// </summary>
 public class MainMenuForm : UIFormLogic
 {
@@ -43,7 +35,7 @@ public class MainMenuForm : UIFormLogic
     private Button m_LanguageButton;
 
     /// <summary>本地化组件引用。</summary>
-    private LocalizationComponent m_LocalizationComponent;
+    // private LocalizationComponent m_LocalizationComponent;
 
     /// <summary>
     /// 是否请求开始游戏。
@@ -59,31 +51,31 @@ public class MainMenuForm : UIFormLogic
     {
         base.OnInit(userData);
 
-        Control root = CachedControl;
-        if (root == null)
-        {
-            Log.Warning("MainMenuForm: CachedControl is null.");
-            return;
-        }
+        // Control root = CachedControl;
+        // if (root == null)
+        // {
+        //     Log.Warning("MainMenuForm: CachedControl is null.");
+        //     return;
+        // }
 
-        m_TitleLabel = root.GetNode<Label>("VBox/Title");
-        m_SubtitleLabel = root.GetNode<Label>("VBox/Subtitle");
-        m_PhaseLabel = root.GetNode<Label>("VBox/PhaseLabel");
-        m_RulesLabel = root.GetNode<Label>("VBox/Rules");
-        m_StartButton = root.GetNode<Button>("VBox/StartButton");
-        m_LanguageButton = root.GetNode<Button>("VBox/LanguageButton");
+        // m_TitleLabel = root.GetNode<Label>("VBox/Title");
+        // m_SubtitleLabel = root.GetNode<Label>("VBox/Subtitle");
+        // m_PhaseLabel = root.GetNode<Label>("VBox/PhaseLabel");
+        // m_RulesLabel = root.GetNode<Label>("VBox/Rules");
+        // m_StartButton = root.GetNode<Button>("VBox/StartButton");
+        // m_LanguageButton = root.GetNode<Button>("VBox/LanguageButton");
 
-        m_LocalizationComponent = GF.Localization;
+        // // m_LocalizationComponent = GF.Localization;
 
-        // 连接按钮事件
-        if (m_StartButton != null)
-        {
-            m_StartButton.Pressed += OnStartButtonPressed;
-        }
-        if (m_LanguageButton != null)
-        {
-            m_LanguageButton.Pressed += OnLanguageButtonPressed;
-        }
+        // // 连接按钮事件
+        // if (m_StartButton != null)
+        // {
+        //     m_StartButton.Pressed += OnStartButtonPressed;
+        // }
+        // if (m_LanguageButton != null)
+        // {
+        //     m_LanguageButton.Pressed += OnLanguageButtonPressed;
+        // }
 
         Log.Info("MainMenuForm OnInit - 主菜单界面初始化完成");
     }
@@ -126,28 +118,28 @@ public class MainMenuForm : UIFormLogic
     /// </summary>
     private void RefreshLocalizedText()
     {
-        if (m_LocalizationComponent == null) return;
+        // if (m_LocalizationComponent == null) return;
 
-        if (m_TitleLabel != null)
-            m_TitleLabel.Text = m_LocalizationComponent.GetString("GameTitle");
+        // if (m_TitleLabel != null)
+        //     m_TitleLabel.Text = m_LocalizationComponent.GetString("GameTitle");
 
-        if (m_SubtitleLabel != null)
-            m_SubtitleLabel.Text = m_LocalizationComponent.GetString("DemoSubtitle");
+        // if (m_SubtitleLabel != null)
+        //     m_SubtitleLabel.Text = m_LocalizationComponent.GetString("DemoSubtitle");
 
-        if (m_PhaseLabel != null)
-            m_PhaseLabel.Text = m_LocalizationComponent.GetString("PhaseInfo");
+        // if (m_PhaseLabel != null)
+        //     m_PhaseLabel.Text = m_LocalizationComponent.GetString("PhaseInfo");
 
-        if (m_RulesLabel != null)
-            m_RulesLabel.Text = m_LocalizationComponent.GetString("GameRules");
+        // if (m_RulesLabel != null)
+        //     m_RulesLabel.Text = m_LocalizationComponent.GetString("GameRules");
 
-        if (m_StartButton != null)
-            m_StartButton.Text = m_LocalizationComponent.GetString("StartGame");
+        // if (m_StartButton != null)
+        //     m_StartButton.Text = m_LocalizationComponent.GetString("StartGame");
 
-        // 语言切换按钮显示当前可切换到的语言
-        if (m_LanguageButton != null)
-        {
-            m_LanguageButton.Text = m_LocalizationComponent.GetString("SwitchLanguage");
-        }
+        // // 语言切换按钮显示当前可切换到的语言
+        // if (m_LanguageButton != null)
+        // {
+        //     m_LanguageButton.Text = m_LocalizationComponent.GetString("SwitchLanguage");
+        // }
     }
 
     /// <summary>
@@ -165,31 +157,31 @@ public class MainMenuForm : UIFormLogic
     /// </summary>
     private void OnLanguageButtonPressed()
     {
-        if (m_LocalizationComponent == null) return;
+        // if (m_LocalizationComponent == null) return;
 
-        Language currentLang = m_LocalizationComponent.Language;
-        Language targetLang;
-        string dictFile;
+        // Language currentLang = m_LocalizationComponent.Language;
+        // Language targetLang;
+        // string dictFile;
 
-        if (currentLang == Language.ChineseSimplified)
-        {
-            targetLang = Language.English;
-            dictFile = "res://Data/Localization/English.txt";
-        }
-        else
-        {
-            targetLang = Language.ChineseSimplified;
-            dictFile = "res://Data/Localization/ChineseSimplified.txt";
-        }
+        // if (currentLang == Language.ChineseSimplified)
+        // {
+        //     targetLang = Language.English;
+        //     dictFile = "res://Data/Localization/English.txt";
+        // }
+        // else
+        // {
+        //     targetLang = Language.ChineseSimplified;
+        //     dictFile = "res://Data/Localization/ChineseSimplified.txt";
+        // }
 
-        // 切换语言：清除旧字典 → 加载新字典 → 设置语言
-        m_LocalizationComponent.RemoveAllRawStrings();
-        bool loaded = m_LocalizationComponent.ReadData(dictFile);
-        if (loaded)
-        {
-            m_LocalizationComponent.Language = targetLang;
-            GD.Print($"  [Phase 7] 语言已切换: {currentLang} → {targetLang}");
-        }
+        // // 切换语言：清除旧字典 → 加载新字典 → 设置语言
+        // m_LocalizationComponent.RemoveAllRawStrings();
+        // bool loaded = m_LocalizationComponent.ReadData(dictFile);
+        // if (loaded)
+        // {
+        //     m_LocalizationComponent.Language = targetLang;
+        //     GD.Print($"  [Phase 7] 语言已切换: {currentLang} → {targetLang}");
+        // }
 
         // 刷新所有 UI 文本
         RefreshLocalizedText();

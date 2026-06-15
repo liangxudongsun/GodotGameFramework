@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using GameFramework;
+using GameFramework.Localization;
 using Godot;
 using System;
 
@@ -13,33 +14,27 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// 基础组件。
-    ///
-    /// 这是 GGF 框架中最核心的组件，负责：
-    /// 1. 初始化各种 Helper（日志、文本格式化、版本信息）
-    /// 2. 管理 Godot 引擎的帧率设置
-    /// 3. 驱动核心框架的 Update 循环（由 GGFEntry 负责调用）
-    /// 4. 管理框架的关闭流程
-    ///
-    /// 对应 Unity 版本中的 BaseComponent。
-    ///
-    /// 初始化顺序：
-    /// 1. _Ready() 被调用
-    /// 2. 初始化 TextHelper（字符串格式化工具）
-    /// 3. 初始化 VersionHelper（版本信息）
-    /// 4. 初始化 LogHelper（日志系统）
-    /// 5. 输出框架版本信息
-    /// 6. 设置帧率
     /// </summary>
     public sealed partial class BaseComponent : GameFrameworkComponent
     {
+        [Export]
+        public Language EditorLanague;
+        [Export]
+        private string m_TextHelper = "GodotGameFramework.DefaultTextHelper";
+        [Export]
+        private string m_VersionHelper = "GodotGameFramework.DefaultVersionHelper";
+        [Export]
+        private string m_LogHelper = "GodotGameFramework.DefaultLogHelper";
         /// <summary>
         /// 帧率设置。默认 60 帧。
         /// </summary>
+        [Export]
         private int m_FrameRate = 60;
 
         /// <summary>
         /// 游戏速度。
         /// </summary>
+        [Export]
         private float m_GameSpeed = 1f;
 
         /// <summary>
@@ -68,8 +63,6 @@ namespace GodotGameFramework
 
         /// <summary>
         /// 获取或设置游戏速度。
-        /// 对齐 UGF 的 GameSpeed 实现，维护 m_GameSpeed 备份字段避免浮点精度问题。
-        /// 对应 Unity 的 Time.timeScale。
         /// </summary>
         public float GameSpeed
         {
@@ -145,18 +138,9 @@ namespace GodotGameFramework
             GameSpeed = 1f;
         }
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 在这里完成框架的初始化工作。
-        ///
-        /// 注意：由于 GGFComponent._Ready() 会先被调用（基类），
-        /// 所以组件已经注册到 GGFEntry 中了。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            // 先调用基类的 _Ready，完成组件注册
-            base._Ready();
-
+            base.OnInit();
             // 按顺序初始化各个 Helper
             // 注意：LogHelper 必须最后初始化，因为前面的初始化可能需要日志输出
             InitTextHelper();
@@ -214,7 +198,11 @@ namespace GodotGameFramework
         {
             try
             {
-                Utility.Text.SetTextHelper(new DefaultTextHelper());
+                Type textHelperType = Utility.Assembly.GetType(m_TextHelper);
+                if (textHelperType != null)
+                {
+                    Utility.Text.SetTextHelper((Utility.Text.ITextHelper)Activator.CreateInstance(textHelperType));
+                }
             }
             catch (Exception exception)
             {
@@ -232,7 +220,11 @@ namespace GodotGameFramework
         {
             try
             {
-                GameFramework.Version.SetVersionHelper(new DefaultVersionHelper());
+                Type versionHelperType = Utility.Assembly.GetType(m_VersionHelper);
+                if (versionHelperType != null)
+                {
+                    GameFramework.Version.SetVersionHelper((GameFramework.Version.IVersionHelper)Activator.CreateInstance(versionHelperType));
+                }
             }
             catch (Exception exception)
             {
@@ -250,7 +242,11 @@ namespace GodotGameFramework
         {
             try
             {
-                GameFrameworkLog.SetLogHelper(new DefaultLogHelper());
+                Type logHelperType = Utility.Assembly.GetType(m_LogHelper);
+                if (logHelperType != null)
+                {
+                    GameFrameworkLog.SetLogHelper((GameFrameworkLog.ILogHelper)Activator.CreateInstance(logHelperType));
+                }
             }
             catch (Exception exception)
             {

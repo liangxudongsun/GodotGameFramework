@@ -20,7 +20,6 @@ namespace GodotGameFramework
     /// - 从 project.godot 的 config/version 设置读取
     /// - 或者在代码中硬编码
     ///
-    /// 对应 Unity 版本中的 DefaultVersionHelper。
     /// </summary>
     public class DefaultVersionHelper : GameFramework.Version.IVersionHelper
     {

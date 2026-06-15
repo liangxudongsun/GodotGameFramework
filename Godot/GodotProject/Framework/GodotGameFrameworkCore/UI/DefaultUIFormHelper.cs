@@ -9,7 +9,7 @@ using GameFramework.UI;
 using Godot;
 using System;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 默认界面辅助器。

@@ -13,7 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Resource
 {
     /// <summary>
     /// 资源组件。
@@ -55,7 +55,6 @@ namespace GodotGameFramework
     /// bool exists = resource.HasAsset("res://Scenes/Main.tscn");
     /// </code>
     ///
-    /// 对应 Unity 版本中的 ResourceComponent。
     /// </summary>
     public sealed partial class ResourceComponent : GameFrameworkComponent
     {
@@ -87,7 +86,6 @@ namespace GodotGameFramework
 
         /// <summary>
         /// 加载代理辅助器数量。
-        /// 对应 UGF 中的 m_LoadResourceAgentHelperCount。
         /// 每个代理可以并行处理一个资源加载请求。
         /// </summary>
         [Export]
@@ -127,6 +125,11 @@ namespace GodotGameFramework
         /// </summary>
         [Export]
         public bool UseResourcePipeline = true;
+        [Export]
+        private string m_ResourceHelperTypeName = "GodotGameFramework.Resource.DefaultResourceHelper";
+        [Export]
+        private string m_LoadResourceAgentHelperTypeName = "GodotGameFramework.Resource.DefaultLoadResourceAgentHelper";
+        private ResourceHelperBase m_ResourceHelper;
 
         /// <summary>
         /// 获取当前异步加载任务数量（仅直接模式的任务）。
@@ -173,13 +176,17 @@ namespace GodotGameFramework
             m_ResourceManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
 
             // 创建并设置资源辅助器
-            var resourceHelper = new DefaultResourceHelper();
-            m_ResourceManager.SetResourceHelper(resourceHelper);
-
+            ResourceHelperBase helperBase = Helper.CreateHelper(m_ResourceHelperTypeName, m_ResourceHelper);
+            m_ResourceManager.SetResourceHelper(helperBase);
+            AddChild(helperBase);
+            helperBase.Name = m_ResourceHelperTypeName;
+            m_ResourceHelper = helperBase;
             // 注册加载代理辅助器
             for (int i = 0; i < LoadResourceAgentHelperCount; i++)
             {
-                var agentHelper = new DefaultLoadResourceAgentHelper();
+                LoadResourceAgentHelperBase agentHelper = Create(m_LoadResourceAgentHelperTypeName) as LoadResourceAgentHelperBase;
+                AddChild(agentHelper);
+                agentHelper.Name = Utility.Text.Format("{0}_{1}", m_LoadResourceAgentHelperTypeName, i);
                 m_ResourceManager.AddLoadResourceAgentHelper(agentHelper);
             }
 

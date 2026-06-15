@@ -9,7 +9,7 @@ using GameFramework;
 using GameFramework.Event;
 using GameFramework.UI;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 关闭界面完成事件。

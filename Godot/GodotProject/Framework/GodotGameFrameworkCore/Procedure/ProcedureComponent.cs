@@ -15,21 +15,6 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// 流程组件。
-    ///
-    /// 基于有限状态机（FSM）的流程管理组件，直接透传核心层的 IProcedureManager。
-    /// 流程（Procedure）是框架中管理游戏生命周期状态的核心机制。
-    ///
-    /// 工作原理：
-    /// 1. 流程本质上是特殊的 FSM 状态，每个流程继承自 ProcedureBase
-    /// 2. ProcedureComponent 在 _Ready 时获取核心层 IProcedureManager
-    /// 3. 通过 CallDeferred 延迟到所有组件就绪后，自动通过反射创建流程实例
-    /// 4. 将所有流程类注册到 FSM，然后启动入口流程
-    /// 5. 流程之间通过 ChangeState 切换
-    ///
-    /// 配置方式（在 Godot Inspector 中设置）：
-    /// - AvailableProcedureTypeNames: 所有可用流程的完整类型名（含命名空间）
-    /// - EntranceProcedureTypeName: 入口流程的完整类型名
-    ///
     /// </summary>
     public sealed partial class ProcedureComponent : GameFrameworkComponent
     {
@@ -94,7 +79,6 @@ namespace GodotGameFramework
         /// 通过反射根据 Inspector 中配置的类型名称创建流程实例，
         /// 然后初始化流程管理器并启动入口流程。
         ///
-        /// 对应 UGF 中 ProcedureComponent.Start() 协程的逻辑。
         /// </summary>
         private void InitProcedures()
         {

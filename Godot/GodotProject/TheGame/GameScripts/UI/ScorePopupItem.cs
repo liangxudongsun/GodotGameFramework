@@ -11,6 +11,7 @@
 
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 分数弹出项逻辑。

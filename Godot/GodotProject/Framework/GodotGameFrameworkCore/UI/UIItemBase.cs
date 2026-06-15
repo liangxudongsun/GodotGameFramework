@@ -7,7 +7,7 @@
 
 using Godot;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面项逻辑基类。

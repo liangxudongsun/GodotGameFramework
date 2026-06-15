@@ -20,7 +20,6 @@ namespace GodotGameFramework
     /// 提供 SoundComponent 的常用便捷方法，
     /// 包括按声音组快捷播放 BGM/SFX/UI 音效。
     ///
-    /// 对应 Unity 版本中游戏项目的 SoundExtension。
     /// </summary>
     public static class SoundExtension
     {

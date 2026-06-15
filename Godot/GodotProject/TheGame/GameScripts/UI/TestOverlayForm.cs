@@ -10,6 +10,7 @@
 
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 测试覆盖层界面逻辑。

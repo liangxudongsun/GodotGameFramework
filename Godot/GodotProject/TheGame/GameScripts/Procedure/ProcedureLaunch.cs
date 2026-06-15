@@ -3,6 +3,8 @@
 // 游戏的入口流程，完成框架初始化、加载配置和数据表、创建实体组
 //------------------------------------------------------------
 
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using GameConfig;
 using GameFramework;
 using GameFramework.DataNode;
@@ -49,10 +51,41 @@ public class ProcedureLaunch : ProcedureBase
         Log.Info($"[SoundComponent]: {(GF.Sound != null ? "OK" : "缺失")}");
         Log.Info($"[LocalizationComponent]: {(GF.Localization != null ? "OK" : "缺失")}");
 
+        Task.Yield();
+        LoadLocalization();
+        LoadUIGroup();
+        LoadEntityGroup();
 
-        // 切换到菜单流程（Procedure 展示）
-        // ChangeState<TestMenuProcedure>(procedureOwner);
-        GF.UI.OpenUIForm<MainMenuForm>(UIFormId.MainMenu);
+        ChangeState<ProcedureGame>(procedureOwner);
+
+    }
+    private void LoadLocalization()
+    {
+        GF.Localization.ReadData(Utility.Text.Format(GameFolderConstant.LOCALIZATION, GF.Localization.Language.ToString()));
+    }
+    private void LoadUIGroup()
+    {
+        var groups = GF.DataTable.TbUIGroupConfig.DataList;
+        for (int i = 0; i < groups.Count; i++)
+        {
+            if (!GF.UI.AddUIGroup(groups[i].Name, groups[i].Depth))
+            {
+                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
+                continue;
+            }
+        }
+    }
+    private void LoadEntityGroup()
+    {
+        var groups = GF.DataTable.TbEntityGroupConfig.DataList;
+        for (int i = 0; i < groups.Count; i++)
+        {
+            if (!GF.Entity.AddEntityGroup(groups[i].Name, groups[i].ReleaseInterval, groups[i].Capacity, groups[i].ExpireTime, groups[i].Priority))
+            {
+                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
+                continue;
+            }
+        }
     }
 
     /// <summary>

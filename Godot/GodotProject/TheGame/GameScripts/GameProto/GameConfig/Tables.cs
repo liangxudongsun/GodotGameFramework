@@ -16,14 +16,16 @@ public partial class Tables
     public item.TbItem TbItem {get; }
     public TbUIFormConfig TbUIFormConfig {get; }
     public TbUIGroupConfig TbUIGroupConfig {get; }
-    public TbLocalizationConfig TbLocalizationConfig {get; }
+    public Entity.TbEntityGroupConfig TbEntityGroupConfig {get; }
+    public Entity.TbEntityConfig TbEntityConfig {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
         TbItem = new item.TbItem(loader("item_tbitem"));
         TbUIFormConfig = new TbUIFormConfig(loader("tbuiformconfig"));
         TbUIGroupConfig = new TbUIGroupConfig(loader("tbuigroupconfig"));
-        TbLocalizationConfig = new TbLocalizationConfig(loader("tblocalizationconfig"));
+        TbEntityGroupConfig = new Entity.TbEntityGroupConfig(loader("entity_tbentitygroupconfig"));
+        TbEntityConfig = new Entity.TbEntityConfig(loader("entity_tbentityconfig"));
         ResolveRef();
     }
     
@@ -32,7 +34,8 @@ public partial class Tables
         TbItem.ResolveRef(this);
         TbUIFormConfig.ResolveRef(this);
         TbUIGroupConfig.ResolveRef(this);
-        TbLocalizationConfig.ResolveRef(this);
+        TbEntityGroupConfig.ResolveRef(this);
+        TbEntityConfig.ResolveRef(this);
     }
 }
 

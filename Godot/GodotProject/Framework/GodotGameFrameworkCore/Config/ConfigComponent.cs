@@ -8,6 +8,7 @@
 using GameFramework;
 using GameFramework.Config;
 using Godot;
+using GodotGameFramework.Resource;
 using System;
 
 namespace GodotGameFramework
@@ -42,7 +43,6 @@ namespace GodotGameFramework
     /// 2. 创建 DefaultConfigHelper 并设置到 Manager
     /// 3. 用户在合适的时机（如 Procedure 中）调用 ReadData 加载配置
     ///
-    /// 对应 Unity 版本中的 ConfigComponent。
     /// </summary>
     public sealed partial class ConfigComponent : GameFrameworkComponent
     {

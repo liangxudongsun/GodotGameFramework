@@ -12,7 +12,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面逻辑基类。
@@ -20,27 +20,6 @@ namespace GodotGameFramework
     /// 纯 C# 抽象类（非 Node），供用户继承编写 UI 窗体逻辑。
     /// 与 EntityLogic 设计模式一致：不继承 Node，通过 Owner 属性
     /// 持有 UIForm 引用来访问实际的 Godot 节点。
-    ///
-    /// 用户继承此类来编写具体的 UI 逻辑，例如：
-    /// <code>
-    /// public class MainMenuForm : UIFormLogic
-    /// {
-    ///     private Button m_StartButton;
-    ///
-    ///     protected internal override void OnInit(object userData)
-    ///     {
-    ///         base.OnInit(userData);
-    ///         m_StartButton = CachedControl.GetNode&lt;Button&gt;("StartButton");
-    ///         m_StartButton.Pressed += OnStartButtonPressed;
-    ///     }
-    ///
-    ///     protected internal override void OnOpen(object userData)
-    ///     {
-    ///         base.OnOpen(userData);
-    ///         // 界面打开后的逻辑
-    ///     }
-    /// }
-    /// </code>
     ///
     /// 状态管理：
     /// - Available: 标记界面是否处于打开状态（OnOpen → true, OnClose → false）
@@ -51,7 +30,6 @@ namespace GodotGameFramework
     /// 用于管理 UIForm 内部子元素的对象池。
     /// OnRecycle 时自动清理所有 UIItem。
     ///
-    /// 对标 UGF 中的 UIFormLogic (MonoBehaviour)。
     /// </summary>
     public abstract class UIFormLogic
     {
@@ -127,7 +105,7 @@ namespace GodotGameFramework
                 InternalSetVisible(value);
             }
         }
-
+        private Control m_CachedControl;
         /// <summary>
         /// 获取已缓存的 Control 节点。
         ///
@@ -138,23 +116,27 @@ namespace GodotGameFramework
         {
             get
             {
-                if (m_UIForm == null || m_UIForm.GetChildCount() <= 0)
+                Control ctr = null;
+                if (m_CachedControl == null)
                 {
-                    return null;
+                    if (m_UIForm == null || m_UIForm.GetChildCount() <= 0)
+                    {
+                        ctr = null;
+                    }
+                    ctr = m_UIForm.GetChild(0) as Control;
                 }
-
-                return m_UIForm.GetChild(0) as Control;
+                return ctr;
             }
         }
 
-        private List<UIStringKey> m_UIStringKeys;
-        public List<UIStringKey> UIStringKeys
+        private List<UIStringLabelKey> m_UIStringKeys;
+        public List<UIStringLabelKey> UIStringKeys
         {
             get
             {
                 if (m_UIStringKeys == null)
                 {
-                    m_UIStringKeys = CachedControl.GetChildren<UIStringKey>();
+                    m_UIStringKeys = CachedControl.FindChildrenOfType<UIStringLabelKey>();
                 }
                 return m_UIStringKeys;
             }

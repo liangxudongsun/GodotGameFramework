@@ -12,6 +12,7 @@
 
 using System;
 using System.Threading.Tasks;
+using GodotGameFramework.Resource;
 
 namespace GodotGameFramework
 {
@@ -25,7 +26,6 @@ namespace GodotGameFramework
     /// 使用 TaskCompletionSource&lt;T&gt; 包装回调式的 LoadAssetAsync，
     /// 加载成功时调用 TrySetResult，失败时调用 TrySetException。
     ///
-    /// 对应 Unity 版本中游戏项目的 ResourceExtension + AwaitExtension。
     /// </summary>
     public static class ResourceExtension
     {

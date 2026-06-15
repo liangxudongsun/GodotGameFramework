@@ -8,6 +8,7 @@
 using GameConfig;
 using GameFramework.Resource;
 using GodotGameFramework;
+using GodotGameFramework.Resource;
 using Luban;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,6 @@ namespace GameFramework.DataTable
     /// </summary>
     internal sealed partial class DataTableManager : GameFrameworkModule, IDataTableManager
     {
-        const string DataPath = "res://TheGame/DataTables/{0}.bytes";
         private bool _init = false;
 
         private Tables _tables;
@@ -65,7 +65,7 @@ namespace GameFramework.DataTable
         /// <returns>ByteBuf</returns>
         private ByteBuf LoadByteBuf(string file)
         {
-            string path = Utility.Text.Format(DataPath, file);
+            string path = Utility.Text.Format(GameFolderConstant.DATATABLE, file);
             byte[] bytes = m_ResourceCmp.LoadBinary(path);
             if (bytes == null || bytes.Length == 0)
             {

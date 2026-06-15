@@ -45,7 +45,6 @@ namespace GodotGameFramework
     /// 2. 创建 DefaultSettingHelper 并设置到 Manager
     /// 3. CallDeferred 延迟加载配置文件（确保所有组件就绪）
     ///
-    /// 对应 Unity 版本中的 SettingComponent。
     /// </summary>
     public sealed partial class SettingComponent : GameFrameworkComponent
     {

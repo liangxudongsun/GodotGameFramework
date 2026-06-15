@@ -25,14 +25,9 @@ namespace GodotGameFramework
         /// </summary>
         private IDataTableManager m_DataTableManager = null;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 获取核心层 IDataTableManager，创建并设置 Helper。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_DataTableManager = GameFrameworkEntry.GetModule<IDataTableManager>();
             if (m_DataTableManager == null)
             {
@@ -41,6 +36,7 @@ namespace GodotGameFramework
             }
             m_DataTableManager.SetResourcesComponent(GF.Resource);
         }
+
 
         /// <summary>
         /// 获取数据表数量。

@@ -11,7 +11,7 @@ using Godot;
 using System;
 using System.Diagnostics;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Resource
 {
     /// <summary>
     /// 默认资源辅助器。
@@ -22,9 +22,8 @@ namespace GodotGameFramework
     /// 2. 卸载场景（UnloadScene，预留）
     /// 3. 释放资源（Release，Godot 引擎自动管理）
     ///
-    /// 对应 Unity 版本中的 DefaultResourceHelper。
     /// </summary>
-    public sealed class DefaultResourceHelper : IResourceHelper
+    public sealed partial class DefaultResourceHelper : ResourceHelperBase
     {
         /// <summary>
         /// 从指定文件路径加载数据流。
@@ -37,7 +36,7 @@ namespace GodotGameFramework
         /// <param name="fileUri">要加载的文件路径（如 "res://Data/Config.dat"）。</param>
         /// <param name="loadBytesCallbacks">加载回调函数集，包含成功和失败回调。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void LoadBytes(string fileUri, LoadBytesCallbacks loadBytesCallbacks, object userData)
+        public override void LoadBytes(string fileUri, LoadBytesCallbacks loadBytesCallbacks, object userData)
         {
             if (loadBytesCallbacks == null)
             {
@@ -98,7 +97,7 @@ namespace GodotGameFramework
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="unloadSceneCallbacks">卸载场景回调函数集。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void UnloadScene(string sceneAssetName, UnloadSceneCallbacks unloadSceneCallbacks,
+        public override void UnloadScene(string sceneAssetName, UnloadSceneCallbacks unloadSceneCallbacks,
             object userData)
         {
             if (unloadSceneCallbacks != null && unloadSceneCallbacks.UnloadSceneFailureCallback != null)
@@ -118,7 +117,7 @@ namespace GodotGameFramework
         /// 让 Godot 引擎通过引用计数自动回收是最安全的做法。
         /// </summary>
         /// <param name="objectToRelease">要释放的资源对象。</param>
-        public void Release(object objectToRelease)
+        public override void Release(object objectToRelease)
         {
             // Godot 引擎通过引用计数自动管理资源生命周期
             // 不调用 Dispose()，避免悬挂指针异常

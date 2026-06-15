@@ -9,7 +9,7 @@ using GameFramework;
 using GameFramework.ObjectPool;
 using GameFramework.UI;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面实例对象。
@@ -24,7 +24,6 @@ namespace GodotGameFramework
     /// 3. 池容量/过期触发 Release → QueueFree 真正销毁
     ///
     /// 对标 EntityInstanceObject，完全复用相同模式。
-    /// 对应 UGF 中 UIManager.UIFormInstanceObject（internal 类）。
     /// </summary>
     public sealed class UIFormInstanceObject : ObjectBase
     {

@@ -5,15 +5,7 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
-/// <summary>
-/// 对 string 的扩展方法。
-///
-/// 提供从字符串中逐行读取的工具方法，
-/// 用于解析配置文件和数据表等文本内容。
-///
-/// 这是 UGF 原始代码中的 StringExtension，
-/// 在核心框架之外定义，因此需要在此处提供。
-/// </summary>
+/// <summary>对 string 的扩展方法。 提供从字符串中逐行读取的工具方法， 用于解析配置文件和数据表等文本内容。 这是 UGF 原始代码中的 StringExtension， 在核心框架之外定义，因此需要在此处提供。</summary>
 public static class StringExtension
 {
     /// <summary>

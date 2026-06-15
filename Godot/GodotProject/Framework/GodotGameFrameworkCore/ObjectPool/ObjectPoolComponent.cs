@@ -45,7 +45,6 @@ namespace GodotGameFramework
     /// pool.Unspawn(obj.Target);
     /// </code>
     ///
-    /// 对应 Unity 版本中的 ObjectPoolComponent。
     /// </summary>
     public sealed partial class ObjectPoolComponent : GameFrameworkComponent
     {

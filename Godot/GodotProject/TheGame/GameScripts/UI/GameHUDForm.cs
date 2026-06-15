@@ -13,6 +13,8 @@ using GameFramework.DataNode;
 using GameFramework.Localization;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Localization;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 游戏 HUD（抬头显示）界面逻辑。

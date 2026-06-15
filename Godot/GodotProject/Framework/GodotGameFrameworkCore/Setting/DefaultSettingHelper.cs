@@ -30,7 +30,6 @@ namespace GodotGameFramework
     /// - GetObject/SetObject 使用 System.Text.Json 进行 JSON 序列化
     /// - 这是 .NET 8 内置的 JSON 库，无需额外依赖
     ///
-    /// 对应 Unity 版本中的 DefaultSettingHelper（使用自定义二进制序列化）。
     /// </summary>
     public class DefaultSettingHelper : ISettingHelper
     {

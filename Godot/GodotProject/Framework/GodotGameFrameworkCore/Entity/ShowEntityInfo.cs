@@ -8,16 +8,20 @@
 using GameFramework;
 using System;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 显示实体信息。
     ///
-    /// 用于 ShowEntity 方法的内部数据传递，
-    /// 携带 EntityLogic 类型、加载序列号、实体 ID 等信息。
+    /// 用于 ShowEntity&lt;T&gt; 泛型方法的内部数据传递，
+    /// 携带 EntityLogic 类型和用户数据。
+    /// DefaultEntityHelper 通过 EntityLogicType 创建对应的 EntityLogic 实例，
+    /// Entity.OnInit 解包 UserData 传给 EntityLogic.OnInit。
     ///
-    /// 对齐 UGF: 实现 IReference 接口，使用 ReferencePool 管理，
-    /// 避免 GC 分配。通过 static Create() 工厂方法获取实例。
+    /// 异步加载的序列号、取消等由核心 IEntityManager 内部管理，
+    /// ShowEntityInfo 不再需要关心。
+    ///
+    /// 对齐 UGF: 实现 IReference 接口，使用 ReferencePool 管理。
     /// </summary>
     public class ShowEntityInfo : IReference
     {
@@ -33,38 +37,12 @@ namespace GodotGameFramework
         public object UserData { get; set; }
 
         /// <summary>
-        /// 获取或设置加载序列号。
-        /// 用于标识一次异步加载请求，支持取消操作。
-        /// </summary>
-        public int SerialId { get; set; }
-
-        /// <summary>
-        /// 获取或设置实体编号。
-        /// </summary>
-        public int EntityId { get; set; }
-
-        /// <summary>
-        /// 获取或设置实体组名称。
-        /// </summary>
-        public string EntityGroupName { get; set; }
-
-        /// <summary>
-        /// 获取或设置加载开始时间（真实流逝时间）。
-        /// 用于计算异步加载耗时。
-        /// </summary>
-        public float StartTime { get; set; }
-
-        /// <summary>
         /// 初始化 ShowEntityInfo 的新实例。
         /// </summary>
         public ShowEntityInfo()
         {
             EntityLogicType = null;
             UserData = null;
-            SerialId = 0;
-            EntityId = 0;
-            EntityGroupName = null;
-            StartTime = 0f;
         }
 
         /// <summary>
@@ -90,10 +68,6 @@ namespace GodotGameFramework
         {
             EntityLogicType = null;
             UserData = null;
-            SerialId = 0;
-            EntityId = 0;
-            EntityGroupName = null;
-            StartTime = 0f;
         }
     }
 }

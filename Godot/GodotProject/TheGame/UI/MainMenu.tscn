@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://igqtb6nv6bph"]
 
-[ext_resource type="Script" uid="uid://bvoov8inctrau" path="res://Framework/GodotGameFrameworkCore/UI/UIStringKey.cs" id="1_6jhs5"]
+[ext_resource type="Script" uid="uid://c1xds3as1e25b" path="res://Framework/GodotGameFrameworkCore/UI/UIStringLabelKey.cs" id="1_6jhs5"]
 
 [node name="MainMenu" type="Control" unique_id=321045376]
 layout_mode = 3
@@ -37,8 +37,9 @@ theme_override_constants/separation = 8
 [node name="Title" type="Label" parent="VBox" unique_id=1621266708]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "Click The Blocks!"
 horizontal_alignment = 1
+script = ExtResource("1_6jhs5")
+Key = "ClickBlock"
 
 [node name="Spacer1" type="Control" parent="VBox" unique_id=1874192526]
 custom_minimum_size = Vector2(0, 16)
@@ -82,7 +83,6 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 18
 text = "Start Game"
-script = ExtResource("1_6jhs5")
 
 [node name="Spacer5" type="Control" parent="VBox" unique_id=337166193]
 custom_minimum_size = Vector2(0, 8)

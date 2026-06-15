@@ -38,7 +38,6 @@ namespace GodotGameFramework
     /// 3. 将每行传递给 DataTableBase.AddDataRow
     /// 4. DataTableBase 内部调用 IDataRow.Parse 解析字段
     ///
-    /// 对应 Unity 版本中的 DefaultDataTableHelper。
     /// </summary>
     public class DefaultDataTableHelper : IDataProviderHelper<DataTableBase>, IDataTableHelper
     {

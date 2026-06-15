@@ -23,7 +23,6 @@ namespace GodotGameFramework
     /// - Error → GD.PushError（红色错误）
     /// - Fatal → GD.PushError（红色错误，带 [FATAL] 前缀）
     ///
-    /// 对应 Unity 版本中的 DefaultLogHelper。
     /// </summary>
     public class DefaultLogHelper : GameFrameworkLog.ILogHelper
     {

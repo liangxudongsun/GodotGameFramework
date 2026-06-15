@@ -39,7 +39,6 @@ namespace GodotGameFramework
     /// int hp = dataNode.GetData&lt;VarInt32&gt;("Player.HP");
     /// </code>
     ///
-    /// 对应 Unity 版本中的 DataNodeComponent。
     /// </summary>
     public sealed partial class DataNodeComponent : GameFrameworkComponent
     {

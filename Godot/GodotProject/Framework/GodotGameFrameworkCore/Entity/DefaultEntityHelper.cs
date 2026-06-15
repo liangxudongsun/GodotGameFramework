@@ -8,7 +8,7 @@
 using GameFramework.Entity;
 using Godot;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 默认实体辅助器。
@@ -19,9 +19,8 @@ namespace GodotGameFramework
     /// CreateEntity：创建 Entity(Node) 包装器，添加到实体组容器，设置 EntityLogic。
     /// ReleaseEntity：通过 QueueFree 释放节点。
     ///
-    /// 对应 Unity 版本中的 EntityInstanceObjectHelper。
     /// </summary>
-    public class DefaultEntityHelper : IEntityHelper
+    public partial class DefaultEntityHelper : EntityHelperBase
     {
         /// <summary>
         /// 实例化实体。
@@ -32,7 +31,7 @@ namespace GodotGameFramework
         /// </summary>
         /// <param name="entityAsset">实体资源（期望为 PackedScene）。</param>
         /// <returns>实例化后的 Node，如果资源类型不匹配返回 null。</returns>
-        public object InstantiateEntity(object entityAsset)
+        public override object InstantiateEntity(object entityAsset)
         {
             if (entityAsset is PackedScene packedScene)
             {
@@ -51,12 +50,15 @@ namespace GodotGameFramework
         /// 2. 将 instanceNode 添加为 Entity 的子节点
         /// 3. 将 Entity 添加到实体组的 DefaultEntityGroupHelper 容器节点下
         /// 4. 如果 userData 包含 ShowEntityInfo，创建对应的 EntityLogic 实例
+        ///
+        /// ShowEntityInfo 的 EntityLogicType 在此处用于创建 EntityLogic 实例。
+        /// userData 的解包由 Entity.OnInit 完成（提取内部 UserData 传给 EntityLogic）。
         /// </summary>
         /// <param name="entityInstance">实体实例（期望为 Node）。</param>
         /// <param name="entityGroup">实体所属的实体组。</param>
         /// <param name="userData">用户自定义数据（可以是 ShowEntityInfo）。</param>
         /// <returns>创建的 IEntity（Entity 节点）。</returns>
-        public IEntity CreateEntity(object entityInstance, IEntityGroup entityGroup, object userData)
+        public override IEntity CreateEntity(object entityInstance, IEntityGroup entityGroup, object userData)
         {
             if (entityInstance == null)
             {
@@ -83,28 +85,18 @@ namespace GodotGameFramework
                 groupHelper.AddChild(entity);
             }
 
-            // 如果 userData 包含 ShowEntityInfo，创建 EntityLogic
-            ShowEntityInfo showInfo = userData as ShowEntityInfo;
-            if (showInfo != null)
+            if (userData is ShowEntityInfo showInfo && showInfo.EntityLogicType != null)
             {
-                if (showInfo.EntityLogicType != null)
+                EntityLogic logic = System.Activator.CreateInstance(showInfo.EntityLogicType) as EntityLogic;
+                if (logic != null)
                 {
-                    // 通过反射创建 EntityLogic 实例
-                    EntityLogic logic = System.Activator.CreateInstance(showInfo.EntityLogicType) as EntityLogic;
-                    if (logic != null)
-                    {
-                        entity.SetEntityLogic(logic);
-                    }
-                    else
-                    {
-                        Log.Warning("Can not create EntityLogic instance of type '{0}'.",
-                            showInfo.EntityLogicType.Name);
-                    }
+                    entity.SetEntityLogic(logic);
                 }
-
-                // 将 ShowEntityInfo 中的 UserData 传递给 OnInit/OnShow
-                // 注意：这里将 userData 替换为内部的 ShowEntityInfo.UserData
-                // EntityComponent.InternalShowEntity 会使用替换后的 userData
+                else
+                {
+                    Log.Warning("Can not create EntityLogic instance of type '{0}'.",
+                        showInfo.EntityLogicType.Name);
+                }
             }
 
             return entity;
@@ -119,7 +111,7 @@ namespace GodotGameFramework
         /// </summary>
         /// <param name="entityAsset">实体资源（PackedScene）。</param>
         /// <param name="entityInstance">实体实例（期望为 Node）。</param>
-        public void ReleaseEntity(object entityAsset, object entityInstance)
+        public override void ReleaseEntity(object entityAsset, object entityInstance)
         {
             if (entityInstance is Node node)
             {

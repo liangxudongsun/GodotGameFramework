@@ -30,7 +30,6 @@ namespace GodotGameFramework
     /// '#' 开头的行被忽略（注释行），但格式行（含#Type）中的第一列也会以#开头。
     /// 实际解析时跳过以 '#' 开头的行。
     ///
-    /// 对应 Unity 版本中的 DefaultConfigHelper（使用 Unity TextAsset 加载）。
     /// </summary>
     public class DefaultConfigHelper : IDataProviderHelper<IConfigManager>, IConfigHelper
     {

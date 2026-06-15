@@ -8,7 +8,7 @@
 using GameFramework;
 using System;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 打开界面信息。

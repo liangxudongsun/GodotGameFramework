@@ -5,7 +5,7 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
-namespace GodotGameFramework.Runtime
+namespace GodotGameFramework.UI
 {
     public sealed partial class UIComponent : GameFrameworkComponent
     {

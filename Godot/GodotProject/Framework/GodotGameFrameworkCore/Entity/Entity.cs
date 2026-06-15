@@ -9,34 +9,15 @@ using GameFramework.Entity;
 using Godot;
 using System;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 实体。
-    ///
-    /// 这是 GGF 中实体的核心实现，继承自 Godot 的 Node 并实现 IEntity 接口。
-    /// Entity 作为包装器节点存在，实际的 Node2D/Node3D 游戏节点作为其子节点。
-    ///
-    /// 架构设计（UGF 风格对象池）：
-    /// <code>
-    /// Entity (Node, 实现 IEntity)     ← 框架管理层，池化单位
-    /// └── [从 PackedScene 实例化的节点] ← 实际游戏节点（CachedNode）
-    ///     ├── Node2D（2D 游戏）
-    ///     └── 或 Node3D（3D 游戏）
-    /// </code>
-    ///
-    /// 对象池复用机制（对齐 UGF）：
-    /// - Entity 节点不销毁，隐藏时通过 SetEntityActive(false) 隐藏视觉
-    /// - EntityLogic 不重新创建，复用时跳过 OnInit，直接调 OnShow
-    /// - CachedNode 保持为 Entity 的子节点，不 RemoveChild
-    /// - OnRecycle 重置 Entity 状态但保留 EntityLogic 引用
-    /// - 仅当对象池释放（池满/过期）时才真正 QueueFree
-    ///
     /// 生命周期：
     /// - 首次创建：OnInit(isNew=true) → OnShow → OnUpdate → OnHide → OnRecycle
     /// - 池复用：OnInit(isNew=false, 跳过EntityLogic.OnInit) → OnShow → OnUpdate → OnHide → OnRecycle
     /// </summary>
-    public sealed partial class Entity : Node, IEntity
+    public sealed partial class Entity : GodotComponent, IEntity
     {
         /// <summary>
         /// 关联的实体逻辑实例。
@@ -83,16 +64,11 @@ namespace GodotGameFramework
         /// </summary>
         public EntityLogic Logic => m_EntityLogic;
 
-        // ================================================================
-        //  IEntity 生命周期方法
-        // ================================================================
 
         /// <summary>
         /// 实体初始化。
-        ///
-        /// UGF 风格生命周期：
-        /// - isNewInstance=true（首次创建）：设置字段，调用 EntityLogic.OnInit
-        /// - isNewInstance=false（池复用）：设置字段，跳过 EntityLogic.OnInit
+        /// 如果 userData 是 ShowEntityInfo，会自动解包取出内部 UserData
+        /// 再传递给 EntityLogic.OnInit
         /// </summary>
         public void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
         {
@@ -100,13 +76,20 @@ namespace GodotGameFramework
             EntityAssetName = entityAssetName;
             Name = GameFramework.Utility.Text.Format("Entity_{0}_{1}", entityId, entityAssetName);
 
+            // 解包 ShowEntityInfo，提取内部 UserData
+            object actualUserData = userData;
+            if (userData is ShowEntityInfo showInfo)
+            {
+                actualUserData = showInfo.UserData;
+            }
+
             if (isNewInstance)
             {
                 // 首次创建：设置 EntityGroup，调用 EntityLogic.OnInit
                 EntityGroup = entityGroup;
                 try
                 {
-                    m_EntityLogic?.OnInit(userData);
+                    m_EntityLogic?.OnInit(actualUserData);
                 }
                 catch (Exception exception)
                 {
@@ -127,8 +110,7 @@ namespace GodotGameFramework
 
         /// <summary>
         /// 实体回收。
-        ///
-        /// UGF 风格：保留 EntityLogic 引用（不设为 null），
+        /// 保留 EntityLogic 引用（不设为 null），
         /// 重置实体标识字段，隐藏视觉。
         /// Entity 节点不销毁，等待对象池复用或池释放。
         /// </summary>
@@ -260,17 +242,8 @@ namespace GodotGameFramework
             }
         }
 
-        // ================================================================
-        //  可见性控制（UGF 风格的 SetActive 等价）
-        // ================================================================
-
         /// <summary>
         /// 设置实体的活跃状态。
-        ///
-        /// UGF 中使用 GameObject.SetActive，Godot 中通过控制子节点可见性实现。
-        /// Entity 本身是 Node（非 CanvasItem/Node3D），没有 Visible 属性，
-        /// 所以控制 CachedNode 的 Visible。
-        /// 支持 CanvasItem（2D）和 Node3D（3D）两种类型的子节点。
         /// </summary>
         /// <param name="active">是否活跃（可见）。</param>
         internal void SetEntityActive(bool active)
@@ -290,10 +263,6 @@ namespace GodotGameFramework
                 node3D.Visible = active;
             }
         }
-
-        // ================================================================
-        //  内部方法
-        // ================================================================
 
         /// <summary>
         /// 内部方法：设置实体逻辑实例。

@@ -1,12 +1,11 @@
 using Godot;
 using System;
-namespace GodotGameFramework
+namespace GodotGameFramework.UI
 {
-	public partial class UIStringKey : Label
+	public partial class UIStringLabelKey : Label
 	{
 		[Export]
-		public string Key { get; private set; }
-
+		public string Key { get; set; }
 		public void SetValue()
 		{
 			if (string.IsNullOrEmpty(Key))
@@ -16,4 +15,3 @@ namespace GodotGameFramework
 
 	}
 }
-
