@@ -53,14 +53,9 @@ namespace GodotGameFramework
         /// </summary>
         public IDataNode Root => m_DataNodeManager.Root;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 从核心框架获取 IDataNodeManager 实例。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_DataNodeManager = GameFrameworkEntry.GetModule<IDataNodeManager>();
             if (m_DataNodeManager == null)
             {
@@ -68,6 +63,7 @@ namespace GodotGameFramework
                 return;
             }
         }
+
 
         /// <summary>
         /// 根据类型获取数据节点的数据。

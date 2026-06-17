@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://cgmgsagnrr8o2" path="res://Framework/GodotGameFrameworkCore/Fsm/FsmComponent.cs" id="4_ynwf7"]
 [ext_resource type="Script" uid="uid://chpprc2tan5wv" path="res://Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs" id="5_qii40"]
 [ext_resource type="Script" uid="uid://cbq1w80o80jck" path="res://Framework/GodotGameFrameworkCore/Setting/SettingComponent.cs" id="6_set"]
-[ext_resource type="Script" uid="uid://d38me50ncc6v7" path="res://Framework/GodotGameFrameworkCore/Config/ConfigComponent.cs" id="7_cfg"]
 [ext_resource type="Script" uid="uid://b1rixcpdvl3ij" path="res://Framework/GodotGameFrameworkCore/DataTable/DataTableComponent.cs" id="8_dt"]
 [ext_resource type="Script" uid="uid://bohum5g5jh5j" path="res://Framework/GodotGameFrameworkCore/DataNode/DataNodeComponent.cs" id="9_dn"]
 [ext_resource type="Script" uid="uid://dlo8s74qn554q" path="res://Framework/GodotGameFrameworkCore/ObjectPool/ObjectPoolComponent.cs" id="10_op"]
@@ -22,28 +21,18 @@ script = ExtResource("1_781av")
 [node name="Base" type="Node" parent="." unique_id=611780270]
 script = ExtResource("2_781av")
 
+[node name="Procedure" type="Node" parent="." unique_id=1553213140]
+script = ExtResource("5_qii40")
+EntranceProcedureTypeName = "ProcedureLaunch"
+
 [node name="Resource" type="Node" parent="." unique_id=553100123]
 script = ExtResource("11_res")
-ReadOnlyPath = "res://"
-ReadWritePath = "user://"
-metadata/_edit_pinned_properties_ = [&"ReadOnlyPath", &"ReadWritePath"]
 
 [node name="Event" type="Node" parent="." unique_id=355543369]
 script = ExtResource("3_353g6")
 
 [node name="Fsm" type="Node" parent="." unique_id=423859323]
 script = ExtResource("4_ynwf7")
-
-[node name="Procedure" type="Node" parent="." unique_id=1553213140]
-script = ExtResource("5_qii40")
-AvailableProcedureTypeNames = PackedStringArray("ProcedureLaunch", "ProcedureGame")
-EntranceProcedureTypeName = "ProcedureLaunch"
-
-[node name="Setting" type="Node" parent="." unique_id=22776590]
-script = ExtResource("6_set")
-
-[node name="Config" type="Node" parent="." unique_id=1975195748]
-script = ExtResource("7_cfg")
 
 [node name="DataTable" type="Node" parent="." unique_id=447100413]
 script = ExtResource("8_dt")
@@ -53,6 +42,9 @@ script = ExtResource("9_dn")
 
 [node name="ObjectPool" type="Node" parent="." unique_id=92156474]
 script = ExtResource("10_op")
+
+[node name="Setting" type="Node" parent="." unique_id=22776590]
+script = ExtResource("6_set")
 
 [node name="Entity" type="Node" parent="." unique_id=777100001]
 script = ExtResource("12_entity")

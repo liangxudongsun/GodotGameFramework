@@ -49,14 +49,9 @@ namespace GodotGameFramework
         /// </summary>
         public int Count => m_FsmManager.Count;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 从核心框架获取 IFsmManager 实例。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_FsmManager = GameFrameworkEntry.GetModule<IFsmManager>();
             if (m_FsmManager == null)
             {
@@ -64,6 +59,7 @@ namespace GodotGameFramework
                 return;
             }
         }
+
 
         /// <summary>
         /// 检查是否存在有限状态机（按持有者类型）。

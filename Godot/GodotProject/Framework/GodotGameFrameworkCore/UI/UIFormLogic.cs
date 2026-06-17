@@ -16,29 +16,9 @@ namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面逻辑基类。
-    ///
-    /// 纯 C# 抽象类（非 Node），供用户继承编写 UI 窗体逻辑。
-    /// 与 EntityLogic 设计模式一致：不继承 Node，通过 Owner 属性
-    /// 持有 UIForm 引用来访问实际的 Godot 节点。
-    ///
-    /// 状态管理：
-    /// - Available: 标记界面是否处于打开状态（OnOpen → true, OnClose → false）
-    /// - Visible: 标记界面是否可见（OnPause → false, OnResume → true）
-    ///
-    /// UIItem 支持：
-    /// 提供 SpawnItem/UnspawnItem/UnspawnAllItems 便捷方法，
-    /// 用于管理 UIForm 内部子元素的对象池。
-    /// OnRecycle 时自动清理所有 UIItem。
-    ///
     /// </summary>
-    public abstract class UIFormLogic
+    public abstract partial class UIFormLogic : Control
     {
-        /// <summary>界面是否可用（处于打开状态）。</summary>
-        private bool m_Available;
-
-        /// <summary>界面是否可见。</summary>
-        private bool m_Visible;
-
         /// <summary>所属的 UIForm 实例。</summary>
         private UIForm m_UIForm;
 
@@ -59,84 +39,14 @@ namespace GodotGameFramework.UI
             get { return m_UIForm; }
         }
 
-        /// <summary>
-        /// 获取或设置界面名称。
-        /// </summary>
-        public string Name
-        {
-            get { return m_UIForm?.Name; }
-            set { if (m_UIForm != null) m_UIForm.Name = value; }
-        }
-
-        /// <summary>
-        /// 获取界面是否可用。
-        ///
-        /// Available 在 OnOpen 时设为 true，OnClose 时设为 false。
-        /// 只有 Available 为 true 时才能设置 Visible。
-        /// </summary>
-        public bool Available
-        {
-            get { return m_Available; }
-        }
-
-        /// <summary>
-        /// 获取或设置界面是否可见。
-        ///
-        /// Visible 控制实际的节点可见性。
-        /// 当界面被暂停时 Visible 自动设为 false，恢复时设为 true。
-        /// </summary>
-        public bool Visible
-        {
-            get { return m_Available && m_Visible; }
-            set
-            {
-                if (!m_Available)
-                {
-                    Log.Warning("UI form '{0}' is not available.", Name);
-                    return;
-                }
-
-                if (m_Visible == value)
-                {
-                    return;
-                }
-
-                m_Visible = value;
-                InternalSetVisible(value);
-            }
-        }
-        private Control m_CachedControl;
-        /// <summary>
-        /// 获取已缓存的 Control 节点。
-        ///
-        /// 返回 UIForm 的第一个子节点（实际的 UI 控件）。
-        /// 对标 UGF UIFormLogic.CachedTransform。
-        /// </summary>
-        public Control CachedControl
-        {
-            get
-            {
-                Control ctr = null;
-                if (m_CachedControl == null)
-                {
-                    if (m_UIForm == null || m_UIForm.GetChildCount() <= 0)
-                    {
-                        ctr = null;
-                    }
-                    ctr = m_UIForm.GetChild(0) as Control;
-                }
-                return ctr;
-            }
-        }
-
-        private List<UIStringLabelKey> m_UIStringKeys;
-        public List<UIStringLabelKey> UIStringKeys
+        private List<IStringKey> m_UIStringKeys;
+        public List<IStringKey> UIStringKeys
         {
             get
             {
                 if (m_UIStringKeys == null)
                 {
-                    m_UIStringKeys = CachedControl.FindChildrenOfType<UIStringLabelKey>();
+                    m_UIStringKeys = this.FindChildrenOfType<IStringKey>() ?? new List<IStringKey>();
                 }
                 return m_UIStringKeys;
             }
@@ -161,7 +71,6 @@ namespace GodotGameFramework.UI
         /// <param name="userData">用户自定义数据。</param>
         protected internal virtual void OnInit(object userData)
         {
-
         }
 
         /// <summary>
@@ -184,7 +93,6 @@ namespace GodotGameFramework.UI
         /// <param name="userData">用户自定义数据。</param>
         protected internal virtual void OnOpen(object userData)
         {
-            m_Available = true;
             Visible = true;
             UIStringKeys.ForEach(key => key.SetValue());
         }
@@ -199,7 +107,6 @@ namespace GodotGameFramework.UI
         protected internal virtual void OnClose(bool isShutdown, object userData)
         {
             Visible = false;
-            m_Available = false;
         }
 
         /// <summary>
@@ -276,22 +183,6 @@ namespace GodotGameFramework.UI
         {
         }
 
-        /// <summary>
-        /// 设置界面的可见性。
-        ///
-        /// 默认实现：控制 CachedControl 的 Visible 属性。
-        /// 用户可覆盖此方法实现自定义可见性效果（如渐隐渐现）。
-        /// </summary>
-        /// <param name="visible">界面的可见性。</param>
-        protected virtual void InternalSetVisible(bool visible)
-        {
-            Control control = CachedControl;
-            if (control != null)
-            {
-                control.Visible = visible;
-            }
-        }
-
         // ================================================================
         //  UIItem 对象池管理
         // ================================================================
@@ -350,8 +241,6 @@ namespace GodotGameFramework.UI
         ///
         /// 如果池中有可用实例则直接复用，否则从 PackedScene 实例化新节点。
         /// 新实例会自动添加到 container 节点下。
-        ///
-        /// 对标 UGF UIFormBase.SpawnItem&lt;T&gt;()。
         /// </summary>
         /// <param name="itemScene">UIItem 的 PackedScene 资源。</param>
         /// <param name="container">UIItem 实例化后的父容器节点。</param>
@@ -410,8 +299,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 从对象池回收一个 UIItem 实例。
-        ///
-        /// 对标 UGF UIFormBase.UnspawnItem&lt;T&gt;()。
         /// </summary>
         /// <param name="itemScene">UIItem 的 PackedScene 资源。</param>
         /// <param name="itemObject">要回收的 UIItem 实例对象。</param>
@@ -433,8 +320,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 回收指定类型的所有 UIItem 实例。
-        ///
-        /// 对标 UGF UIFormBase.UnspawnAllItem&lt;T&gt;()。
         /// </summary>
         /// <param name="itemScene">UIItem 的 PackedScene 资源。</param>
         protected void UnspawnAllItems(PackedScene itemScene)
@@ -494,6 +379,11 @@ namespace GodotGameFramework.UI
         internal void InternalRecycleItems()
         {
             DestroyAllItemPools();
+        }
+
+        public void Close()
+        {
+            GF.UI.CloseUIForm(m_UIForm);
         }
     }
 }

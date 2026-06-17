@@ -69,9 +69,9 @@ namespace GodotGameFramework.Localization
         [Export]
         private string m_LocalizationHelperTypeName = "GodotGameFramework.Localization.DefaultLocalizationHelper";
         private LocalizationHelperBase m_LocalizationHelper = null;
-        public override void OnEnter()
+        public override void OnInit()
         {
-            base.OnEnter();
+            base.OnInit();
             m_LocalizationManager = GameFrameworkEntry.GetModule<ILocalizationManager>();
             if (m_LocalizationManager == null)
             {

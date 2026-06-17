@@ -80,7 +80,7 @@ namespace GodotGameFramework.Entity
             entity.AddChild(instanceNode);
 
             // 将 Entity 添加到实体组的容器节点下
-            if (entityGroup != null && entityGroup.Helper is DefaultEntityGroupHelper groupHelper)
+            if (entityGroup != null && entityGroup.Helper is EntityGroupHelperBase groupHelper)
             {
                 groupHelper.AddChild(entity);
             }

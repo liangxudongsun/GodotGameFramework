@@ -77,8 +77,13 @@ namespace GodotGameFramework.Entity
                 return -1;
             }
 
+            return entityComponent.ShowEntity(cfg.AssetPath, cfg.EntityGroupName, userData);
+
+        }
+        public static int ShowEntity(this EntityComponent entityComponent, string assetPath, string entityGroupName, object userData = null)
+        {
             int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
-            entityComponent.ShowEntity(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            entityComponent.ShowEntity(ser, assetPath, entityGroupName, userData);
             return ser;
         }
 

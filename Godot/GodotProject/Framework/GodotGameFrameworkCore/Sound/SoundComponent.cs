@@ -43,7 +43,7 @@ namespace GodotGameFramework.Sound
             if (m_EnablePlaySoundUpdateEvent) m_SoundManager.PlaySoundUpdate += OnPlaySoundUpdate;
             if (m_EnablePlaySoundDependencyAssetEvent) m_SoundManager.PlaySoundDependencyAsset += OnPlaySoundDependencyAsset;
 
-            m_SoundManager.SetResourceManager(GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
+            m_SoundManager.SetResourceManager(GF.Base.EditorResourceMode ? GF.Base.EditorResourceManager : GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
             SoundHelperBase soundHelper = Helper.CreateHelper(m_SoundHelperTypeName, m_SoundHelper);
             if (soundHelper == null) { Log.Fatal("Can not create sound helper."); return; }
             m_SoundHelper = soundHelper;
@@ -94,7 +94,7 @@ namespace GodotGameFramework.Sound
                 agentHelper.Name = $"Agent Helper {i}";
                 agentHelper.AudioStreamPlayer = audioPlayer;
                 agentHelper.SetAudioStreamPlayer(audioPlayer);
-                groupHelper.AddChild(agentHelper);
+                audioPlayer.AddChild(agentHelper);
                 m_SoundManager.AddSoundAgentHelper(soundGroupName, agentHelper);
             }
 

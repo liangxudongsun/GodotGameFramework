@@ -25,14 +25,14 @@ namespace GodotGameFramework.Entity
         private EventComponent m_EventComponent = null;
         private EntityHelperBase m_EntityHelper = null;
 
-        [Export] private bool m_EnableShowEntitySuccessEvent = true;
+        [Export(PropertyHint.Flags, "!")] private bool m_EnableShowEntitySuccessEvent = true;
         [Export] private bool m_EnableShowEntityFailureEvent = true;
         [Export] private bool m_EnableShowEntityUpdateEvent = false;
         [Export] private bool m_EnableShowEntityDependencyAssetEvent = false;
         [Export] private bool m_EnableHideEntityCompleteEvent = true;
         [Export] private float m_InstanceAutoReleaseInterval = 60f;
         [Export] private int m_InstanceCapacity = 16;
-        [Export] private float m_InstanceExpireTime = 60f;
+        private float m_InstanceExpireTime = 60f;
         [Export] private int m_InstancePriority = 0;
         [Export] private string m_EntityHelperTypeName = "GodotGameFramework.Entity.DefaultEntityHelper";
         [Export] private string m_EntityGroupHelperTypeName = "GodotGameFramework.Entity.DefaultEntityGroupHelper";
@@ -56,7 +56,7 @@ namespace GodotGameFramework.Entity
             m_EventComponent = GameEntry.GetComponent<EventComponent>();
             if (m_EventComponent == null) { Log.Fatal("Event component is invalid."); return; }
 
-            m_EntityManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
+            m_EntityManager.SetResourceManager(GF.Base.EditorResourceMode ? GF.Base.EditorResourceManager : GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
             m_EntityManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
             m_EntityHelper = Helper.CreateHelper(m_EntityHelperTypeName, m_EntityHelper);
             if (m_EntityHelper == null) { Log.Fatal("Can not create entity helper."); return; }

@@ -15,11 +15,11 @@
 
 ## 📖 简介
 
-**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、配置、设置等子系统。
+**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置等子系统。
 
 ### ✨ 核心特性
 
-- 🧩 **模块化架构** — 14 个独立子系统，高内聚低耦合，可按需替换
+- 🧩 **模块化架构** — 13 个独立子系统，高内聚低耦合，可按需替换
 - 🔄 **双层架构** — 纯 C# 核心层（无 Godot 依赖）+ Godot 运行时组件层
 - 🎯 **组件委托模式** — Godot 组件持有核心 Manager 引用，所有操作委托给核心，不重复实现内部状态
 - 📊 **数据管线** — 集成 Luban，Excel 配置 → C# 代码 + 二进制数据
@@ -212,7 +212,6 @@ GodotProject/                 ← Godot 项目根
 │       ├── Localization/ Utility/ Variable/
 │       └── Lib/LubanLib/     ← Luban 运行时（ByteBuf, BeanBase）
 │   └── GameEntry.tscn        ← 主场景
-├── AAAGame/                  ← 示例游戏项目
 ├── TheGame/                  ← 当前活跃游戏项目
 │   ├── DataTables/           ← Luban 生成的二进制数据
 │   └── GameScripts/GameProto/ ← Luban 生成的 C# 数据类
@@ -363,7 +362,7 @@ Godot 编辑器 **Project > Tools** 菜单下有三个内置工具：
 ```
 GameFramework (GameEntry)
 ├── Base / Resource / Event / Fsm / Procedure
-├── Setting / Config / DataTable / DataNode
+├── Setting / DataTable / DataNode
 ├── ObjectPool / Entity / UI / Sound / Localization
 ```
 

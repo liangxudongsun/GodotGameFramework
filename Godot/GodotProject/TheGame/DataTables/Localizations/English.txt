@@ -3,5 +3,5 @@
 ##type	int	string	string
 ##group			
 ##	index	键	值
-	1	ClickBlock	Click The Blocks!
-	2	Demo	GGF Demo Game
+	1	BulletShoot	The BulletShoot
+	2	Demo	Godot GameFrameWork Demo Game

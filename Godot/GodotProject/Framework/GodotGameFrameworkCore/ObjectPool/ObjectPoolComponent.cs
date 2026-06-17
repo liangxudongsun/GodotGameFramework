@@ -58,14 +58,9 @@ namespace GodotGameFramework
         /// </summary>
         public int Count => m_ObjectPoolManager.Count;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 从核心框架获取 IObjectPoolManager 实例。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_ObjectPoolManager = GameFrameworkEntry.GetModule<IObjectPoolManager>();
             if (m_ObjectPoolManager == null)
             {
@@ -73,6 +68,8 @@ namespace GodotGameFramework
                 return;
             }
         }
+
+
 
         /// <summary>
         /// 检查是否存在对象池。

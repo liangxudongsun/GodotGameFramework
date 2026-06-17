@@ -32,14 +32,9 @@ namespace GodotGameFramework
         /// </summary>
         public int EventCount => m_EventManager.EventCount;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 从核心框架获取 IEventManager 实例。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_EventManager = GameFrameworkEntry.GetModule<IEventManager>();
             if (m_EventManager == null)
             {
@@ -47,6 +42,7 @@ namespace GodotGameFramework
                 return;
             }
         }
+
 
         /// <summary>
         /// 获取指定事件类型的处理函数数量。

@@ -10,6 +10,7 @@ using GameFramework.Fsm;
 using GameFramework.Procedure;
 using Godot;
 using System;
+using System.Collections.Generic;
 
 namespace GodotGameFramework
 {
@@ -27,12 +28,6 @@ namespace GodotGameFramework
         /// 入口流程实例引用。
         /// </summary>
         private ProcedureBase m_EntranceProcedure = null;
-
-        /// <summary>
-        /// 所有可用的流程类型名称（含命名空间的完整名称）。
-        /// </summary>
-        [Export]
-        public string[] AvailableProcedureTypeNames = null;
 
         /// <summary>
         /// 入口流程的类型名称（含命名空间的完整名称）。
@@ -53,38 +48,31 @@ namespace GodotGameFramework
         /// </summary>
         public float CurrentProcedureTime => m_ProcedureManager.CurrentProcedureTime;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 从核心框架获取 IProcedureManager 实例。
-        /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_ProcedureManager = GameFrameworkEntry.GetModule<IProcedureManager>();
             if (m_ProcedureManager == null)
             {
                 Log.Fatal("Procedure manager is invalid.");
                 return;
             }
-
-            // 延迟到所有组件 _Ready 完成后再初始化流程
-            // 确保所有核心模块（如 IFsmManager）都已就绪
-            CallDeferred(MethodName.InitProcedures);
+            LoadProcedures();
         }
 
         /// <summary>
         /// 初始化流程系统。
-        ///
-        /// 通过反射根据 Inspector 中配置的类型名称创建流程实例，
+        /// 通过反射获得所有继承自 ProcedureBase 的类，
         /// 然后初始化流程管理器并启动入口流程。
-        ///
         /// </summary>
-        private void InitProcedures()
+        public void LoadProcedures()
         {
-            if (AvailableProcedureTypeNames == null || AvailableProcedureTypeNames.Length == 0)
+            // 通过反射创建所有流程实例
+            Type[] procedureType = Utility.Assembly.GetTypes(typeof(ProcedureBase));
+            ProcedureBase[] procedures = new ProcedureBase[procedureType.Length];
+            if (procedureType.Length == 0)
             {
-                Log.Warning("AvailableProcedureTypeNames is empty, procedure system will not be initialized.");
+                Log.Warning("No procedure found.");
                 return;
             }
 
@@ -93,8 +81,6 @@ namespace GodotGameFramework
                 Log.Error("EntranceProcedureTypeName is not set.");
                 return;
             }
-
-            // 获取核心层 IFsmManager（Procedure 系统内部依赖 FSM）
             IFsmManager fsmManager = GameFrameworkEntry.GetModule<IFsmManager>();
             if (fsmManager == null)
             {
@@ -102,28 +88,19 @@ namespace GodotGameFramework
                 return;
             }
 
-            // 通过反射创建所有流程实例
-            ProcedureBase[] procedures = new ProcedureBase[AvailableProcedureTypeNames.Length];
-            for (int i = 0; i < AvailableProcedureTypeNames.Length; i++)
+            for (int i = 0; i < procedureType.Length; i++)
             {
-                Type procedureType = Utility.Assembly.GetType(AvailableProcedureTypeNames[i]);
-                if (procedureType == null)
+                ProcedureBase procedure = Activator.CreateInstance(procedureType[i]) as ProcedureBase;
+                if (procedure == null)
                 {
-                    Log.Error("Can not find procedure type '{0}'.", AvailableProcedureTypeNames[i]);
+                    Log.Error("Can not create procedure instance.");
                     return;
                 }
+                procedures[i] = procedure;
 
-                procedures[i] = (ProcedureBase)Activator.CreateInstance(procedureType);
-                if (procedures[i] == null)
+                if (procedure.GetType().FullName == EntranceProcedureTypeName)
                 {
-                    Log.Error("Can not create procedure instance '{0}'.", AvailableProcedureTypeNames[i]);
-                    return;
-                }
-
-                // 记录入口流程
-                if (EntranceProcedureTypeName == AvailableProcedureTypeNames[i])
-                {
-                    m_EntranceProcedure = procedures[i];
+                    m_EntranceProcedure = procedure;
                 }
             }
 
@@ -135,7 +112,12 @@ namespace GodotGameFramework
 
             // 初始化流程管理器
             m_ProcedureManager.Initialize(fsmManager, procedures);
-
+        }
+        /// <summary>
+        /// 手动开始流程
+        /// </summary> 
+        public void StartProcedure()
+        {
             // 启动入口流程
             m_ProcedureManager.StartProcedure(m_EntranceProcedure.GetType());
         }

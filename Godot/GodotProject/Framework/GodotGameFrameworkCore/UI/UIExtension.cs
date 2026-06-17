@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GameConfig;
 
 namespace GodotGameFramework.UI
@@ -212,22 +213,34 @@ namespace GodotGameFramework.UI
             return topForm?.Logic as TLogic;
         }
 
-        public static int OpenUIForm<TLogic>(this UIComponent uiComponent, string uiFormAssetName, string uiGroupName, int priority, bool pauseCoveredUIForm, object userData)
+        public static int OpenUIForm(this UIComponent uiComponent, string uiFormAssetName, string uiGroupName, int priority, bool pauseCoveredUIForm, object userData)
         {
-            return uiComponent.OpenUIForm(uiFormAssetName, uiGroupName, priority, pauseCoveredUIForm, OpenUIFormInfo.Create(typeof(TLogic), userData));
+            return uiComponent.OpenUIForm(uiFormAssetName, uiGroupName, priority, pauseCoveredUIForm, userData);
         }
-        public static int OpenUIForm<TLogic>(this UIComponent uiComponent, string uiFormAssetName, string uiGroupName, object userData = null)
+        public static int OpenUIForm(this UIComponent uiComponent, string uiFormAssetName, string uiGroupName, object userData = null)
         {
-            return uiComponent.OpenUIForm(uiFormAssetName, uiGroupName, OpenUIFormInfo.Create(typeof(TLogic), userData));
+            return uiComponent.OpenUIForm(uiFormAssetName, uiGroupName, userData);
         }
-        public static int OpenUIForm<TLogic>(this UIComponent uiComponent, UIFormId formId, object userData = null)
+        public static int OpenUIForm(this UIComponent uiComponent, UIFormId formId, object userData = null)
         {
             UIFormConfig formConfig = GF.DataTable.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
             if (formConfig == null)
             {
                 throw new Exception($"找不到UIFormId:{formId}的配置");
             }
-            return uiComponent.OpenUIForm(formConfig.AssetPath, formConfig.UIGroupName, OpenUIFormInfo.Create(typeof(TLogic), userData));
+            return uiComponent.OpenUIForm(formConfig.AssetPath, formConfig.UIGroupName, userData);
+        }
+        public static Task<UIForm> OpenUIForm(this UIComponent uiComponent, UIFormId formId, string uiGroupName, object userData = null)
+        {
+            UIFormConfig formConfig = GF.DataTable.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
+            if (formConfig == null)
+            {
+                throw new Exception($"找不到UIFormId:{formId}的配置");
+            }
+            var task = new TaskCompletionSource<UIForm>();
+            int serialId = uiComponent.OpenUIForm(formConfig.AssetPath, uiGroupName, userData);
+            // uiComponent.AddOpenUIFormTask(serialId, task);
+            return task.Task;
         }
     }
 }

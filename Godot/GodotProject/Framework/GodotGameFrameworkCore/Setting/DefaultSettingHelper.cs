@@ -12,24 +12,14 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Setting
 {
     /// <summary>
     /// 默认游戏设置辅助器。
-    ///
-    /// 基于 Godot 的 ConfigFile 实现的 ISettingHelper。
-    /// ConfigFile 是 Godot 提供的 INI 风格配置文件读写类，
-    /// 支持分节（Section）、键值对（Key-Value）的持久化存储。
-    ///
     /// 存储方案：
     /// - 文件路径：user://settings.cfg（Godot 的用户数据目录）
     /// - 文件格式：Godot ConfigFile 格式（类似 INI）
     /// - 所有配置项存储在名为 "Settings" 的 Section 下
-    ///
-    /// 对象序列化：
-    /// - GetObject/SetObject 使用 System.Text.Json 进行 JSON 序列化
-    /// - 这是 .NET 8 内置的 JSON 库，无需额外依赖
-    ///
     /// </summary>
     public class DefaultSettingHelper : ISettingHelper
     {

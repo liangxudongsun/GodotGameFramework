@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GameFramework
 {
@@ -65,6 +66,23 @@ namespace GameFramework
                 {
                     results.AddRange(assembly.GetTypes());
                 }
+            }
+            /// <summary>
+            /// 获得已加载的程序集中的指定类型的所有子类。
+            /// </summary>
+            public static Type[] GetTypes(Type parent)
+            {
+                if (parent == null)
+                {
+                    throw new GameFrameworkException("Filter is invalid.");
+                }
+
+                List<Type> results = new List<Type>();
+                foreach (System.Reflection.Assembly assembly in s_Assemblies)
+                {
+                    results.AddRange(assembly.GetTypes().Where(t => t.IsSubclassOf(parent)));
+                }
+                return results.ToArray();
             }
 
             /// <summary>

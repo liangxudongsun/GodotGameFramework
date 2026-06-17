@@ -4,7 +4,7 @@ echo %CD%
 set WORKSPACE=../..
 set LUBAN_DLL=%WORKSPACE%\Tools\Luban\Luban.dll
 set CONF_ROOT=.
-set DATA_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/DataTables/
+set DATA_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/DataTables/GameConfigs
 set CODE_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/
 
 copy /y "%CONF_ROOT%\CustomTemplate\ExternalTypeUtil.cs" "%WORKSPACE%\Godot\GodotProject\TheGame\GameScripts\GameProto\ExternalTypeUtil.cs"

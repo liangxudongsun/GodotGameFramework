@@ -1,30 +1,10 @@
-//------------------------------------------------------------
-// NodeExtension - Godot Node 便捷扩展方法
-// 提供 Node 类型的常用便捷方法，简化场景树操作。
-//
-// 使用方式：
-//   var label = node.GetOrAddChild<Label>("MyLabel");
-//   var sprite = node.GetChild<Sprite2D>();
-//   var children = node.GetChildren<Control>();
-//   node.RemoveAllChildren();
-//
-// 对应 UGF 参考项目中的 TransformExtension + UnityExtension。
-// Godot 用 Node 替代 Unity 的 Transform/GameObject，
-// 提供 GetOrAddChild、GetChildren<T> 等便捷方法。
-//------------------------------------------------------------
-
 using Godot;
 using System.Collections.Generic;
 
 namespace GodotGameFramework
 {
     /// <summary>
-    /// Godot Node 扩展方法。
-    ///
-    /// 提供 Node 类型的常用便捷方法，
-    /// 包括获取/添加子节点、按类型查找节点、批量操作等。
-    ///
-    /// 和 UnityExtension（GetOrAddComponent 等）。
+    /// Godot Node 扩展方法。。
     /// </summary>
     public static class NodeExtension
     {
@@ -66,7 +46,7 @@ namespace GodotGameFramework
         /// <typeparam name="T">节点类型。</typeparam>
         /// <param name="parent">父节点。</param>
         /// <returns>第一个匹配的子节点，未找到返回 null。</returns>
-        public static T GetChild<T>(this Node parent) where T : Node
+        public static T GetChild<T>(this Node parent) where T : class
         {
             int childCount = parent.GetChildCount();
             for (int i = 0; i < childCount; i++)
@@ -88,7 +68,7 @@ namespace GodotGameFramework
         /// <typeparam name="T">节点类型。</typeparam>
         /// <param name="parent">父节点。</param>
         /// <returns>匹配的子节点列表。</returns>
-        public static List<T> GetChildren<T>(this Node parent) where T : Node
+        public static List<T> GetChildren<T>(this Node parent) where T : class
         {
             List<T> result = new List<T>();
             int childCount = parent.GetChildCount();
@@ -112,7 +92,7 @@ namespace GodotGameFramework
         /// <param name="parent">父节点。</param>
         /// <param name="name">子节点名称。</param>
         /// <returns>匹配的子节点，未找到返回 null。</returns>
-        public static T GetChildByName<T>(this Node parent, string name) where T : Node
+        public static T GetChildByName<T>(this Node parent, string name) where T : class
         {
             return parent.GetNodeOrNull<T>(name);
         }
@@ -125,7 +105,7 @@ namespace GodotGameFramework
         /// <typeparam name="T">节点类型。</typeparam>
         /// <param name="parent">父节点。</param>
         /// <returns>第一个匹配的子孙节点，未找到返回 null。</returns>
-        public static T FindChildOfType<T>(this Node parent) where T : Node
+        public static T FindChildOfType<T>(this Node parent) where T : class
         {
             int childCount = parent.GetChildCount();
             for (int i = 0; i < childCount; i++)
@@ -155,7 +135,7 @@ namespace GodotGameFramework
         /// <typeparam name="T">节点类型。</typeparam>
         /// <param name="parent">父节点。</param>
         /// <returns>匹配的子孙节点列表。</returns>
-        public static List<T> FindChildrenOfType<T>(this Node parent) where T : Node
+        public static List<T> FindChildrenOfType<T>(this Node parent) where T : class
         {
             List<T> result = new List<T>();
             FindChildrenOfType(parent, result);
@@ -185,7 +165,7 @@ namespace GodotGameFramework
         /// <typeparam name="T">父节点类型。</typeparam>
         /// <param name="node">当前节点。</param>
         /// <returns>父节点（已转换类型），无父节点或类型不匹配返回 null。</returns>
-        public static T GetParent<T>(this Node node) where T : Node
+        public static T GetParent<T>(this Node node) where T : class
         {
             return node.GetParent() as T;
         }
@@ -193,8 +173,9 @@ namespace GodotGameFramework
         /// <summary>
         /// 递归搜索所有子孙节点中指定类型的节点。
         /// </summary>
-        private static void FindChildrenOfType<T>(Node parent, List<T> result) where T : Node
+        private static void FindChildrenOfType<T>(Node parent, List<T> result) where T : class
         {
+            if (parent == null) return;
             int childCount = parent.GetChildCount();
             for (int i = 0; i < childCount; i++)
             {

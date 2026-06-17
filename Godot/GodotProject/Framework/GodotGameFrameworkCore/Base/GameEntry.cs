@@ -19,22 +19,39 @@ namespace GodotGameFramework
 
         private static BaseComponent m_BaseComponent = null;
         private static bool m_Shutdown = false;
+        private bool m_StartProcedure = false;
 
-        /// <summary>子节点按子→父顺序完成 _Ready 和注册后，触发 GameFrameworkEntry.Update</summary>
-        public override void _Ready()
+        public override void OnUpdate(double delta)
         {
-        }
-
-        public override void _Process(double delta)
-        {
+            base.OnUpdate(delta);
             if (m_Shutdown) return;
-
+            CheckProcedure();
             float elapseSeconds = (float)delta;
             float realElapseSeconds = (float)Engine.TimeScale > 0f
                 ? elapseSeconds / (float)Engine.TimeScale
                 : 0f;
 
             GameFrameworkEntry.Update(elapseSeconds, realElapseSeconds);
+        }
+        /// <summary>
+        /// 验证流程组件是否注册完成，如果完成则启动流程组件
+        /// </summary>
+        private void CheckProcedure()
+        {
+            if (!m_StartProcedure)
+            {
+                var procedureComponent = GetComponent<ProcedureComponent>();
+                if (procedureComponent != null)
+                {
+                    procedureComponent.StartProcedure();
+                    m_StartProcedure = true;
+                    Log.Info("----------------验证完成，游戏流程开始----------------");
+                }
+                else
+                {
+                    Log.Info("----------------验证未完成，等待组件加载----------------");
+                }
+            }
         }
 
         public static T GetComponent<T>() where T : GameFrameworkComponent

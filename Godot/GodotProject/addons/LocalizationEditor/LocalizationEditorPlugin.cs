@@ -1,3 +1,4 @@
+#if TOOLS
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -214,3 +215,4 @@ public partial class LocalizationEditorPlugin : EditorPlugin
 		RemoveToolMenuItem(MENU_ITEM_NAME);
 	}
 }
+#endif

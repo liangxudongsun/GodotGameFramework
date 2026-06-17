@@ -25,9 +25,9 @@ namespace GodotGameFramework
         /// </summary>
         private IDataTableManager m_DataTableManager = null;
 
-        public override void OnInit()
+        public override void OnEnter()
         {
-            base.OnInit();
+            base.OnEnter();
             m_DataTableManager = GameFrameworkEntry.GetModule<IDataTableManager>();
             if (m_DataTableManager == null)
             {

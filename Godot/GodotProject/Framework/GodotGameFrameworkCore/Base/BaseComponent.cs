@@ -7,7 +7,10 @@
 
 using GameFramework;
 using GameFramework.Localization;
+using GameFramework.Resource;
 using Godot;
+using Godot.Collections;
+using GodotGameFrameworkCore.Resource;
 using System;
 
 namespace GodotGameFramework
@@ -17,6 +20,27 @@ namespace GodotGameFramework
     /// </summary>
     public sealed partial class BaseComponent : GameFrameworkComponent
     {
+        [Export]
+        private bool m_EditorResourceMode = true;
+        public bool EditorResourceMode
+        {
+            get
+            {
+                return m_EditorResourceMode &= OS.HasFeature("editor");
+            }
+        }
+        private IResourceManager m_ResourceManager;
+        public IResourceManager EditorResourceManager
+        {
+            get
+            {
+                if (m_ResourceManager == null)
+                {
+                    m_ResourceManager = new EditorResourceManager();
+                }
+                return m_ResourceManager;
+            }
+        }
         [Export]
         public Language EditorLanague;
         [Export]
@@ -28,13 +52,13 @@ namespace GodotGameFramework
         /// <summary>
         /// 帧率设置。默认 60 帧。
         /// </summary>
-        [Export]
+        [Export(PropertyHint.Range, "30,120,1")]
         private int m_FrameRate = 60;
 
         /// <summary>
         /// 游戏速度。
         /// </summary>
-        [Export]
+        [Export(PropertyHint.Range, "0,8,1")]
         private float m_GameSpeed = 1f;
 
         /// <summary>
@@ -158,18 +182,17 @@ namespace GodotGameFramework
             Engine.TimeScale = m_GameSpeed;
         }
 
+
         /// <summary>
         /// 节点被销毁时调用。
         /// 触发核心框架的 Shutdown 流程。
         /// </summary>
-        public override void _Notification(int what)
+        public override void OnPreDestory()
         {
-            // NOTIFICATION_PREDELETE 在节点即将被删除前发送
-            if (what == NotificationPredelete)
-            {
-                Shutdown();
-            }
+            base.OnPreDestory();
+            Shutdown();
         }
+
 
         /// <summary>
         /// 执行框架关闭。

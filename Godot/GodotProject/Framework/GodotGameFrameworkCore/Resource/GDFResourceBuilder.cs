@@ -12,12 +12,12 @@ using System;
 using System.Collections.Generic;
 using SystemIO = System.IO;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Resource
 {
     /// <summary>
     /// 资源版本列表构建工具。扫描 res:// 目录生成 GameFrameworkVersion.dat（V2 格式）。
     /// 排除：.godot/、.import、.uid、.cs、.gd、.meta、.csproj、.sln、.dll、.asmdef、隐藏文件。
-    /// 编辑器模式下由 ResourceComponent 自动调用。
+    /// 由 ResourcesCollection 编辑器插件手动触发。
     /// </summary>
     public static class GDFResourceBuilder
     {
@@ -38,13 +38,27 @@ namespace GodotGameFramework
             if (string.IsNullOrEmpty(readOnlyPath)) throw new GameFrameworkException("Read-only path is invalid.");
             if (string.IsNullOrEmpty(outputPath)) throw new GameFrameworkException("Output path is invalid.");
 
+            // Step 1: 扫描目录
+            GD.Print(string.Format("[GDFResourceBuilder] Scanning directory: {0}", readOnlyPath));
             List<string> files = new List<string>();
             ScanDirectory(readOnlyPath, files);
-            if (files.Count == 0) Log.Warning("No resource files found in '{0}'.", readOnlyPath);
+            GD.Print(string.Format("[GDFResourceBuilder] Scan complete. Found {0} resource files.", files.Count));
+
+            if (files.Count == 0)
+            {
+                GD.PrintErr(string.Format("[GDFResourceBuilder] No resource files found in '{0}'.", readOnlyPath));
+                return false;
+            }
+
             files.Sort(StringComparer.Ordinal);
+
+            // Step 2: 构建资源列表 + 计算哈希
+            GD.Print(string.Format("[GDFResourceBuilder] Building version list (GameVersion={0}, ResourceVersion={1})...",
+                gameVersion, resourceVersion));
 
             PackageVersionList.Asset[] assets = new PackageVersionList.Asset[files.Count];
             PackageVersionList.Resource[] resources = new PackageVersionList.Resource[files.Count];
+            int progressInterval = files.Count > 100 ? files.Count / 20 : 10; // 约 5% 进度步长
 
             for (int i = 0; i < files.Count; i++)
             {
@@ -62,6 +76,11 @@ namespace GodotGameFramework
                 int length = GetFileLength(fullPath);
                 int hashCode = GetFileHashCode(fullPath);
                 resources[i] = new PackageVersionList.Resource(name, null, extension, 0, length, hashCode, new int[] { i });
+
+                if ((i + 1) % progressInterval == 0 || i == files.Count - 1)
+                {
+                    GD.Print(string.Format("[GDFResourceBuilder] Processing... {0}/{1}", i + 1, files.Count));
+                }
             }
 
             PackageVersionList versionList = new PackageVersionList(
@@ -69,13 +88,15 @@ namespace GodotGameFramework
                 new PackageVersionList.FileSystem[0],
                 new PackageVersionList.ResourceGroup[0]);
 
+            // Step 3: 序列化写入
+            GD.Print(string.Format("[GDFResourceBuilder] Serializing version list to: {0}", outputPath));
             return SerializeVersionList(outputPath, versionList);
         }
 
         private static void ScanDirectory(string directoryPath, List<string> result)
         {
             using var dir = DirAccess.Open(directoryPath);
-            if (dir == null) { Log.Warning("Can not open directory '{0}'.", directoryPath); return; }
+            if (dir == null) { Log.Warning(string.Format("[GDFResourceBuilder] Can not open directory '{0}'.", directoryPath)); return; }
 
             dir.ListDirBegin();
             string currentFile;
@@ -94,14 +115,13 @@ namespace GodotGameFramework
                 {
                     string ext = SystemIO.Path.GetExtension(currentFile);
                     if (!string.IsNullOrEmpty(ext) && ExcludedExtensions.Contains(ext)) continue;
-                    if (currentFile == VersionListFileName) continue;
+                    if (currentFile == GameFolderConstant.GameFrameworkVersionData) continue;
                     result.Add(fullPath);
                 }
             }
             dir.ListDirEnd();
         }
 
-        private const string VersionListFileName = "GameFrameworkVersion.dat";
 
         private static int GetFileLength(string filePath)
         {
@@ -151,19 +171,23 @@ namespace GodotGameFramework
                         {
                             bool identical = true;
                             for (int i = 0; i < bytes.Length; i++) { if (bytes[i] != existingBytes[i]) { identical = false; break; } }
-                            if (identical) { Log.Info("Version list '{0}' is up-to-date.", outputPath); return true; }
+                            if (identical)
+                            {
+                                GD.Print(string.Format("[GDFResourceBuilder] Version list is up-to-date, skipped."));
+                                return true;
+                            }
                         }
                     }
                 }
 
                 using var outputFile = FileAccess.Open(outputPath, FileAccess.ModeFlags.Write);
-                if (outputFile == null) { Log.Error("Can not create version list file '{0}'.", outputPath); return false; }
+                if (outputFile == null) { GD.PrintErr(string.Format("[GDFResourceBuilder] Can not create file '{0}'.", outputPath)); return false; }
                 outputFile.StoreBuffer(bytes);
-                Log.Info("Version list '{0}' generated. Assets: {1}, Resources: {2}",
-                    outputPath, versionList.GetAssets().Length, versionList.GetResources().Length);
+                GD.Print(string.Format("[GDFResourceBuilder] Done! File: {0}, Assets: {1}, Resources: {2}, Size: {3} bytes",
+                    outputPath, versionList.GetAssets().Length, versionList.GetResources().Length, bytes.Length));
                 return true;
             }
-            catch (Exception e) { Log.Error("Serialize version list exception: {0}", e.Message); return false; }
+            catch (Exception e) { GD.PrintErr(string.Format("[GDFResourceBuilder] Serialize failed: {0}", e.Message)); return false; }
         }
 
         private static void EnsureDirectoryExists(string directoryPath)

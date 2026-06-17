@@ -58,55 +58,49 @@ namespace GodotGameFramework.UI
         /// <returns>创建的界面。</returns>
         public override IUIForm CreateUIForm(object uiFormInstance, IUIGroup uiGroup, object userData)
         {
-            Node instance = uiFormInstance as Node;
-            if (instance == null)
-            {
-                Log.Error("UI form instance is invalid.");
-                return null;
-            }
-
-            // 获取 UI 组的辅助器节点（CanvasLayer）作为容器
-            Node groupContainer = ((Node)uiGroup.Helper);
-            if (groupContainer == null)
-            {
-                Log.Error("UI group helper is invalid.");
-                return null;
-            }
-
             // 创建 UIForm 包装器节点
-            UIForm uiForm = new UIForm();
-            uiForm.Name = instance.Name;
-
-            // 将 Control 实例添加为 UIForm 的子节点
-            uiForm.AddChild(instance);
-
-            // 将 UIForm 添加到 UI 组容器下
-            groupContainer.AddChild(uiForm);
-
-            // 如果 userData 包含 UIFormLogic 类型信息，创建并关联
-            // 这与 Entity 系统中 DefaultEntityHelper 创建 EntityLogic 的模式一致
-            if (userData is OpenUIFormInfo openUIFormInfo && openUIFormInfo.UIFormLogicType != null)
+            if (uiFormInstance is UIFormLogic uiFormLogic)
             {
-                try
+                UIForm uiForm = new UIForm();
+                UIFormLogic instance = uiFormLogic;
+                if (instance == null)
                 {
-                    UIFormLogic logic = (UIFormLogic)Activator.CreateInstance(openUIFormInfo.UIFormLogicType);
-                    uiForm.SetUIFormLogic(logic);
+                    Log.Error("UI form instance is invalid.");
+                    return null;
                 }
-                catch (System.Exception exception)
-                {
-                    Log.Error("Create UI form logic '{0}' with exception '{1}'.",
-                        openUIFormInfo.UIFormLogicType.FullName, exception);
-                }
-            }
 
-            return uiForm;
+                // 获取 UI 组的辅助器节点（CanvasLayer）作为容器
+                Node groupContainer = ((Node)uiGroup.Helper);
+                if (groupContainer == null)
+                {
+                    Log.Error("UI group helper is invalid.");
+                    return null;
+                }
+
+
+                uiForm.Name = string.IsNullOrEmpty(instance.Name) ? "UIForm_" + instance.GetType().Name : "UIForm_" + instance.Name;
+
+                // 将 Control 实例添加为 UIForm 的子节点
+                uiForm.AddChild(instance);
+
+                // 将 UIForm 添加到 UI 组容器下
+                groupContainer.AddChild(uiForm);
+
+                uiForm.SetUIFormLogic(instance);
+                instance.Name = $"UIFormLogic_{instance.GetType().Name}";
+                return uiForm;
+            }
+            else
+            {
+                Log.Error("{0} is not UIFormLogic type.", uiFormInstance);
+                return null;
+            }
         }
 
         /// <summary>
         /// 释放界面。
         ///
         /// 销毁 UIForm 节点及其所有子节点。
-        /// 对标 UGF: Destroy((Object)uiFormInstance)
         /// </summary>
         /// <param name="uiFormAsset">要释放的界面资源。</param>
         /// <param name="uiFormInstance">要释放的界面实例。</param>

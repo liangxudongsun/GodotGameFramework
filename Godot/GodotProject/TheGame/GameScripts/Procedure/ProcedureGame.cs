@@ -3,6 +3,8 @@ using GameConfig.Entity;
 using GameFramework.Procedure;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.UI;
+using TheGame;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>
@@ -28,8 +30,7 @@ public class ProcedureGame : ProcedureBase
     protected internal override void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
-        // GF.UI.OpenUIForm<MainMenuForm>(UIFormId.MainMenu, this);
-        GF.Entity.ShowEntity(EntityId.Cat);
+        GF.UI.OpenUIForm(UIFormId.MenuForm);
     }
 
     /// <summary>

@@ -7,10 +7,11 @@
 
 using GameFramework;
 using GameFramework.Setting;
+using Godot;
 using System;
 using System.Collections.Generic;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Setting
 {
     /// <summary>
     /// 游戏设置组件。
@@ -48,6 +49,8 @@ namespace GodotGameFramework
     /// </summary>
     public sealed partial class SettingComponent : GameFrameworkComponent
     {
+        [Export]
+        private string m_SettingHelperTypeName = "GodotGameFramework.Setting.DefaultSettingHelper";
         /// <summary>
         /// 核心层的设置管理器实例。
         /// </summary>
@@ -62,10 +65,9 @@ namespace GodotGameFramework
         /// 节点初始化回调。
         /// 获取核心层 ISettingManager，创建 Helper 并初始化。
         /// </summary>
-        public override void _Ready()
+        public override void OnInit()
         {
-            base._Ready();
-
+            base.OnInit();
             m_SettingManager = GameFrameworkEntry.GetModule<ISettingManager>();
             if (m_SettingManager == null)
             {
@@ -74,17 +76,19 @@ namespace GodotGameFramework
             }
 
             // 创建默认的设置辅助器并设置到管理器
-            // DefaultSettingHelper 使用 Godot ConfigFile 实现持久化
-            DefaultSettingHelper settingHelper = new DefaultSettingHelper();
-            m_SettingManager.SetSettingHelper(settingHelper);
+            Type settingHelperType = Utility.Assembly.GetType(m_SettingHelperTypeName);
+            if (settingHelperType == null)
+            {
+                Log.Fatal("Setting helper type '{0}' is invalid.", m_SettingHelperTypeName);
+                return;
+            }
 
-            // 延迟加载配置文件，确保所有组件都已完成初始化
-            CallDeferred(MethodName.LoadSettings);
+            ISettingHelper settingHelper = (ISettingHelper)Activator.CreateInstance(settingHelperType);
+            m_SettingManager.SetSettingHelper(settingHelper);
+            LoadSettings();
         }
 
-        /// <summary>
-        /// 延迟加载配置文件。
-        /// </summary>
+
         private void LoadSettings()
         {
             if (!m_SettingManager.Load())

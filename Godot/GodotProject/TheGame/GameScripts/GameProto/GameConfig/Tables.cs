@@ -13,7 +13,6 @@ namespace GameConfig
 {
 public partial class Tables
 {
-    public item.TbItem TbItem {get; }
     public TbUIFormConfig TbUIFormConfig {get; }
     public TbUIGroupConfig TbUIGroupConfig {get; }
     public Entity.TbEntityGroupConfig TbEntityGroupConfig {get; }
@@ -22,7 +21,6 @@ public partial class Tables
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
-        TbItem = new item.TbItem(loader("item_tbitem"));
         TbUIFormConfig = new TbUIFormConfig(loader("tbuiformconfig"));
         TbUIGroupConfig = new TbUIGroupConfig(loader("tbuigroupconfig"));
         TbEntityGroupConfig = new Entity.TbEntityGroupConfig(loader("entity_tbentitygroupconfig"));
@@ -33,7 +31,6 @@ public partial class Tables
     
     private void ResolveRef()
     {
-        TbItem.ResolveRef(this);
         TbUIFormConfig.ResolveRef(this);
         TbUIGroupConfig.ResolveRef(this);
         TbEntityGroupConfig.ResolveRef(this);

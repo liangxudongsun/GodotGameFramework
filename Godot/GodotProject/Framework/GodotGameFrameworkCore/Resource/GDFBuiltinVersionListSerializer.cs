@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace GodotGameFramework
+namespace GodotGameFramework.Resource
 {
     /// <summary>
     /// 内置版本资源列表序列化器。

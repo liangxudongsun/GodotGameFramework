@@ -11,37 +11,6 @@ namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面项逻辑基类。
-    ///
-    /// 纯 C# 抽象类（非 Node），供用户继承编写 UI 子元素逻辑。
-    /// 典型场景：列表项、选项卡、背包格子等需要动态复用的 UI 元素。
-    ///
-    /// 与 UIFormLogic 的区别：
-    /// - UIFormLogic: 整个 UI 窗口的逻辑，由框架管理生命周期
-    /// - UIItemBase: 窗口内部的子元素逻辑，由 UIFormLogic 通过对象池管理
-    ///
-    /// 使用方式：
-    /// <code>
-    /// public class ShopItem : UIItemBase
-    /// {
-    ///     private TextureRect m_Icon;
-    ///     private Label m_PriceLabel;
-    ///
-    ///     protected override void OnInit()
-    ///     {
-    ///         base.OnInit();
-    ///         m_Icon = CachedNode.GetNode&lt;TextureRect&gt;("Icon");
-    ///         m_PriceLabel = CachedNode.GetNode&lt;Label&gt;("Price");
-    ///     }
-    ///
-    ///     public void SetData(string iconPath, int price)
-    ///     {
-    ///         m_Icon.Texture = GD.Load&lt;Texture2D&gt;(iconPath);
-    ///         m_PriceLabel.Text = price.ToString();
-    ///     }
-    /// }
-    /// </code>
-    ///
-    /// 对标 UGF 测试项目中的 UIItemBase（MonoBehaviour → 纯 C# 类）。
     /// </summary>
     public abstract class UIItemBase
     {

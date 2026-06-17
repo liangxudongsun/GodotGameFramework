@@ -13,25 +13,8 @@ namespace GodotGameFramework.UI
 {
     /// <summary>
     /// 界面。
-    ///
-    /// 继承 Node 并实现 IUIForm 接口，作为 UI 窗体的包装器。
-    /// 实际的 UI 控件（Control）是其第一个子节点。
-    ///
-    /// 架构说明：
-    /// UIForm 是框架与 UI 控件之间的桥梁。
-    /// 核心框架通过 IUIForm 接口管理生命周期，
-    /// UIForm 将所有生命周期调用委托给 UIFormLogic（纯 C# 逻辑类）。
-    ///
-    /// <code>
-    /// UIForm (Node, IUIForm)          ← 框架管理层
-    ///   └── [Control from PackedScene] ← 实际的 UI 控件
-    ///         └── UIFormLogic          ← 用户逻辑（纯 C# 类）
-    /// </code>
-    ///
-    /// 对标 UGF 中的 UIForm (MonoBehaviour, IUIForm)。
-    /// 方法体级别对齐 UGF 的实现逻辑。
     /// </summary>
-    public sealed partial class UIForm : Node, IUIForm
+    public sealed partial class UIForm : GodotComponent, IUIForm
     {
         /// <summary>界面序列编号。</summary>
         private int m_SerialId;
@@ -65,7 +48,6 @@ namespace GodotGameFramework.UI
         /// 获取界面实例。
         ///
         /// 返回实际的 UI 控件节点（第一个子节点）。
-        /// 对标 UGF 中 UIForm.Handle 返回 gameObject。
         /// </summary>
         public object Handle => GetChild(0);
 
@@ -127,7 +109,6 @@ namespace GodotGameFramework.UI
             m_PauseCoveredUIForm = pauseCoveredUIForm;
 
             // 对象池复用时跳过 UIFormLogic 初始化
-            // 与 UGF 行为一致：!isNewInstance 直接 return
             if (!isNewInstance)
             {
                 return;
@@ -154,7 +135,6 @@ namespace GodotGameFramework.UI
         /// <summary>
         /// 界面回收。
         ///
-        /// 对标 UGF UIForm.OnRecycle。
         /// </summary>
         public void OnRecycle()
         {
@@ -179,7 +159,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面打开。
-        /// 对标 UGF UIForm.OnOpen。
         /// </summary>
         public void OnOpen(object userData)
         {
@@ -198,7 +177,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面关闭。
-        /// 对标 UGF UIForm.OnClose。
         /// </summary>
         public void OnClose(bool isShutdown, object userData)
         {
@@ -217,7 +195,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面暂停。
-        /// 对标 UGF UIForm.OnPause。
         /// </summary>
         public void OnPause()
         {
@@ -236,7 +213,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面暂停恢复。
-        /// 对标 UGF UIForm.OnResume。
         /// </summary>
         public void OnResume()
         {
@@ -255,7 +231,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面遮挡。
-        /// 对标 UGF UIForm.OnCover。
         /// </summary>
         public void OnCover()
         {
@@ -274,7 +249,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面遮挡恢复。
-        /// 对标 UGF UIForm.OnReveal。
         /// </summary>
         public void OnReveal()
         {
@@ -293,7 +267,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面重新获得焦点。
-        /// 对标 UGF UIForm.OnRefocus。
         /// </summary>
         public void OnRefocus(object userData)
         {
@@ -312,7 +285,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面轮询。
-        /// 对标 UGF UIForm.OnUpdate。
         /// </summary>
         public void OnUpdate(float elapseSeconds, float realElapseSeconds)
         {
@@ -331,7 +303,6 @@ namespace GodotGameFramework.UI
 
         /// <summary>
         /// 界面深度改变。
-        /// 对标 UGF UIForm.OnDepthChanged。
         /// </summary>
         public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
         {

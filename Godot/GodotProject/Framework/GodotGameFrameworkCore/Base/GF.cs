@@ -6,6 +6,7 @@ using Godot;
 using GodotGameFramework.Entity;
 using GodotGameFramework.Localization;
 using GodotGameFramework.Resource;
+using GodotGameFramework.Setting;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 
@@ -22,7 +23,6 @@ namespace GodotGameFramework
         public static EntityComponent Entity => GameEntry.GetComponent<EntityComponent>();
         public static UIComponent UI => GameEntry.GetComponent<UIComponent>();
         public static SoundComponent Sound => GameEntry.GetComponent<SoundComponent>();
-        public static ConfigComponent Config => GameEntry.GetComponent<ConfigComponent>();
         public static Tables DataTable => GameEntry.GetComponent<DataTableComponent>().GetTables();
         public static LocalizationComponent Localization => GameEntry.GetComponent<LocalizationComponent>();
         public static SettingComponent Setting => GameEntry.GetComponent<SettingComponent>();

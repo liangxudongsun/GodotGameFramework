@@ -65,7 +65,7 @@ namespace GameFramework.DataTable
         /// <returns>ByteBuf</returns>
         private ByteBuf LoadByteBuf(string file)
         {
-            string path = Utility.Text.Format(GameFolderConstant.DATATABLE, file);
+            string path = Utility.Text.Format(GameFolderConstant.GameConfigs, file);
             byte[] bytes = m_ResourceCmp.LoadBinary(path);
             if (bytes == null || bytes.Length == 0)
             {

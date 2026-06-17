@@ -4,6 +4,7 @@
 //------------------------------------------------------------
 
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
 using GameConfig;
 using GameFramework;
@@ -21,6 +22,8 @@ using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedure
 /// </summary>
 public class ProcedureLaunch : ProcedureBase
 {
+    private static readonly ConcurrentDictionary<string, bool> m_LoadFlagDic = new ConcurrentDictionary<string, bool>();
+    private static readonly string[] m_LoadFlagKeys = { "Localization", "UIGroup", "EntityGroup", "SoundGroup" };
     /// <summary>
     /// 状态初始化。
     /// </summary>
@@ -39,10 +42,9 @@ public class ProcedureLaunch : ProcedureBase
 
         Log.Info($"Log 系统正常");
         Log.Info($"[LaunchProcedure] 验证框架组件...");
+        Log.Info($"[BaseComponent]: {(GF.Base != null ? "OK" : "缺失")}");
         Log.Info($"[EventComponent]: {(GF.Event != null ? "OK" : "缺失")}");
         Log.Info($"[FsmComponent]: {(GF.Fsm != null ? "OK" : "缺失")}");
-        Log.Info($"[ConfigComponent]: {(GF.Config != null ? "OK" : "缺失")}");
-        Log.Info($"[DataTableComponent]: {(GF.DataTable != null ? "OK" : "缺失")}");
         Log.Info($"[SettingComponent]: {(GF.Setting != null ? "OK" : "缺失")}");
         Log.Info($"[DataNodeComponent]: {(GF.DataNode != null ? "OK" : "缺失")}");
         Log.Info($"[ResourceComponent]: {(GF.Resource != null ? "OK" : "缺失")}");
@@ -50,54 +52,73 @@ public class ProcedureLaunch : ProcedureBase
         Log.Info($"[UIComponent]: {(GF.UI != null ? "OK" : "缺失")}");
         Log.Info($"[SoundComponent]: {(GF.Sound != null ? "OK" : "缺失")}");
         Log.Info($"[LocalizationComponent]: {(GF.Localization != null ? "OK" : "缺失")}");
+        Log.Info($"[DataTableComponent]: {(GF.DataTable != null ? "OK" : "缺失")}");
 
-        Task.Yield();
+
+        Log.Info("当前资源加载管理：{0}", GF.Base.EditorResourceMode ? "编辑器模式" : "运行时模式");
+        LoadEntityGroup();
         LoadLocalization();
         LoadUIGroup();
-        LoadEntityGroup();
         LoadSoundGroup();
-        ChangeState<ProcedureGame>(procedureOwner);
+
+        if (IsLoadAll())
+        {
+            ChangeState<ProcedureGame>(procedureOwner);
+        }
 
     }
     private void LoadLocalization()
     {
-        GF.Localization.ReadData(Utility.Text.Format(GameFolderConstant.LOCALIZATION, GF.Localization.Language.ToString()));
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[0], false);
+        GF.Localization.ReadData(Utility.Text.Format(GameFolderConstant.Localizations, GF.Localization.Language.ToString()));
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[0], true, false);
     }
     private void LoadUIGroup()
     {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[1], false);
         var groups = GF.DataTable.TbUIGroupConfig.DataList;
         for (int i = 0; i < groups.Count; i++)
         {
             if (!GF.UI.AddUIGroup(groups[i].Name, groups[i].Depth))
             {
                 Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
-                continue;
+                return;
             }
         }
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[1], true, false);
     }
     private void LoadEntityGroup()
     {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[2], false);
         var groups = GF.DataTable.TbEntityGroupConfig.DataList;
         for (int i = 0; i < groups.Count; i++)
         {
             if (!GF.Entity.AddEntityGroup(groups[i].Name, groups[i].ReleaseInterval, groups[i].Capacity, groups[i].ExpireTime, groups[i].Priority))
             {
                 Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
-                continue;
+                return;
             }
         }
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[2], true, false);
     }
     private void LoadSoundGroup()
     {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[3], false);
         var groups = GF.DataTable.TbSoundConfig.DataList;
         for (int i = 0; i < groups.Count; i++)
         {
             if (!GF.Sound.AddSoundGroup(groups[i].Name, groups[i].AgentCounts, groups[i].AvoidBeingReplacedBySamePriority))
             {
                 Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
-                continue;
+                return;
             }
         }
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[3], true, false);
+    }
+
+    private bool IsLoadAll()
+    {
+        return m_LoadFlagDic.All(x => x.Value);
     }
 
     /// <summary>

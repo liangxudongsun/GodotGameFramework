@@ -16,11 +16,11 @@ namespace GameConfig
         /// <summary>
         /// 主菜单
         /// </summary>
-        MainMenu = 0,
+        MenuForm = 0,
         /// <summary>
         /// 游戏界面
         /// </summary>
-        GameHUD = 1,
+        MainForm = 1,
     }
 
 } 
