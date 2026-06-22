@@ -45,18 +45,7 @@ namespace GodotGameFramework.Entity
 
         /// <summary>
         /// 创建实体。
-        ///
-        /// 1. 创建 Entity(Node) 作为包装器
-        /// 2. 将 instanceNode 添加为 Entity 的子节点
-        /// 3. 将 Entity 添加到实体组的 DefaultEntityGroupHelper 容器节点下
-        /// 4. 如果 userData 包含 ShowEntityInfo，创建对应的 EntityLogic 实例
-        ///
-        /// ShowEntityInfo 的 EntityLogicType 在此处用于创建 EntityLogic 实例。
-        /// userData 的解包由 Entity.OnInit 完成（提取内部 UserData 传给 EntityLogic）。
         /// </summary>
-        /// <param name="entityInstance">实体实例（期望为 Node）。</param>
-        /// <param name="entityGroup">实体所属的实体组。</param>
-        /// <param name="userData">用户自定义数据（可以是 ShowEntityInfo）。</param>
         /// <returns>创建的 IEntity（Entity 节点）。</returns>
         public override IEntity CreateEntity(object entityInstance, IEntityGroup entityGroup, object userData)
         {
@@ -65,39 +54,26 @@ namespace GodotGameFramework.Entity
                 Log.Warning("Entity instance is invalid.");
                 return null;
             }
-
-            Node instanceNode = entityInstance as Node;
-            if (instanceNode == null)
+            // 创建 Entity 包装器节点
+            Entity entity = new Entity();
+            if (entityInstance is EntityLogic logic)
             {
-                Log.Warning("Entity instance is not a Node: {0}.", entityInstance.GetType().Name);
+                // 将实际的场景节点作为 Entity 的子节点
+                entity.AddChild(logic);
+
+                // 将 Entity 添加到实体组的容器节点下
+                if (entityGroup != null && entityGroup.Helper is EntityGroupHelperBase groupHelper)
+                {
+                    groupHelper.AddChild(entity);
+                }
+                entity.SetEntityLogic(logic);
+            }
+            else
+            {
+                Log.Warning("Entity instance is not a EntityLogic: {0}.", entityInstance.GetType().Name);
                 return null;
             }
 
-            // 创建 Entity 包装器节点
-            Entity entity = new Entity();
-
-            // 将实际的场景节点作为 Entity 的子节点
-            entity.AddChild(instanceNode);
-
-            // 将 Entity 添加到实体组的容器节点下
-            if (entityGroup != null && entityGroup.Helper is EntityGroupHelperBase groupHelper)
-            {
-                groupHelper.AddChild(entity);
-            }
-
-            if (userData is ShowEntityInfo showInfo && showInfo.EntityLogicType != null)
-            {
-                EntityLogic logic = System.Activator.CreateInstance(showInfo.EntityLogicType) as EntityLogic;
-                if (logic != null)
-                {
-                    entity.SetEntityLogic(logic);
-                }
-                else
-                {
-                    Log.Warning("Can not create EntityLogic instance of type '{0}'.",
-                        showInfo.EntityLogicType.Name);
-                }
-            }
 
             return entity;
         }

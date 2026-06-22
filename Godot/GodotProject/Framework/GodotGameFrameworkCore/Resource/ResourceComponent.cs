@@ -43,10 +43,10 @@ namespace GodotGameFramework.Resource
         public ResourceMode EffectiveResourceMode => m_EffectiveResourceMode;
 
         /// <summary>当前资源数量（管道模式下有效）。</summary>
-        public int AssetCount => m_ResourceManager.AssetCount;
+        public int AssetCount => m_ResourceManager?.AssetCount ?? 0;
 
         /// <summary>当前资源信息数量（管道模式下有效）。</summary>
-        public int ResourceCount => m_ResourceManager.ResourceCount;
+        public int ResourceCount => m_ResourceManager?.ResourceCount ?? 0;
 
         public override void OnInit()
         {
@@ -149,6 +149,8 @@ namespace GodotGameFramework.Resource
         public override void OnUpdate(double delta)
         {
             base.OnUpdate(delta);
+            // No per-frame logic needed; pipeline callbacks are event-driven.
+            // Keep SetProcess(true) for potential future use (e.g. LoadResourceAgent polling).
         }
 
         /// <summary>同步加载资源。使用 Godot ResourceLoader.Load。</summary>
@@ -202,6 +204,7 @@ namespace GodotGameFramework.Resource
         public bool HasAsset(string assetPath)
         {
             if (string.IsNullOrEmpty(assetPath)) return false;
+            if (m_ResourceManager == null) return false;
             var result = m_ResourceManager.HasAsset(assetPath);
             return result != HasAssetResult.NotExist && result != HasAssetResult.NotReady;
         }

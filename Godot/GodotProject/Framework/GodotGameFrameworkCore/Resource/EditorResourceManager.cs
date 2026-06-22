@@ -247,6 +247,13 @@ namespace GodotGameFrameworkCore.Resource
 			try
 			{
 				using var file = FileAccess.Open(binaryAssetName, FileAccess.ModeFlags.Read);
+				if (file == null)
+				{
+					loadBinaryCallbacks.LoadBinaryFailureCallback?.Invoke(
+						binaryAssetName, LoadResourceStatus.AssetError,
+						Utility.Text.Format("Cannot open binary asset '{0}'.", binaryAssetName), userData);
+					return;
+				}
 				var bytes = file.GetBuffer((long)file.GetLength());
 				loadBinaryCallbacks.LoadBinarySuccessCallback?.Invoke(binaryAssetName, bytes, 0f, userData);
 			}

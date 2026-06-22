@@ -49,7 +49,15 @@ namespace GodotGameFramework.UI
         ///
         /// 返回实际的 UI 控件节点（第一个子节点）。
         /// </summary>
-        public object Handle => GetChild(0);
+        public object Handle
+        {
+            get
+            {
+                if (GetChildCount() > 0)
+                    return GetChild(0);
+                return this;
+            }
+        }
 
         /// <summary>
         /// 获取界面所属的界面组。

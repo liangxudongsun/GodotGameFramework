@@ -211,7 +211,7 @@ GodotProject/                 ← Godot 项目根
 │       ├── DataTable/ DataNode/ ObjectPool/ Setting/
 │       ├── Localization/ Utility/ Variable/
 │       └── Lib/LubanLib/     ← Luban 运行时（ByteBuf, BeanBase）
-│   └── GameEntry.tscn        ← 主场景
+│   └── GameFramework.tscn        ← 主场景
 ├── TheGame/                  ← 当前活跃游戏项目
 │   ├── DataTables/           ← Luban 生成的二进制数据
 │   └── GameScripts/GameProto/ ← Luban 生成的 C# 数据类
@@ -357,7 +357,7 @@ Godot 编辑器 **Project > Tools** 菜单下有三个内置工具：
 
 ## 📋 场景树
 
-主场景 `Framework/GameEntry.tscn` 注册为 `run/main_scene`：
+主场景 `Framework/GameFramework.tscn` 注册为 `run/main_scene`：
 
 ```
 GameFramework (GameEntry)
@@ -394,6 +394,33 @@ GameFramework (GameEntry)
 
 ---
 
+## ⚠️ 开发注意事项
+
+### C# 类型层级与 Godot 原生类型
+
+**EntityLogic** 继承自 `GodotComponent`（→ `Node`），**不继承 `Node2D`/`CanvasItem`**。即使场景根节点是 `Sprite2D`（原生 IS-A `Node2D`），C# 侧的 `is Node2D` / `is CanvasItem` 检查会返回 `false`。
+
+> **解决方案**：使用 Godot 的 `Set()` / `Get()` 方法操作原生属性，绕过 C# 类型层级限制：
+> ```csharp
+> // ❌ 错误：CachedNode is Node2D → false（EntityLogic 不继承 Node2D）
+> if (CachedNode is Node2D node) { node.Position = value; }
+> 
+> // ✅ 正确：直接操作原生属性
+> CachedNode?.Set(Node2D.PropertyName.Position, value);
+> ```
+
+**UIFormLogic** 直接继承 `Control`（→ `CanvasItem` → `Node`），无此问题。
+
+### 实体 ID 生成
+
+实体 ID 使用 `Interlocked.Increment` 原子计数器生成，确保无碰撞。不再使用时间戳（存在整数溢出风险）。
+
+### 组件事件取消订阅
+
+`EntityComponent` 在 `OnExitTree()` 中取消订阅 `IEntityManager` 事件，防止场景重载时的内存泄漏和事件重复触发。
+
+---
+
 ## 🌟 开源项目推荐
 
 | 项目 | 描述 | 链接 |
@@ -402,6 +429,46 @@ GameFramework (GameEntry)
 | **Luban** | 游戏配置解决方案 | [GitHub](https://github.com/focus-creative-games/luban) |
 | **Godot Engine** | 开源游戏引擎 | [GitHub](https://github.com/godotengine/godot) |
 | **CodeGraph** | 代码知识图谱工具 | [GitHub](https://github.com/colbymchenry/codegraph) |
+
+---
+
+---
+
+## 🚧 待实现功能
+
+以下功能已规划但尚未实现，欢迎贡献：
+
+### 资源系统
+
+- [ ] **Updatable / UpdatableWhilePlaying 资源模式** — 需要实现 `IDownloadManager` 和 `IFileSystemManager` 的 Godot 层绑定，当前自动回退到 Package 模式
+- [ ] **EditorResourceManager 事件实现** — `ResourceVerifyStart`、`ResourceApplySuccess` 等 IResourceManager 事件在编辑模式下未触发，当前仅声明了空事件
+
+### UI 系统
+
+- [ ] **`OpenUIForm` 异步版本** — 需要实现 `AddOpenUIFormTask` 方法，通过 `OpenUIFormSuccess`/`OpenUIFormFailure` 事件来完成 `TaskCompletionSource`
+- [ ] **UIItem 字符串键热更新** — `IStringKey` 接口已定义，`UIStringLabelKey` 已部分实现，需完善多语言切换时的自动刷新机制
+
+### 实体系统
+
+- [ ] **EntityLogic 类型层级优化** — 考虑让 `EntityLogic` 继承 `Node2D`（类似 `UIFormLogic` 继承 `Control`），从根本上消除 `is Node2D` / `is CanvasItem` 检查失败的 C# 类型层级问题
+
+### 网络系统
+
+- [ ] **NetworkComponent** — 纯 C# 层 `INetworkManager` 已有接口定义，需在 Godot 层实现网络组件、Helper 基类及默认实现
+
+### 场景系统
+
+- [ ] **SceneComponent 完善** — 当前仅含基础框架，需实现场景加载/卸载、场景切换过渡、异步加载进度回调
+
+### 调试与工具
+
+- [ ] **DebuggerComponent** — 纯 C# 层 `IDebuggerManager` 已有接口定义，需在 Godot 层实现调试窗口组件
+- [ ] **单元测试框架** — 当前项目未配置测试框架，建议引入 `xUnit` + `NSubstitute` 覆盖核心模块
+
+### 编辑器插件
+
+- [ ] **Entity/UI 可视化编辑器** — 在 Godot 编辑器中提供实体组、界面组的可视化配置面板
+- [ ] **Luban 一键生成菜单** — 将 `gen_code_bin_to_project.bat` 集成到 Godot 编辑器菜单中
 
 ---
 

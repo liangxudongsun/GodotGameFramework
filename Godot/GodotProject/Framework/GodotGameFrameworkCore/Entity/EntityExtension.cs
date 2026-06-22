@@ -13,9 +13,11 @@
 
 using GameConfig.Entity;
 using GameFramework.Entity;
+using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GodotGameFramework.Entity
@@ -29,6 +31,8 @@ namespace GodotGameFramework.Entity
     /// </summary>
     public static class EntityExtension
     {
+        private static int s_NextEntityId;
+
         /// <summary>
         /// 通过实体编号获取 EntityLogic 子类。
         ///
@@ -54,22 +58,13 @@ namespace GodotGameFramework.Entity
             return null;
         }
         #region 显示实体
-        public static int ShowEntity<TLogic>(this EntityComponent entityComponent, EntityId entityId, object userData = null)
-            where TLogic : EntityLogic, new()
-        {
-            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
-            if (cfg == null)
-            {
-                Log.Error($"Entity {entityId} not found in EntityConfig");
-                return -1;
-            }
-
-            int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
-            entityComponent.ShowEntity<TLogic>(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
-            return ser;
-        }
         public static int ShowEntity(this EntityComponent entityComponent, EntityId entityId, object userData = null)
         {
+            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            {
+                Log.Error("EntityConfig data table is not available.");
+                return -1;
+            }
             EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
             if (cfg == null)
             {
@@ -77,19 +72,24 @@ namespace GodotGameFramework.Entity
                 return -1;
             }
 
-            return entityComponent.ShowEntity(cfg.AssetPath, cfg.EntityGroupName, userData);
-
+            int ser = Interlocked.Increment(ref s_NextEntityId);
+            entityComponent.ShowEntity(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            return ser;
         }
         public static int ShowEntity(this EntityComponent entityComponent, string assetPath, string entityGroupName, object userData = null)
         {
-            int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
+            int ser = Interlocked.Increment(ref s_NextEntityId);
             entityComponent.ShowEntity(ser, assetPath, entityGroupName, userData);
             return ser;
         }
 
-        public static async Task<IEntity> ShowEntityAsync<TLogic>(this EntityComponent entityComponent, EntityId entityId, object userData = null)
-            where TLogic : EntityLogic, new()
+        public static async Task<IEntity> ShowEntityAsync(this EntityComponent entityComponent, EntityId entityId, object userData = null)
         {
+            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            {
+                Log.Error("EntityConfig data table is not available.");
+                return null;
+            }
             EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
             if (cfg == null)
             {
@@ -97,8 +97,8 @@ namespace GodotGameFramework.Entity
                 return null;
             }
 
-            int ser = (int)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 使用时间戳作为临时编号
-            return await entityComponent.ShowEntityAsync<TLogic>(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            int ser = Interlocked.Increment(ref s_NextEntityId);
+            return await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
         }
         #endregion
 
@@ -279,6 +279,5 @@ namespace GodotGameFramework.Entity
 
             return result;
         }
-
     }
 }

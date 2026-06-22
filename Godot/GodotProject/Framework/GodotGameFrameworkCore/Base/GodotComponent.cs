@@ -94,7 +94,7 @@ namespace GodotGameFramework
 					OnUnpaused();
 					break;
 				case (int)NotificationPredelete:
-					OnPreDestory();
+					OnPreDestroy();
 					break;
 			}
 		}
@@ -143,14 +143,16 @@ namespace GodotGameFramework
 
 		#region 生命周期虚方法
 		/// <summary>
-		/// 节点进入场景树时触发（可多次触发）
+		/// 节点就绪时触发（仅一次，所有子节点已进入树）。
+		/// 对应 Godot _Ready 阶段。
 		/// </summary>
 		public virtual void OnEnter()
 		{
 		}
 
 		/// <summary>
-		/// 节点就绪时触发（仅一次，所有子节点已进入树）
+		/// 节点进入场景树时触发（可多次触发）。
+		/// 对应 Godot _EnterTree 阶段。
 		/// </summary>
 		public virtual void OnInit()
 		{
@@ -275,7 +277,7 @@ namespace GodotGameFramework
 		/// <summary>
 		/// 节点被销毁前触发
 		/// </summary>
-		public virtual void OnPreDestory()
+		public virtual void OnPreDestroy()
 		{
 		}
 		#endregion
@@ -353,13 +355,20 @@ namespace GodotGameFramework
 		}
 		public static Node Create(string type, Node parent = null)
 		{
-			var node = Activator.CreateInstance(Utility.Assembly.GetType(type)) as Node;
+			var resolvedType = Utility.Assembly.GetType(type);
+			if (resolvedType == null)
+			{
+				Log.Error("Can not find type '{0}'.", type);
+				return null;
+			}
+			var node = Activator.CreateInstance(resolvedType) as Node;
 			if (parent != null)
 				parent.AddChild(node);
 			return node;
 		}
 		public static void Destroy(Node node)
 		{
+			if (node == null) return;
 			node.QueueFree();
 		}
 	}

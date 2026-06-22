@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using GameConfig.Entity;
 using GameFramework;
 using GameFramework.DataNode;
+using GameFramework.Entity;
 using GameFramework.Localization;
 using Godot;
 using GodotGameFramework;

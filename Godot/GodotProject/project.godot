@@ -33,7 +33,9 @@ enabled=PackedStringArray("res://addons/LocalizationEditor/plugin.cfg", "res://a
 [file_customization]
 
 folder_colors={
-"res://Framework/GodotGameFrameworkCore/": "orange"
+"res://Framework/GodotGameFrameworkCore/": "orange",
+"res://TheGame/": "green",
+"res://TheGame/GameScripts/GameProto/": "gray"
 }
 
 [physics]

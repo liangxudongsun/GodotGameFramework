@@ -67,8 +67,6 @@ namespace GodotGameFramework.Entity
 
         /// <summary>
         /// 实体初始化。
-        /// 如果 userData 是 ShowEntityInfo，会自动解包取出内部 UserData
-        /// 再传递给 EntityLogic.OnInit
         /// </summary>
         public void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
         {
@@ -76,20 +74,13 @@ namespace GodotGameFramework.Entity
             EntityAssetName = entityAssetName;
             Name = GameFramework.Utility.Text.Format("Entity_{0}_{1}", entityId, entityAssetName);
 
-            // 解包 ShowEntityInfo，提取内部 UserData
-            object actualUserData = userData;
-            if (userData is ShowEntityInfo showInfo)
-            {
-                actualUserData = showInfo.UserData;
-            }
-
             if (isNewInstance)
             {
                 // 首次创建：设置 EntityGroup，调用 EntityLogic.OnInit
                 EntityGroup = entityGroup;
                 try
                 {
-                    m_EntityLogic?.OnInit(actualUserData);
+                    m_EntityLogic?.OnInit(userData);
                 }
                 catch (Exception exception)
                 {
@@ -133,7 +124,7 @@ namespace GodotGameFramework.Entity
             Name = "Entity (Recycled)";
 
             // 隐藏视觉
-            SetEntityActive(false);
+            Logic.Visible = false;
         }
 
         /// <summary>
@@ -239,28 +230,6 @@ namespace GodotGameFramework.Entity
             catch (Exception exception)
             {
                 Log.Warning("Entity '{0}' OnUpdate with exception '{1}'.", Id, exception);
-            }
-        }
-
-        /// <summary>
-        /// 设置实体的活跃状态。
-        /// </summary>
-        /// <param name="active">是否活跃（可见）。</param>
-        internal void SetEntityActive(bool active)
-        {
-            if (GetChildCount() <= 0)
-            {
-                return;
-            }
-
-            var child = GetChild(0);
-            if (child is CanvasItem canvasItem)
-            {
-                canvasItem.Visible = active;
-            }
-            else if (child is Node3D node3D)
-            {
-                node3D.Visible = active;
             }
         }
 

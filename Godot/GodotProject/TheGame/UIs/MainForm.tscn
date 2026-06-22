@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cymxn7v3et51l"]
 
 [ext_resource type="Script" uid="uid://b8p38yuebgnp1" path="res://TheGame/GameScripts/UI/MainForm.cs" id="1_h2ej1"]
+[ext_resource type="Script" uid="uid://c1xds3as1e25b" path="res://Framework/GodotGameFrameworkCore/UI/UIStringLabelKey.cs" id="2_sjr3c"]
 
 [node name="MainForm" type="Control" unique_id=1859845138]
 layout_mode = 3
@@ -14,14 +15,14 @@ script = ExtResource("1_h2ej1")
 
 [node name="TopBar" type="PanelContainer" parent="." unique_id=489537559]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 1
+anchor_left = 1.0
 anchor_right = 1.0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = 52.0
-grow_horizontal = 2
-grow_vertical = 0
+offset_left = -491.0
+offset_top = 61.0
+offset_right = -58.0
+offset_bottom = 181.0
+grow_horizontal = 0
 
 [node name="Margin" type="MarginContainer" parent="TopBar" unique_id=418909686]
 layout_mode = 2
@@ -36,36 +37,23 @@ theme_override_constants/separation = 20
 
 [node name="ScoreLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832063107]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+size_flags_stretch_ratio = 1.39
+theme_override_font_sizes/font_size = 30
 text = "Score: 0"
+script = ExtResource("2_sjr3c")
+Key = "MainForm.Score"
 
 [node name="Spacer" type="Control" parent="TopBar/Margin/HBox" unique_id=1427592179]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BlocksLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=745364164]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Blocks: 0"
-
-[node name="Spacer2" type="Control" parent="TopBar/Margin/HBox" unique_id=706873668]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="StateLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=385730033]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Ready"
-
-[node name="Spacer3" type="Control" parent="TopBar/Margin/HBox" unique_id=1159018230]
-layout_mode = 2
-size_flags_horizontal = 3
-
 [node name="TimerLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832024025]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Time: 30s"
 horizontal_alignment = 2
+script = ExtResource("2_sjr3c")
+Key = "MainForm.Timer"
 
 [node name="PopupContainer" type="VBoxContainer" parent="." unique_id=607148741]
 layout_mode = 1

@@ -108,10 +108,18 @@ namespace GodotGameFramework.UI
                 {
                     node2D.Position = Vector2.Zero;
                 }
+                else
+                {
+                    node.Set(Node2D.PropertyName.Position, Vector2.Zero);
+                }
                 // 显示节点
                 if (node is CanvasItem canvasItem)
                 {
                     canvasItem.Visible = true;
+                }
+                else
+                {
+                    node.Set(CanvasItem.PropertyName.Visible, true);
                 }
             }
         }
@@ -130,6 +138,10 @@ namespace GodotGameFramework.UI
                 if (node is CanvasItem canvasItem)
                 {
                     canvasItem.Visible = false;
+                }
+                else
+                {
+                    node.Set(CanvasItem.PropertyName.Visible, false);
                 }
             }
         }

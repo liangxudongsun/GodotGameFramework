@@ -16,76 +16,124 @@ namespace GodotGameFramework.Entity
     /// 这是用户编写实体游戏逻辑的基类。用户通过继承此类并重写生命周期方法，
     /// 来实现实体的初始化、显示、隐藏、更新等逻辑。
     /// </summary>
-    public abstract class EntityLogic
+    public abstract partial class EntityLogic : GodotComponent
     {
         private bool m_Available;
 
         private bool m_Visible;
 
-        public Entity Owner { get; private set; }
+        public Entity Entity { get; private set; }
+
+        public bool Available => m_Available;
+        private Node m_CachedNode;
 
         public Node CachedNode
         {
             get
             {
-                if (Owner != null && Owner.GetChildCount() > 0)
+                if (m_CachedNode == null && Entity != null && Entity.GetChildCount() > 0)
                 {
-                    return Owner.GetChild(0);
+                    m_CachedNode = Entity.GetChild(0);
                 }
 
-                return null;
+                return m_CachedNode;
+            }
+        }
+        public Vector2 Position2D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector2)CachedNode.Get(Node2D.PropertyName.Position) : Vector2.Zero;
+            }
+            set
+            {
+                CachedNode?.Set(Node2D.PropertyName.Position, value);
+            }
+        }
+        public Vector3 Position3D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector3)CachedNode.Get(Node3D.PropertyName.Position) : Vector3.Zero;
+            }
+            set
+            {
+                CachedNode?.Set(Node3D.PropertyName.Position, value);
             }
         }
 
-        public bool Available => m_Available;
+        public float Rotation2D
+        {
+            get
+            {
+                return CachedNode != null ? (float)CachedNode.Get(Node2D.PropertyName.Rotation) : 0f;
+            }
+            set
+            {
+                CachedNode?.Set(Node2D.PropertyName.Rotation, value);
+            }
+        }
+        public Vector3 Rotation3D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector3)CachedNode.Get(Node3D.PropertyName.Rotation) : Vector3.Zero;
+            }
+            set
+            {
+                CachedNode?.Set(Node3D.PropertyName.Rotation, value);
+            }
+        }
+
+        public Vector2 Scale2D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector2)CachedNode.Get(Node2D.PropertyName.Scale) : Vector2.One;
+            }
+            set
+            {
+                CachedNode?.Set(Node2D.PropertyName.Scale, value);
+            }
+        }
+        public Vector3 Scale3D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector3)CachedNode.Get(Node3D.PropertyName.Scale) : Vector3.One;
+            }
+            set
+            {
+                CachedNode?.Set(Node3D.PropertyName.Scale, value);
+            }
+        }
+        public Vector2 GlobalPosition2D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector2)CachedNode.Get(Node2D.PropertyName.GlobalPosition) : Vector2.Zero;
+            }
+            set
+            {
+                CachedNode?.Set(Node2D.PropertyName.GlobalPosition, value);
+            }
+        }
+        public Vector3 GlobalPosition3D
+        {
+            get
+            {
+                return CachedNode != null ? (Vector3)CachedNode.Get(Node3D.PropertyName.GlobalPosition) : Vector3.Zero;
+            }
+            set
+            {
+                CachedNode?.Set(Node3D.PropertyName.GlobalPosition, value);
+            }
+        }
 
         public bool Visible
         {
             get => m_Visible;
             set => InternalSetVisible(value);
-        }
-
-        public bool IsNode2D => CachedNode is Node2D;
-
-        public bool IsNode3D => CachedNode is Node3D;
-
-        public Node2D AsNode2D => CachedNode as Node2D;
-
-        public Node3D AsNode3D => CachedNode as Node3D;
-
-        public Vector2 Position2D
-        {
-            get => AsNode2D?.Position ?? Vector2.Zero;
-            set { if (AsNode2D != null) AsNode2D.Position = value; }
-        }
-
-        public float Rotation2D
-        {
-            get => AsNode2D?.Rotation ?? 0f;
-            set { if (AsNode2D != null) AsNode2D.Rotation = value; }
-        }
-
-        public Vector2 Scale2D
-        {
-            get => AsNode2D?.Scale ?? Vector2.One;
-            set { if (AsNode2D != null) AsNode2D.Scale = value; }
-        }
-
-        public Vector3 Position3D
-        {
-            get => AsNode3D?.Position ?? Vector3.Zero;
-            set { if (AsNode3D != null) AsNode3D.Position = value; }
-        }
-
-        public Vector3 Rotation3D
-        {
-            get => AsNode3D?.Rotation ?? Vector3.Zero;
-            set { if (AsNode3D != null) AsNode3D.Rotation = value; }
-        }
-        public Vector3 Scale3D
-        {
-            get => AsNode3D?.Scale ?? Vector3.One;
-            set { if (AsNode3D != null) AsNode3D.Scale = value; }
         }
 
         protected internal virtual void OnInit(object userData)
@@ -176,18 +224,13 @@ namespace GodotGameFramework.Entity
         protected virtual void InternalSetVisible(bool visible)
         {
             m_Visible = visible;
-            if (Owner != null && Owner.GetChildCount() > 0 && Owner.GetChild(0) is CanvasItem cachedNode)
-            {
-                cachedNode.Visible = visible;
-            }
+            CachedNode?.Set(CanvasItem.PropertyName.Visible, visible);
         }
 
 
         internal void InternalSetOwner(Entity owner)
         {
-            Owner = owner;
+            Entity = owner;
         }
-
-
     }
 }

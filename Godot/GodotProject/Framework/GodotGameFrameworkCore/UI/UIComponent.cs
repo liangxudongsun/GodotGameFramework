@@ -159,6 +159,13 @@ namespace GodotGameFramework.UI
                 return;
             }
 
+            m_EventComponent = GameEntry.GetComponent<EventComponent>();
+            if (m_EventComponent == null)
+            {
+                Log.Fatal("Event component is invalid.");
+                return;
+            }
+
             if (m_EnableOpenUIFormSuccessEvent)
             {
                 m_UIManager.OpenUIFormSuccess += OnOpenUIFormSuccess;
@@ -179,13 +186,6 @@ namespace GodotGameFramework.UI
             if (m_EnableCloseUIFormCompleteEvent)
             {
                 m_UIManager.CloseUIFormComplete += OnCloseUIFormComplete;
-            }
-
-            m_EventComponent = GameEntry.GetComponent<EventComponent>();
-            if (m_EventComponent == null)
-            {
-                Log.Fatal("Event component is invalid.");
-                return;
             }
 
             m_UIManager.SetResourceManager(GF.Base.EditorResourceMode ? GF.Base.EditorResourceManager : GameFrameworkEntry.GetModule<IResourceManager>());

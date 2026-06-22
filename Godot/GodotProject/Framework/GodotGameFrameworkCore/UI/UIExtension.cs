@@ -172,10 +172,12 @@ namespace GodotGameFramework.UI
             UIForm[] uiForms = uiComponent.GetAllLoadedUIForms();
             for (int i = 0; i < uiForms.Length; i++)
             {
-                // 检查该 UI 是否属于指定组
                 if (uiForms[i] != null && uiComponent.IsValidUIForm(uiForms[i]))
                 {
-                    uiComponent.CloseUIForm(uiForms[i], userData);
+                    if (uiForms[i].UIGroup?.Name == uiGroupName)
+                    {
+                        uiComponent.CloseUIForm(uiForms[i], userData);
+                    }
                 }
             }
         }
@@ -223,6 +225,10 @@ namespace GodotGameFramework.UI
         }
         public static int OpenUIForm(this UIComponent uiComponent, UIFormId formId, object userData = null)
         {
+            if (GF.DataTable?.TbUIFormConfig?.DataList == null)
+            {
+                throw new Exception("UIFormConfig data table is not available.");
+            }
             UIFormConfig formConfig = GF.DataTable.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
             if (formConfig == null)
             {
@@ -230,17 +236,9 @@ namespace GodotGameFramework.UI
             }
             return uiComponent.OpenUIForm(formConfig.AssetPath, formConfig.UIGroupName, userData);
         }
-        public static Task<UIForm> OpenUIForm(this UIComponent uiComponent, UIFormId formId, string uiGroupName, object userData = null)
-        {
-            UIFormConfig formConfig = GF.DataTable.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
-            if (formConfig == null)
-            {
-                throw new Exception($"找不到UIFormId:{formId}的配置");
-            }
-            var task = new TaskCompletionSource<UIForm>();
-            int serialId = uiComponent.OpenUIForm(formConfig.AssetPath, uiGroupName, userData);
-            // uiComponent.AddOpenUIFormTask(serialId, task);
-            return task.Task;
-        }
+        // TODO: Async OpenUIForm requires AddOpenUIFormTask support on UIComponent
+        // to hook into OpenUIFormSuccess/OpenUIFormFailure events and complete the TCS.
+        // public static Task<UIForm> OpenUIForm(this UIComponent uiComponent, UIFormId formId, string uiGroupName, object userData = null)
+        // { ... }
     }
 }

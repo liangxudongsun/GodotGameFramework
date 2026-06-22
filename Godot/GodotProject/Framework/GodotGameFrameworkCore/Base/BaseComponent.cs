@@ -26,7 +26,7 @@ namespace GodotGameFramework
         {
             get
             {
-                return m_EditorResourceMode &= OS.HasFeature("editor");
+                return m_EditorResourceMode && OS.HasFeature("editor");
             }
         }
         private IResourceManager m_ResourceManager;
@@ -42,7 +42,7 @@ namespace GodotGameFramework
             }
         }
         [Export]
-        public Language EditorLanague;
+        public Language EditorLanguage;
         [Export]
         private string m_TextHelper = "GodotGameFramework.DefaultTextHelper";
         [Export]
@@ -187,9 +187,9 @@ namespace GodotGameFramework
         /// 节点被销毁时调用。
         /// 触发核心框架的 Shutdown 流程。
         /// </summary>
-        public override void OnPreDestory()
+        public override void OnPreDestroy()
         {
-            base.OnPreDestory();
+            base.OnPreDestroy();
             Shutdown();
         }
 

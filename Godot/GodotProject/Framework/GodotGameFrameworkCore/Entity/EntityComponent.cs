@@ -47,22 +47,39 @@ namespace GodotGameFramework.Entity
             m_EntityManager = GameFrameworkEntry.GetModule<IEntityManager>();
             if (m_EntityManager == null) { Log.Fatal("Entity manager is invalid."); return; }
 
+            m_EventComponent = GameEntry.GetComponent<EventComponent>();
+            if (m_EventComponent == null) { Log.Fatal("Event component is invalid."); return; }
+
             if (m_EnableShowEntitySuccessEvent) m_EntityManager.ShowEntitySuccess += OnShowEntitySuccess;
             m_EntityManager.ShowEntityFailure += OnShowEntityFailure;
             if (m_EnableShowEntityUpdateEvent) m_EntityManager.ShowEntityUpdate += OnShowEntityUpdate;
             if (m_EnableShowEntityDependencyAssetEvent) m_EntityManager.ShowEntityDependencyAsset += OnShowEntityDependencyAsset;
             if (m_EnableHideEntityCompleteEvent) m_EntityManager.HideEntityComplete += OnHideEntityComplete;
 
-            m_EventComponent = GameEntry.GetComponent<EventComponent>();
-            if (m_EventComponent == null) { Log.Fatal("Event component is invalid."); return; }
-
-            m_EntityManager.SetResourceManager(GF.Base.EditorResourceMode ? GF.Base.EditorResourceManager : GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
+            var resourceManager = GF.Base.EditorResourceMode
+                ? GF.Base.EditorResourceManager
+                : GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>();
+            if (resourceManager == null) { Log.Fatal("Resource manager is invalid."); return; }
+            m_EntityManager.SetResourceManager(resourceManager);
             m_EntityManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
             m_EntityHelper = Helper.CreateHelper(m_EntityHelperTypeName, m_EntityHelper);
             if (m_EntityHelper == null) { Log.Fatal("Can not create entity helper."); return; }
             m_EntityHelper.Name = m_EntityHelperTypeName;
             m_EntityManager.SetEntityHelper(m_EntityHelper);
             AddChild(m_EntityHelper);
+        }
+
+        public override void OnExitTree()
+        {
+            if (m_EntityManager != null)
+            {
+                m_EntityManager.ShowEntitySuccess -= OnShowEntitySuccess;
+                m_EntityManager.ShowEntityFailure -= OnShowEntityFailure;
+                m_EntityManager.ShowEntityUpdate -= OnShowEntityUpdate;
+                m_EntityManager.ShowEntityDependencyAsset -= OnShowEntityDependencyAsset;
+                m_EntityManager.HideEntityComplete -= OnHideEntityComplete;
+            }
+            base.OnExitTree();
         }
 
         // ================================================================
@@ -109,11 +126,10 @@ namespace GodotGameFramework.Entity
         // ================================================================
 
         /// <summary>显示实体，通过泛型参数指定 EntityLogic 类型。</summary>
-        public void ShowEntity<TLogic>(int entityId, string entityAssetName,
-            string entityGroupName, object userData = null) where TLogic : EntityLogic, new()
+        public void ShowEntity(int entityId, string entityAssetName,
+            string entityGroupName, object userData = null)
         {
-            ShowEntityInfo showInfo = ShowEntityInfo.Create(typeof(TLogic), userData);
-            m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, DefaultPriority, showInfo);
+            m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, DefaultPriority, userData);
         }
 
         /// <summary>显示实体，指定加载优先级。</summary>
@@ -123,23 +139,16 @@ namespace GodotGameFramework.Entity
             m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, priority, userData);
         }
 
-        /// <summary>显示实体。</summary>
-        public void ShowEntity(int entityId, string entityAssetName,
-            string entityGroupName, object userData = null)
-        {
-            ShowEntity(entityId, entityAssetName, entityGroupName, DefaultPriority, userData);
-        }
 
         // ================================================================
         //  异步显示实体
         // ================================================================
 
         /// <summary>异步显示实体，通过泛型参数指定 EntityLogic 类型。返回 Task&lt;IEntity&gt;。</summary>
-        public async Task<IEntity> ShowEntityAsync<TLogic>(int entityId, string entityAssetName,
-            string entityGroupName, object userData = null) where TLogic : EntityLogic, new()
+        public async Task<IEntity> ShowEntityAsync(int entityId, string entityAssetName,
+            string entityGroupName, object userData = null)
         {
-            ShowEntityInfo showInfo = ShowEntityInfo.Create(typeof(TLogic), userData);
-            return await ShowEntityAsyncInternal(entityId, entityAssetName, entityGroupName, DefaultPriority, showInfo);
+            return await ShowEntityAsyncInternal(entityId, entityAssetName, entityGroupName, DefaultPriority, userData);
         }
 
         /// <summary>异步显示实体，指定加载优先级。返回 Task&lt;IEntity&gt;。</summary>
@@ -147,13 +156,6 @@ namespace GodotGameFramework.Entity
             string entityGroupName, int priority, object userData = null)
         {
             return await ShowEntityAsyncInternal(entityId, entityAssetName, entityGroupName, priority, userData);
-        }
-
-        /// <summary>异步显示实体。返回 Task&lt;IEntity&gt;。</summary>
-        public async Task<IEntity> ShowEntityAsync(int entityId, string entityAssetName,
-            string entityGroupName, object userData = null)
-        {
-            return await ShowEntityAsyncInternal(entityId, entityAssetName, entityGroupName, DefaultPriority, userData);
         }
 
         /// <summary>异步显示实体内部实现。通过 TaskCompletionSource 桥接 IEntityManager 事件。</summary>
@@ -300,7 +302,7 @@ namespace GodotGameFramework.Entity
             IEntity childEntity = m_EntityManager.GetEntity(childEntityId);
             m_EntityManager.DetachEntity(childEntityId, userData);
 
-            if (childEntity is Node childNode && childEntity != null)
+            if (childEntity is Node childNode)
             {
                 IEntityGroup group = childEntity.EntityGroup;
                 if (group?.Helper is DefaultEntityGroupHelper groupHelper)

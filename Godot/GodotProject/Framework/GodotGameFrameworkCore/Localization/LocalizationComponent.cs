@@ -86,7 +86,7 @@ namespace GodotGameFramework.Localization
             m_LocalizationHelper = localizationHelper;
             m_LocalizationManager.SetDataProviderHelper(localizationHelper);
             m_LocalizationManager.SetLocalizationHelper(localizationHelper);
-            m_LocalizationManager.Language = GF.Base.EditorLanague != Language.Unspecified ? GF.Base.EditorLanague : m_LocalizationManager.SystemLanguage;
+            m_LocalizationManager.Language = GF.Base.EditorLanguage != Language.Unspecified ? GF.Base.EditorLanguage : m_LocalizationManager.SystemLanguage;
         }
 
         /// <summary>
