@@ -5,8 +5,8 @@
 ##	index	键	值
 	1	BulletShoot	弹幕射击
 	2	Demo	戈多游戏框架Demo
-
-
+	3	MainForm.Score	分数:
+	4	MainForm.Timer	计时:
 
 		
 

@@ -129,6 +129,28 @@ namespace GodotGameFramework.Entity
                 CachedNode?.Set(Node3D.PropertyName.GlobalPosition, value);
             }
         }
+        public bool FlipX
+        {
+            get
+            {
+                return CachedNode != null ? (bool)CachedNode.Get(Sprite2D.PropertyName.FlipH) : false;
+            }
+            set
+            {
+                CachedNode?.Set(Sprite2D.PropertyName.FlipH, value);
+            }
+        }
+        public bool FlipY
+        {
+            get
+            {
+                return CachedNode != null ? (bool)CachedNode.Get(Sprite2D.PropertyName.FlipH) : false;
+            }
+            set
+            {
+                CachedNode?.Set(Sprite2D.PropertyName.FlipV, value);
+            }
+        }
 
         public bool Visible
         {

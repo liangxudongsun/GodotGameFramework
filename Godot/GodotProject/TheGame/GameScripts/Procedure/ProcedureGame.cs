@@ -27,10 +27,10 @@ public class ProcedureGame : ProcedureBase
     /// 进入流程。
     /// 加载配置、重置游戏状态、创建并启动游戏状态 FSM。
     /// </summary>
-    protected internal override void OnEnter(ProcedureOwner procedureOwner)
+    protected internal override async void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
-        GF.UI.OpenUIForm(UIFormId.MenuForm);
+        await GF.UI.OpenUIFormAsync(UIFormId.MenuForm);
     }
 
     /// <summary>

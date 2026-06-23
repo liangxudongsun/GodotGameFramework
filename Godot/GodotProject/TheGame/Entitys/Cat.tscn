@@ -7,4 +7,5 @@
 texture = ExtResource("1_dk710")
 region_enabled = true
 region_rect = Rect2(942.4002, 462.33344, 228.79999, 93.13336)
+region_filter_clip_enabled = true
 script = ExtResource("2_55yih")

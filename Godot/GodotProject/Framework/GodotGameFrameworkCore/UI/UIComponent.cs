@@ -13,6 +13,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using GameConfig;
+using System.Threading.Tasks;
 
 namespace GodotGameFramework.UI
 {
@@ -137,7 +138,7 @@ namespace GodotGameFramework.UI
                 m_UIManager.InstancePriority = m_InstancePriority = value;
             }
         }
-
+        private static readonly Dictionary<int, TaskCompletionSource<IUIForm>> m_UIFormTask = new Dictionary<int, TaskCompletionSource<IUIForm>>();
         /// <summary>
         /// 游戏框架组件初始化。
         ///
@@ -679,6 +680,12 @@ namespace GodotGameFramework.UI
         private void OnOpenUIFormSuccess(object sender, GameFramework.UI.OpenUIFormSuccessEventArgs e)
         {
             m_EventComponent.Fire(this, OpenUIFormSuccessEventArgs.Create(e));
+            m_UIFormTask.TryGetValue(e.UIForm.SerialId, out TaskCompletionSource<IUIForm> tcs);
+            if (tcs != null)
+            {
+                tcs.TrySetResult(e.UIForm);
+                m_UIFormTask.Remove(e.UIForm.SerialId);
+            }
         }
 
         private void OnOpenUIFormFailure(object sender, GameFramework.UI.OpenUIFormFailureEventArgs e)
@@ -687,6 +694,13 @@ namespace GodotGameFramework.UI
             if (m_EnableOpenUIFormFailureEvent)
             {
                 m_EventComponent.Fire(this, OpenUIFormFailureEventArgs.Create(e));
+                m_UIFormTask.TryGetValue(e.SerialId, out TaskCompletionSource<IUIForm> tcs);
+                if (tcs != null)
+                {
+                    Log.Fatal(e.ErrorMessage);
+                    tcs.TrySetException(new GameFrameworkException(e.ErrorMessage));
+                    m_UIFormTask.Remove(e.SerialId);
+                }
             }
         }
 
@@ -703,6 +717,34 @@ namespace GodotGameFramework.UI
         private void OnCloseUIFormComplete(object sender, GameFramework.UI.CloseUIFormCompleteEventArgs e)
         {
             m_EventComponent.Fire(this, CloseUIFormCompleteEventArgs.Create(e));
+        }
+
+
+        public Task<IUIForm> OpenUIFormAsync(string uiFormAssetName, string uiGroupName, int priority, bool pauseCoveredUIForm, object userData = null)
+        {
+            return OpenUIFormAsyncInternal(uiFormAssetName, uiGroupName, priority, pauseCoveredUIForm, userData);
+        }
+        public Task<IUIForm> OpenUIFormAsync(string uiFormAssetName, string uiGroupName, object userData = null)
+        {
+            return OpenUIFormAsyncInternal(uiFormAssetName, uiGroupName, DefaultPriority, false, userData);
+        }
+        private Task<IUIForm> OpenUIFormAsyncInternal(string uiFormAssetName, string uiGroupName, int priority, bool pauseCoveredUIForm, object userData)
+        {
+            if (string.IsNullOrEmpty(uiFormAssetName))
+            {
+                Log.Warning("UI form asset name is invalid.");
+                return Task.FromResult<IUIForm>(null);
+            }
+            if (string.IsNullOrEmpty(uiGroupName))
+            {
+                Log.Warning("UI group name is invalid.");
+                return Task.FromResult<IUIForm>(null);
+            }
+
+            var task = new TaskCompletionSource<IUIForm>();
+            int serialId = m_UIManager.OpenUIForm(uiFormAssetName, uiGroupName, priority, pauseCoveredUIForm, userData);
+            m_UIFormTask.Add(serialId, task);
+            return task.Task;
         }
     }
 }

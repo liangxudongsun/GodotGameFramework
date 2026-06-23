@@ -25,7 +25,7 @@ namespace GodotGameFramework.Entity
         private EventComponent m_EventComponent = null;
         private EntityHelperBase m_EntityHelper = null;
 
-        [Export(PropertyHint.Flags, "!")] private bool m_EnableShowEntitySuccessEvent = true;
+        [Export] private bool m_EnableShowEntitySuccessEvent = true;
         [Export] private bool m_EnableShowEntityFailureEvent = true;
         [Export] private bool m_EnableShowEntityUpdateEvent = false;
         [Export] private bool m_EnableShowEntityDependencyAssetEvent = false;

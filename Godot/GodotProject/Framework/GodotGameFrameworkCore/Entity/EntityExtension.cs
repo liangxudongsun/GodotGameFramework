@@ -82,8 +82,15 @@ namespace GodotGameFramework.Entity
             entityComponent.ShowEntity(ser, assetPath, entityGroupName, userData);
             return ser;
         }
-
-        public static async Task<IEntity> ShowEntityAsync(this EntityComponent entityComponent, EntityId entityId, object userData = null)
+        /// <summary>
+        /// 异步显示实体。泛型指定 EntityLogic 子类。
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="entityComponent"></param>
+        /// <param name="entityId"></param>
+        /// <param name="userData"></param>
+        /// <returns></returns>
+        public static async Task<T> ShowEntityAsync<T>(this EntityComponent entityComponent, EntityId entityId, object userData = null) where T : EntityLogic
         {
             if (GF.DataTable?.TbEntityConfig?.DataList == null)
             {
@@ -98,7 +105,33 @@ namespace GodotGameFramework.Entity
             }
 
             int ser = Interlocked.Increment(ref s_NextEntityId);
-            return await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            return (entity as Entity)?.Logic as T;
+        }
+        /// <summary>
+        /// 异步显示实体。强转为 EntityLogic 子类。
+        /// </summary>
+        /// <param name="entityComponent"></param>
+        /// <param name="entityId"></param>
+        /// <param name="userData"></param>
+        /// <returns></returns>
+        public static async Task<EntityLogic> ShowEntityAsync(this EntityComponent entityComponent, EntityId entityId, object userData = null)
+        {
+            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            {
+                Log.Error("EntityConfig data table is not available.");
+                return null;
+            }
+            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            if (cfg == null)
+            {
+                Log.Error($"Entity {entityId} not found in EntityConfig");
+                return null;
+            }
+
+            int ser = Interlocked.Increment(ref s_NextEntityId);
+            IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            return (entity as Entity)?.Logic;
         }
         #endregion
 
