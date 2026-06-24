@@ -90,9 +90,6 @@ namespace GodotGameFramework.Resource
 
         /// <summary>
         /// 卸载场景。
-        ///
-        /// 预留实现。Scene 系统在后续 Phase 中实现。
-        /// 当前直接调用失败回调。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="unloadSceneCallbacks">卸载场景回调函数集。</param>
@@ -108,13 +105,8 @@ namespace GodotGameFramework.Resource
 
         /// <summary>
         /// 释放资源。
-        ///
         /// 在 Godot 中，资源由引擎的引用计数系统自动管理，
         /// 当没有引用指向资源时，引擎会自动释放。
-        ///
-        /// 注意：不应在此调用 Dispose()，因为 Godot 内部可能仍持有对资源的引用
-        /// （如 ResourceLoader 缓存），强制 Dispose 会导致悬挂指针异常。
-        /// 让 Godot 引擎通过引用计数自动回收是最安全的做法。
         /// </summary>
         /// <param name="objectToRelease">要释放的资源对象。</param>
         public override void Release(object objectToRelease)

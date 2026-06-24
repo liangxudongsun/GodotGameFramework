@@ -5,6 +5,7 @@
 
 using System.Collections.Concurrent;
 using System.Linq;
+using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Procedure;
 using GodotGameFramework;

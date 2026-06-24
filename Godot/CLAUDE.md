@@ -108,12 +108,13 @@ Namespace `GameFramework`. **No Godot dependency.**
 - **ReferencePool（引用池）**：位于 `GameFramework/Base/ReferencePool/`，提供 `T Acquire<T>()` 和 `Release<T>(T)` 来复用对象，减少 GC。所有事件参数（`GameEventArgs` 子类）和常用数据结构都应实现 `IReference` 接口并使用引用池管理
 - **Variable（变量系统）**：`GameFramework/Base/Variable/` 提供 `Variable<T>` 泛型类，用于在 FSM/Procedure 等模块间传递类型安全的值。基类 `Variable` 提供 `GetValue()`/`SetValue()`，支持通过引用池复用
 - **事件参数模式**：自定义事件参数需继承 `GameEventArgs`（实现 `IReference`），提供 `Create()` 静态工厂方法从引用池获取实例，`Clear()` 方法重置状态。事件 ID 通过 `typeof(T).GetHashCode()` 生成
-- **组件初始化顺序**：`OnInit()`（对应 `_Ready` 阶段，子→父顺序）是所有组件初始化逻辑的入口。组件间依赖通过 `GameEntry.GetComponent<T>()` 解决，因此 `OnInit` 中可安全获取其他已注册组件
+- **组件初始化顺序**：`OnInit()` 在 `_EnterTree` 阶段触发（父→子顺序）；`OnEnter()` 在 `_Ready` 阶段触发（子→父顺序，仅一次）。组件间依赖通过 `GameEntry.GetComponent<T>()` 解决。由于 `_EnterTree` 按父→子顺序执行，`OnInit` 中可安全获取场景树中排在前面的组件
 - **Luban 配置驱动 API**：Entity 和 UI 的创建不再使用泛型类型参数，改为 Luban 生成的枚举 ID + 配置表查找。Entity 用 `EntityId` 枚举（`GF.Entity.ShowEntity(EntityId)` 从 `TbEntityConfig` 查 assetPath/groupName），UI 用 `UIFormId` 枚举（`GF.UI.OpenUIForm(UIFormId)` 从 `TbUIFormConfig` 查 assetPath/groupName）。类型安全的 Logic 获取通过扩展方法：`GF.Entity.GetEntity<TLogic>(entityId)` / `GF.UI.GetUIForm<TLogic>(serialId)`
 - **EditorResourceMode**：编辑器开发时，`BaseComponent.EditorResourceMode` 为 true，框架使用 `EditorResourceManager` 直接加载 Godot 资源文件（绕过资源版本管理管线）。`EditorResourceManager` 位于 `GodotGameFrameworkCore/Resource/EditorResourceManager.cs`，实现 `IResourceManager` 接口。发布时设为 false 以启用完整资源管线
 - **新增组件流程**：继承 `GameFrameworkComponent` → 挂到 `GameFramework.tscn` 根节点下 → 在 `GF.cs` 加静态属性
 - **GameFolderConstant**：资源路径常量 `res://TheGame/...`，位于 `Framework/GodotGameFrameworkCore/Config/GameFolderConstant.cs`，含格式模板（如 `AUDIO = "res://TheGame/Audios/{0}.{1}"`、`Entities = "res://TheGame/DataTables/Entitiys/{0}.tscn"`、`GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes"`），手动维护。注意：`Entities` 路径中 `Entitiys` 拼写为历史遗留
-- **Entity / UI 扩展方法**：`EntityExtension` 和 `UIExtension` 提供类型安全的静态扩展方法，位于 `GodotGameFrameworkCore` 对应目录下。Entity：`GetEntity<TLogic>(entityId)`、`ShowEntity(EntityId)`、`ShowEntityAsync(EntityId)`、`HideEntitySafe()`。UI：`GetUIForm<TLogic>(serialId)`、`OpenUIForm(UIFormId)`、`CloseUIForms(groupName)`、`GetTopUIForm()`
+- **Entity / UI 扩展方法**：`EntityExtension` 和 `UIExtension` 提供类型安全的静态扩展方法，位于 `GodotGameFrameworkCore` 对应目录下。Entity：`GetEntity<TLogic>(entityId)`、`ShowEntity(EntityId)`、`ShowEntityAsync(EntityId)`、`HideEntitySafe()`。UI：`GetUIForm<TLogic>(serialId)`、`OpenUIForm(UIFormId)`、`OpenUIFormAsync(UIFormId)`、`OpenUIFormAsync<T>(UIFormId)`、`CloseUIForms(groupName)`、`GetTopUIForm()`
+- **C# 类型层级陷阱与 Set() 模式**：`EntityLogic` 继承 `GodotComponent`（→ `Node`），不继承 `Node2D`/`CanvasItem`。即使场景根节点是 `Sprite2D`（原生 IS-A Node2D），C# 的 `is Node2D` 检查也返回 `false`。操作原生属性必须使用 `node.Set(PropertyName.Xxx, value)` 和 `(Vector2)node.Get(PropertyName.Xxx)`，不能用 `is`/`as` 类型转换。`EntityLogic` 提供属性封装：`Position2D`/`Position3D`、`Rotation2D`/`Rotation3D`、`Scale2D`/`Scale3D`、`GlobalPosition2D`/`GlobalPosition3D`。`UIFormLogic` 直接继承 `Control`（→ `CanvasItem`），无此问题
 
 ## Editor Plugins
 

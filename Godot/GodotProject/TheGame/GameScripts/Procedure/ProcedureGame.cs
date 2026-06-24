@@ -4,7 +4,6 @@ using GameFramework.Procedure;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
 using GodotGameFramework.UI;
-using TheGame;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>

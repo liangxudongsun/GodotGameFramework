@@ -5,6 +5,7 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
+using GameConfig.Constant;
 using GameFramework;
 using GameFramework.ObjectPool;
 using GameFramework.Resource;

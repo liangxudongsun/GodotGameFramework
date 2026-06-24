@@ -1,8 +1,9 @@
 using GameConfig.Character;
+using GameConfig.Constant;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
-using System;
+
 
 public partial class CatLogic : EntityLogic
 {
@@ -28,6 +29,10 @@ public partial class CatLogic : EntityLogic
 	{
 		base.OnUpdate(elapseSeconds, realElapseSeconds);
 		KeybordMove(elapseSeconds);
+		if (Input.IsActionJustPressed("ui_text_newline"))
+		{
+			GF.Scene.UnloadScene(ResourcesCollectionConstant.Map);
+		}
 	}
 
 	private void KeybordMove(float elapseSeconds)

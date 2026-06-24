@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://chld578oe1cwt"]
+
+[ext_resource type="Texture2D" uid="uid://bq3u1gc1t7hag" path="res://TheGame/Sprites/map1.png" id="1_r3kxp"]
+
+[node name="Node2D" type="Node2D" unique_id=1705836904]
+
+[node name="Map1" type="Sprite2D" parent="." unique_id=607431773]
+position = Vector2(953, 527)
+scale = Vector2(1.43, 1.43)
+texture = ExtResource("1_r3kxp")

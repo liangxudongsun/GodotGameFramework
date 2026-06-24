@@ -69,6 +69,7 @@ namespace GodotGameFramework.Entity
             AddChild(m_EntityHelper);
         }
 
+
         public override void OnExitTree()
         {
             if (m_EntityManager != null)
@@ -363,14 +364,14 @@ namespace GodotGameFramework.Entity
             if (m_EnableShowEntityFailureEvent) m_EventComponent.Fire(this, e);
         }
 
-        private void OnShowEntityUpdate(object sender, ShowEntityUpdateEventArgs e)
+        private void OnShowEntityUpdate(object sender, GameFramework.Entity.ShowEntityUpdateEventArgs e)
         {
-            // 继承自 GameFrameworkEventArgs，无法通过 EventComponent 转发
+            m_EventComponent.Fire(this, ShowEntityUpdateEventArgs.Create(e));
         }
 
-        private void OnShowEntityDependencyAsset(object sender, ShowEntityDependencyAssetEventArgs e)
+        private void OnShowEntityDependencyAsset(object sender, GameFramework.Entity.ShowEntityDependencyAssetEventArgs e)
         {
-            // 继承自 GameFrameworkEventArgs，无法通过 EventComponent 转发
+            m_EventComponent.Fire(this, ShowEntityDependencyAssetEventArgs.Create(e));
         }
 
         private void OnHideEntityComplete(object sender, HideEntityCompleteEventArgs e) => m_EventComponent.Fire(this, e);

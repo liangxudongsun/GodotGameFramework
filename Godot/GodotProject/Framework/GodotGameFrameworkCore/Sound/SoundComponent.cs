@@ -8,6 +8,7 @@
 using GameFramework;
 using GameFramework.Sound;
 using Godot;
+using System;
 using System.Collections.Generic;
 
 namespace GodotGameFramework.Sound
@@ -19,6 +20,7 @@ namespace GodotGameFramework.Sound
 
         private ISoundManager m_SoundManager = null;
         private SoundHelperBase m_SoundHelper = null;
+        private EventComponent m_EventComponent = null;
 
         [Export] private bool m_EnablePlaySoundSuccessEvent = true;
         [Export] private bool m_EnablePlaySoundFailureEvent = true;
@@ -37,6 +39,7 @@ namespace GodotGameFramework.Sound
 
             m_SoundManager = GameFrameworkEntry.GetModule<ISoundManager>();
             if (m_SoundManager == null) { Log.Fatal("Sound manager is invalid."); return; }
+            m_EventComponent = GameEntry.GetComponent<EventComponent>();
 
             if (m_EnablePlaySoundSuccessEvent) m_SoundManager.PlaySoundSuccess += OnPlaySoundSuccess;
             m_SoundManager.PlaySoundFailure += OnPlaySoundFailure;
@@ -56,9 +59,11 @@ namespace GodotGameFramework.Sound
 
         }
 
+
         // ================================================================
         //  声音组管理
         // ================================================================
+
 
         /// <summary>是否存在指定声音组。</summary>
         public bool HasSoundGroup(string soundGroupName) => m_SoundManager.HasSoundGroup(soundGroupName);
@@ -215,23 +220,37 @@ namespace GodotGameFramework.Sound
         //  事件处理
         // ================================================================
 
-        private void OnPlaySoundSuccess(object sender, PlaySoundSuccessEventArgs e)
+        private void OnPlaySoundSuccess(object sender, GameFramework.Sound.PlaySoundSuccessEventArgs e)
         {
-            // PlaySoundSuccessEventArgs 继承自 GameFrameworkEventArgs，无法通过 EventComponent 转发
+            // PlaySoundInfo playSoundInfo = (PlaySoundInfo)e.UserData;
+            // if (playSoundInfo != null)
+            // {
+            //     SoundAgentHelperBase soundAgentHelper = (SoundAgentHelperBase)e.SoundAgent.Helper;
+            //     if (playSoundInfo.BindingEntity != null)
+            //     {
+            //         soundAgentHelper.SetBindingEntity(playSoundInfo.BindingEntity);
+            //     }
+            //     else
+            //     {
+            //         soundAgentHelper.SetWorldPosition(playSoundInfo.WorldPosition);
+            //     }
+            // }
+
+            // m_EventComponent.Fire(this, PlaySoundSuccessEventArgs.Create(e));
         }
 
-        private void OnPlaySoundFailure(object sender, PlaySoundFailureEventArgs e)
+        private void OnPlaySoundFailure(object sender, GameFramework.Sound.PlaySoundFailureEventArgs e)
         {
             Log.Warning("Play sound failure, asset '{0}', group '{1}', msg '{2}'.",
                 e.SoundAssetName, e.SoundGroupName, e.ErrorMessage);
         }
 
-        private void OnPlaySoundUpdate(object sender, PlaySoundUpdateEventArgs e)
+        private void OnPlaySoundUpdate(object sender, GameFramework.Sound.PlaySoundUpdateEventArgs e)
         {
-            // PlaySoundUpdateEventArgs 继承自 GameFrameworkEventArgs，无法通过 EventComponent 转发
+            m_EventComponent.Fire(this, PlaySoundUpdateEventArgs.Create(e));
         }
 
-        private void OnPlaySoundDependencyAsset(object sender, PlaySoundDependencyAssetEventArgs e)
+        private void OnPlaySoundDependencyAsset(object sender, GameFramework.Sound.PlaySoundDependencyAssetEventArgs e)
         {
             // PlaySoundDependencyAssetEventArgs 继承自 GameFrameworkEventArgs，无法通过 EventComponent 转发
         }

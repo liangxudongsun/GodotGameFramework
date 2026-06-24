@@ -174,7 +174,7 @@ namespace GodotGameFramework.Resource
             }
         }
 
-        /// <summary>反序列化 V2 版本列表（当前格式）。完整 Assets/Resources/FileSystems/ResourceGroups。</summary>
+        /// <summary>反序列化 V2 版本列表（当前格式）。完整 res//:TheGame/.../...。</summary>
         public static PackageVersionList PackageVersionListDeserializeCallback_V2(Stream stream)
         {
             using (BinaryReader binaryReader = new BinaryReader(stream, Encoding.UTF8))

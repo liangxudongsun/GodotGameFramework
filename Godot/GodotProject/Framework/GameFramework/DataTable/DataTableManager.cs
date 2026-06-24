@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using GameConfig;
+using GameConfig.Constant;
 using GameFramework.Resource;
 using GodotGameFramework;
 using GodotGameFramework.Resource;

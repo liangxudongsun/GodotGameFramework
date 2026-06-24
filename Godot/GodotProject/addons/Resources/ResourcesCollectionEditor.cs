@@ -1,4 +1,5 @@
 #if TOOLS
+using GameConfig.Constant;
 using GameFramework;
 using Godot;
 using GodotGameFramework.Resource;
@@ -115,7 +116,7 @@ public partial class ResourcesCollectionEditor : EditorPlugin
 			$"// Generation time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
 			$"//------------------------------------------------------------\n" +
 			$"\n" +
-			$"namespace TheGame\n" +
+			$"namespace GameConfig.Constant\n" +
 			$"{{\n" +
 			$"\tpublic static class ResourcesCollectionConstant\n" +
 			$"\t{{\n" +
