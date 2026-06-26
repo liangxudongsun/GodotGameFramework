@@ -7,9 +7,11 @@
 
 using System;
 using GameConfig;
+using GameConfig.Constant;
 using GameFramework.Localization;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 
 public partial class MenuForm : UIFormLogic
@@ -35,6 +37,11 @@ public partial class MenuForm : UIFormLogic
         m_SettingButton.Pressed += OnSettingButtonPressed;
         m_CloseButton.Pressed += OnCloseButtonPressed;
         m_StartButton.Pressed += OnStartButtonPressed;
+    }
+    protected internal override void OnOpen(object userData)
+    {
+        base.OnOpen(userData);
+        // GF.Sound.PlayBGM(ResourcesCollectionConstant.Menu);
     }
 
     private void OnStartButtonPressed()

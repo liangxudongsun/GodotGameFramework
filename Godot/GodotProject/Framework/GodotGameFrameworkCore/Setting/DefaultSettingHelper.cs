@@ -10,7 +10,7 @@ using GameFramework.Setting;
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
+
 
 namespace GodotGameFramework.Setting
 {
@@ -305,8 +305,7 @@ namespace GodotGameFramework.Setting
         /// <returns>反序列化后的对象。</returns>
         public T GetObject<T>(string settingName)
         {
-            string json = GetString(settingName);
-            return JsonSerializer.Deserialize<T>(json);
+            return Utility.Json.ToObject<T>(GetString(settingName));
         }
 
         /// <summary>
@@ -317,8 +316,7 @@ namespace GodotGameFramework.Setting
         /// <returns>反序列化后的对象。</returns>
         public object GetObject(Type objectType, string settingName)
         {
-            string json = GetString(settingName);
-            return JsonSerializer.Deserialize(json, objectType);
+            return Utility.Json.ToObject(objectType, GetString(settingName));
         }
 
         /// <summary>
@@ -352,7 +350,7 @@ namespace GodotGameFramework.Setting
         /// </summary>
         public void SetObject<T>(string settingName, T obj)
         {
-            SetString(settingName, JsonSerializer.Serialize(obj));
+            SetString(settingName, Utility.Json.ToJson(obj));
         }
 
         /// <summary>
@@ -360,7 +358,7 @@ namespace GodotGameFramework.Setting
         /// </summary>
         public void SetObject(string settingName, object obj)
         {
-            SetString(settingName, JsonSerializer.Serialize(obj));
+            SetString(settingName, Utility.Json.ToJson(obj));
         }
     }
 }

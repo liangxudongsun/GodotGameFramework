@@ -3,6 +3,7 @@ using GameConfig.Constant;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.Sound;
 
 
 public partial class CatLogic : EntityLogic
@@ -29,53 +30,15 @@ public partial class CatLogic : EntityLogic
 	{
 		base.OnUpdate(elapseSeconds, realElapseSeconds);
 		KeybordMove(elapseSeconds);
-		if (Input.IsActionJustPressed("ui_text_newline"))
-		{
-			GF.Scene.UnloadScene(ResourcesCollectionConstant.Map);
-		}
 	}
 
 	private void KeybordMove(float elapseSeconds)
 	{
-		//WASD控制猫移动
-		if (Input.IsActionPressed("ui_right"))
-		{
-			Position2D = new Vector2(Position2D.X + m_CatConfig.Speed * elapseSeconds, Position2D.Y);
-			FlipX = false;
-			m_IsMoving = true;
-		}
-		else
-		{
-			m_IsMoving = false;
-		}
-		if (Input.IsActionPressed("ui_left"))
-		{
-			Position2D = new Vector2(Position2D.X - m_CatConfig.Speed * elapseSeconds, Position2D.Y);
-			FlipX = true;
-			m_IsMoving = true;
-		}
-		else
-		{
-			m_IsMoving = false;
-		}
-		if (Input.IsActionPressed("ui_down"))
-		{
-			Position2D = new Vector2(Position2D.X, Position2D.Y + m_CatConfig.Speed * elapseSeconds);
-			m_IsMoving = true;
-		}
-		else
-		{
-			m_IsMoving = false;
-		}
-		if (Input.IsActionPressed("ui_up"))
-		{
-			Position2D = new Vector2(Position2D.X, Position2D.Y - m_CatConfig.Speed * elapseSeconds);
-			m_IsMoving = true;
-		}
-		else
-		{
-			m_IsMoving = false;
-		}
+		float hor = Input.GetAxis("ui_left", "ui_right");
+		float ver = Input.GetAxis("ui_up", "ui_down");
+		Position2D += new Vector2(hor, ver) * m_CatConfig.Speed * elapseSeconds;
+		m_IsMoving = hor != 0 || ver != 0;
+		FlipX = hor < 0;
 	}
 
 }

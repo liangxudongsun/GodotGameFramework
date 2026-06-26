@@ -1,45 +1,18 @@
 //------------------------------------------------------------
 // SoundExtension - 音频组件便捷扩展方法
-// 提供 SoundComponent 的常用便捷方法，简化音频播放代码。
-//
-// 使用方式：
-//   GF.Sound.PlayBGM("res://Audio/bgm.mp3");
-//   GF.Sound.PlaySFX("res://Audio/click.wav");
-//   GF.Sound.PlayUISound("res://Audio/ui_click.wav");
-//   GF.Sound.StopBGM(1.0f);
-//
-// 对应 UGF 参考项目中的 SoundExtension（PlayBGM/PlaySound/PlayEffect，
-// 振动和冷却逻辑属于游戏特定逻辑，不移植）。
 //------------------------------------------------------------
+
+using GameFramework.Sound;
+using GodotGameFramework.Scene;
 
 namespace GodotGameFramework.Sound
 {
     /// <summary>
     /// 音频组件扩展方法。
-    ///
-    /// 提供 SoundComponent 的常用便捷方法，
-    /// 包括按声音组快捷播放 BGM/SFX/UI 音效。
-    ///
     /// </summary>
     public static class SoundExtension
     {
-        /// <summary>
-        /// 默认背景音乐组名称。
-        /// 与 SoundComponent 初始化时创建的默认组名一致。
-        /// </summary>
-        private const string DefaultMusicGroup = "Music";
 
-        /// <summary>
-        /// 默认音效组名称。
-        /// 与 SoundComponent 初始化时创建的默认组名一致。
-        /// </summary>
-        private const string DefaultSfxGroup = "SFX";
-
-        /// <summary>
-        /// 默认 UI 音效组名称。
-        /// 与 SoundComponent 初始化时创建的默认组名一致。
-        /// </summary>
-        private const string DefaultUiGroup = "UI";
 
         /// <summary>
         /// 播放背景音乐（BGM）。
@@ -56,7 +29,7 @@ namespace GodotGameFramework.Sound
         /// <returns>声音序列号，可用于后续停止/暂停操作。</returns>
         public static int PlayBGM(this SoundComponent soundComponent, string soundAssetName)
         {
-            return soundComponent.PlaySound(soundAssetName, DefaultMusicGroup);
+            return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultMusicGroup);
         }
 
         /// <summary>
@@ -68,25 +41,17 @@ namespace GodotGameFramework.Sound
         /// <returns>声音序列号。</returns>
         public static int PlayBGM(this SoundComponent soundComponent, string soundAssetName, object userData)
         {
-            return soundComponent.PlaySound(soundAssetName, DefaultMusicGroup, 0, userData);
+            return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultMusicGroup, 0, userData);
         }
 
         /// <summary>
         /// 播放音效（SFX）。
-        ///
-        /// 使用 SFX 组播放，优先级为 0（默认）。
-        /// SFX 组默认配置为 8 个 Agent，适合同时播放多个音效。
-        ///
-        /// <code>
-        /// GF.Sound.PlaySFX("res://Audio/explosion.wav");
-        /// </code>
-        /// </summary>
         /// <param name="soundComponent">音频组件。</param>
         /// <param name="soundAssetName">音频资源路径。</param>
         /// <returns>声音序列号。</returns>
         public static int PlaySFX(this SoundComponent soundComponent, string soundAssetName)
         {
-            return soundComponent.PlaySound(soundAssetName, DefaultSfxGroup);
+            return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultSfxGroup);
         }
 
         /// <summary>
@@ -98,25 +63,17 @@ namespace GodotGameFramework.Sound
         /// <returns>声音序列号。</returns>
         public static int PlaySFX(this SoundComponent soundComponent, string soundAssetName, object userData)
         {
-            return soundComponent.PlaySound(soundAssetName, DefaultSfxGroup, 0, userData);
+            return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultSfxGroup, 0, userData);
         }
 
         /// <summary>
         /// 播放 UI 音效。
-        ///
-        /// 使用 UI 组播放，优先级为 0（默认）。
-        /// UI 组默认配置为 4 个 Agent，适合按钮点击等 UI 交互音效。
-        ///
-        /// <code>
-        /// GF.Sound.PlayUISound("res://Audio/ui_click.wav");
-        /// </code>
-        /// </summary>
         /// <param name="soundComponent">音频组件。</param>
         /// <param name="soundAssetName">音频资源路径。</param>
         /// <returns>声音序列号。</returns>
         public static int PlayUISound(this SoundComponent soundComponent, string soundAssetName)
         {
-            return soundComponent.PlaySound(soundAssetName, DefaultUiGroup);
+            return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultUiGroup);
         }
 
         /// <summary>
@@ -128,7 +85,7 @@ namespace GodotGameFramework.Sound
         /// <returns>声音序列号。</returns>
         public static int PlayUISound(this SoundComponent soundComponent, string soundAssetName, object userData)
         {
-            return soundComponent.PlaySound(soundAssetName, DefaultUiGroup, 0, userData);
+            return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultUiGroup, 0, userData);
         }
 
         /// <summary>

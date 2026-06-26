@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://bup2c8ljfa3f6"]
 
 [ext_resource type="Texture2D" uid="uid://bdy5b5i3jeyx8" path="res://TheGame/Sprites/Y1.png" id="1_dk710"]
-[ext_resource type="Script" uid="uid://dh70d8ekpj6pk" path="res://TheGame/GameScripts/Entity/CatLogic.cs" id="2_55yih"]
 
 [node name="Cat" type="Sprite2D" unique_id=223061908]
 position = Vector2(822, 548)
@@ -9,6 +8,3 @@ texture = ExtResource("1_dk710")
 region_enabled = true
 region_rect = Rect2(942.4002, 462.33344, 228.79999, 93.13336)
 region_filter_clip_enabled = true
-script = ExtResource("2_55yih")
-
-[node name="Camera2D" type="Camera2D" parent="." unique_id=2080281662]

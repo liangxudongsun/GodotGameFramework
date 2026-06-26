@@ -14,4 +14,10 @@
          Release 构建时可移除此行以消除所有日志调用的性能开销。 -->
     <DefineConstants>ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG</DefineConstants>
   </PropertyGroup>
+
+   <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>.\Framework\GodotGameFrameworkCore\Lib\Json\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

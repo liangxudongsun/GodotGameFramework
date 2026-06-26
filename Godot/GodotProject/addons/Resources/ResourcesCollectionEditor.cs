@@ -101,11 +101,14 @@ public partial class ResourcesCollectionEditor : EditorPlugin
 		{
 			string constName = Path.GetFileNameWithoutExtension(file);
 
+			//获得文件所在文件夹名
+			string folderName = Path.GetFileName(Path.GetDirectoryName(file));
+
 			// 常量名不能以数字开头
 			if (constName.Length > 0 && char.IsDigit(constName[0]))
 				constName = $"_{constName}";
 
-			lines.Add($"\t\tpublic const string {constName} = \"{file}\";");
+			lines.Add($"\t\tpublic const string {folderName}_{constName} = \"{file}\";");
 		}
 
 		// 生成完整 C# 文件内容

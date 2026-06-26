@@ -49,6 +49,8 @@ namespace GodotGameFramework
         private string m_VersionHelper = "GodotGameFramework.DefaultVersionHelper";
         [Export]
         private string m_LogHelper = "GodotGameFramework.DefaultLogHelper";
+        [Export]
+        private string m_JsonHelper = "GodotGameFramework.DefaultJsonHelper";
         /// <summary>
         /// 帧率设置。默认 60 帧。
         /// </summary>
@@ -170,6 +172,7 @@ namespace GodotGameFramework
             InitTextHelper();
             InitVersionHelper();
             InitLogHelper();
+            InitJsonHelper();
 
             // 输出框架版本信息
             Log.Info("Game Framework Version: {0}", GameFramework.Version.GameFrameworkVersion);
@@ -274,6 +277,22 @@ namespace GodotGameFramework
             catch (Exception exception)
             {
                 Log.Fatal("Can not create log helper instance with exception '{0}'.", exception);
+            }
+        }
+
+        private void InitJsonHelper()
+        {
+            try
+            {
+                Type jsonHelperType = Utility.Assembly.GetType(m_JsonHelper);
+                if (jsonHelperType != null)
+                {
+                    Utility.Json.SetJsonHelper((Utility.Json.IJsonHelper)Activator.CreateInstance(jsonHelperType));
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal("Can not create json helper instance with exception '{0}'.", exception);
             }
         }
     }

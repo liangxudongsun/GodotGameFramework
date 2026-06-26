@@ -14,43 +14,14 @@ namespace GodotGameFramework.Sound
 {
     /// <summary>
     /// 默认声音代理辅助器。
-    ///
-    /// 封装 Godot 的 AudioStreamPlayer，实现核心框架的 ISoundAgentHelper 接口。
-    /// 每个实例对应一个 AudioStreamPlayer 节点，负责单个声音的播放控制。
-    ///
-    /// 核心功能：
-    /// 1. 播放/停止/暂停/恢复（含淡入淡出支持）
-    /// 2. 音量（线性 0-1 ↔ 分贝 VolumeDb 转换）
-    /// 3. 静音（AudioStreamPlayer 无原生 Mute，通过 VolumeDb=-80f 实现）
-    /// 4. 循环播放（通过 AudioStreamLoopable.LoopMode 控制）
-    /// 5. 播放速率（映射到 PitchScale）
-    /// 6. 自然播放完成检测（连接 Finished 信号）
-    /// 7. 淡入淡出（使用 Godot Tween API）
-    ///
-    /// Godot 4.x 适配要点：
-    /// - AudioStreamPlayer.VolumeDb 是分贝值，需要 Mathf.LinearToDb/DbToLinear 转换
-    /// - AudioStreamPlayer 没有原生 Mute 属性，通过设 VolumeDb=-80f 实现
-    /// - AudioStreamPlayer 没有 Pause/Resume 方法，需要保存播放位置后 Stop，恢复时 Seek+Play
-    /// - AudioStreamPlayer 不支持空间音频（PanStereo/SpatialBlend/MaxDistance/DopplerLevel 存储但 no-op）
-    /// - 自然完成通过 Finished 信号检测（比 _Process 轮询更高效）
-    ///
     /// </summary>
     public sealed partial class DefaultSoundAgentHelper : SoundAgentHelperBase
     {
-        // ================================================================
-        //  常量
-        // ================================================================
-
         /// <summary>
         /// 静音时的分贝值。
         /// -80db 在人耳中基本听不到，等效于 Unity AudioSource.mute = true。
         /// </summary>
         private const float MuteVolumeDb = -80f;
-
-        // ================================================================
-        //  私有字段
-        // ================================================================
-
         /// <summary>
         /// 被封装的 AudioStreamPlayer 节点。
         /// 每个 Agent 对应一个独立的 AudioStreamPlayer 实例。
@@ -73,33 +44,15 @@ namespace GodotGameFramework.Sound
 
         /// <summary>
         /// 优先级。
-        /// 在 GGF 中直接存储核心框架的优先级值（0=最低），不做反转。
         /// </summary>
         private int m_Priority;
 
-        /// <summary>
-        /// 立体声声相（-1 到 1）。
-        /// AudioStreamPlayer 不支持此属性，仅存储以保持接口兼容。
-        /// </summary>
         private float m_PanStereo;
 
-        /// <summary>
-        /// 空间混合量（0=2D，1=3D）。
-        /// AudioStreamPlayer 不支持此属性，仅存储以保持接口兼容。
-        /// 如需空间音频，可使用 AudioStreamPlayer2D 或 AudioStreamPlayer3D。
-        /// </summary>
         private float m_SpatialBlend;
 
-        /// <summary>
-        /// 最大距离（3D 空间音频参数）。
-        /// AudioStreamPlayer 不支持此属性，仅存储以保持接口兼容。
-        /// </summary>
         private float m_MaxDistance;
 
-        /// <summary>
-        /// 多普勒效应等级（3D 空间音频参数）。
-        /// AudioStreamPlayer 不支持此属性，仅存储以保持接口兼容。
-        /// </summary>
         private float m_DopplerLevel;
 
         /// <summary>
@@ -111,7 +64,6 @@ namespace GodotGameFramework.Sound
 
         /// <summary>
         /// 是否处于暂停状态。
-        /// 用于区分"已暂停"和"已停止"两种非播放状态。
         /// </summary>
         private bool m_IsPaused;
 
@@ -212,50 +164,12 @@ namespace GodotGameFramework.Sound
         }
 
         /// <summary>
-        /// 获取或设置是否循环播放。
-        ///
-        /// Godot 中循环播放是通过 AudioStream 资源对象的属性控制的，
-        /// 而不是 AudioStreamPlayer 本身。不同子类型的 API 不同：
-        /// - AudioStreamWav: LoopMode 枚举 (Forward/Disabled/PingPong)
-        /// - AudioStreamOggVorbis: Loop bool
-        /// - AudioStreamMP3: Loop bool
-        ///
-        /// 注意：不是所有 AudioStream 子类型都支持循环。
-        /// 常见的 AudioStreamWav、AudioStreamOggVorbis、AudioStreamMP3 都支持。
+        /// Godot有资源自身导入设置进行循环的设置
         /// </summary>
         public override bool Loop
         {
-            get
-            {
-                if (AudioStreamPlayer.Stream is AudioStreamWav wav)
-                {
-                    return wav.LoopMode != AudioStreamWav.LoopModeEnum.Disabled;
-                }
-                if (AudioStreamPlayer.Stream is AudioStreamOggVorbis ogg)
-                {
-                    return ogg.Loop;
-                }
-                if (AudioStreamPlayer.Stream is AudioStreamMP3 mp3)
-                {
-                    return mp3.Loop;
-                }
-                return false;
-            }
-            set
-            {
-                if (AudioStreamPlayer.Stream is AudioStreamWav wav)
-                {
-                    wav.LoopMode = value ? AudioStreamWav.LoopModeEnum.Forward : AudioStreamWav.LoopModeEnum.Disabled;
-                }
-                else if (AudioStreamPlayer.Stream is AudioStreamOggVorbis ogg)
-                {
-                    ogg.Loop = value;
-                }
-                else if (AudioStreamPlayer.Stream is AudioStreamMP3 mp3)
-                {
-                    mp3.Loop = value;
-                }
-            }
+            get;
+            set;
         }
 
         /// <summary>
@@ -346,9 +260,6 @@ namespace GodotGameFramework.Sound
         ///
         /// 当声音自然播放完成时（非循环声音播到末尾），触发此事件。
         /// SoundComponent 通过此事件得知 Agent 已空闲，可分配给新的播放请求。
-        ///
-        /// 检测到 !IsPlaying && clip != null 时触发 ResetSoundAgent。
-        /// GGF 改用 Finished 信号实现，更高效。
         /// </summary>
         public override event EventHandler<ResetSoundAgentEventArgs> ResetSoundAgent
         {
@@ -559,11 +470,6 @@ namespace GodotGameFramework.Sound
             AudioStreamPlayer.Stream = audioStream;
             return true;
         }
-
-        // ================================================================
-        //  私有方法 - 音量控制
-        // ================================================================
-
         /// <summary>
         /// 应用当前音量到 AudioStreamPlayer。
         ///
@@ -675,10 +581,6 @@ namespace GodotGameFramework.Sound
             m_IsFadingOut = false;
         }
 
-        // ================================================================
-        //  私有方法 - 信号处理
-        // ================================================================
-
         /// <summary>
         /// AudioStreamPlayer 播放完成信号处理。
         ///
@@ -689,14 +591,6 @@ namespace GodotGameFramework.Sound
         /// - 循环声音不会触发此信号
         /// - 淡出过程中不应触发（避免 Stop 时重复处理）
         /// - 暂停状态下不应触发
-        ///
-        /// <code>
-        /// if (!m_ApplicationPauseFlag && !IsPlaying && m_AudioSource.clip != null)
-        /// {
-        ///     // 触发 ResetSoundAgent 事件
-        /// }
-        /// </code>
-        /// GGF 使用信号代替轮询，更高效。
         /// </summary>
         private void OnAudioStreamPlayerFinished()
         {
@@ -710,6 +604,11 @@ namespace GodotGameFramework.Sound
             if (m_IsPaused)
             {
                 return;
+            }
+
+            if (AudioStreamPlayer.Stream._HasLoop())
+            {
+                return; // 循环声音不触发
             }
 
             // 通知订阅者：Agent 已空闲
@@ -740,9 +639,6 @@ namespace GodotGameFramework.Sound
             m_IsPaused = false;
             m_FadeTween = null;
             m_IsFadingOut = false;
-
-            // 连接 AudioStreamPlayer 的 Finished 信号，用于检测自然播放完成
-            // 当非循环声音播放到末尾时，Godot 会自动触发此信号
             AudioStreamPlayer.Finished += OnAudioStreamPlayerFinished;
         }
 

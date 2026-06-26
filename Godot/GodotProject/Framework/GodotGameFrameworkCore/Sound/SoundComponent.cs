@@ -16,7 +16,23 @@ namespace GodotGameFramework.Sound
     /// <summary>声音组件。封装 ISoundManager，提供音频播放/停止/暂停/恢复及声音组管理。</summary>
     public sealed partial class SoundComponent : GameFrameworkComponent
     {
-        private const int DefaultAgentCount = 8;
+        /// <summary>
+        /// 默认背景音乐组名称。
+        /// 与 SoundComponent 初始化时创建的默认组名一致。
+        /// </summary>
+        public const string DefaultMusicGroup = "Music";
+
+        /// <summary>
+        /// 默认音效组名称。
+        /// 与 SoundComponent 初始化时创建的默认组名一致。
+        /// </summary>
+        public const string DefaultSfxGroup = "SFX";
+
+        /// <summary>
+        /// 默认 UI 音效组名称。
+        /// 与 SoundComponent 初始化时创建的默认组名一致。
+        /// </summary>
+        public const string DefaultUiGroup = "UI";
 
         private ISoundManager m_SoundManager = null;
         private SoundHelperBase m_SoundHelper = null;
@@ -56,6 +72,7 @@ namespace GodotGameFramework.Sound
             m_SoundHelper = soundHelper;
             m_SoundHelper.Name = m_SoundHelperTypeName;
             m_SoundManager.SetSoundHelper(soundHelper);
+            AddChild(m_SoundHelper);
 
         }
 
@@ -97,9 +114,22 @@ namespace GodotGameFramework.Sound
             {
                 var audioPlayer = new AudioStreamPlayer();
                 audioPlayer.Name = $"Agent {i}";
+                SoundAgentHelperBase agentHelper = (SoundAgentHelperBase)Create(m_SoundAgentHelperTypeName);
+                switch (soundGroupName)
+                {
+                    case DefaultMusicGroup:
+                        audioPlayer.ProcessMode = AudioStreamPlayer.ProcessModeEnum.Always;
+                        audioPlayer.Bus = DefaultMusicGroup;
+                        break;
+                    case DefaultSfxGroup:
+                        audioPlayer.Bus = DefaultSfxGroup;
+                        break;
+                    case DefaultUiGroup:
+                        audioPlayer.Bus = DefaultUiGroup;
+                        break;
+                }
                 groupHelper.AddChild(audioPlayer);
 
-                SoundAgentHelperBase agentHelper = Create(m_SoundAgentHelperTypeName) as SoundAgentHelperBase;
                 if (agentHelper == null)
                 {
                     Log.Error("Can not create sound agent helper.");
