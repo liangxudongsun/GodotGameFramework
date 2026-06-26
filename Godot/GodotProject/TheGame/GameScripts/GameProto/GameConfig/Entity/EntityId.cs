@@ -17,6 +17,10 @@ namespace GameConfig.Entity
         /// 猫猫
         /// </summary>
         Cat = 0,
+        /// <summary>
+        /// 感叹号
+        /// </summary>
+        GanTan = 1,
     }
 
 } 

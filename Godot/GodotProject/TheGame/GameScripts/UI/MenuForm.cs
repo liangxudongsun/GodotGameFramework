@@ -1,20 +1,14 @@
-//------------------------------------------------------------
-// 主菜单界面逻辑。
-// 通过 UIComponent.OpenUIForm<MainMenuForm>() 打开。
-// 演示 UIFormLogic 生命周期：OnInit → OnOpen → OnClose → OnRecycle
-// Phase 7: 本地化文本 + 语言切换按钮
-//------------------------------------------------------------
-
 using System;
 using GameConfig;
 using GameConfig.Constant;
 using GameFramework.Localization;
+using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 
-public partial class MenuForm : UIFormLogic
+public partial class MenuForm : ControlUIForm
 {
     [Export]
     private Label m_TitleLabel;
@@ -31,17 +25,21 @@ public partial class MenuForm : UIFormLogic
     private Button m_CloseButton;
     [Export]
     private Control m_SettingPanel;
-    protected internal override void OnInit(object userData)
+    public override void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
     {
-        base.OnInit(userData);
-        m_SettingButton.Pressed += OnSettingButtonPressed;
-        m_CloseButton.Pressed += OnCloseButtonPressed;
-        m_StartButton.Pressed += OnStartButtonPressed;
+        base.OnInit(serialId, uiFormAssetName, uiGroup, pauseCoveredUIForm, isNewInstance, userData);
+        if (isNewInstance)
+        {
+            m_SettingButton.Pressed += OnSettingButtonPressed;
+            m_CloseButton.Pressed += OnCloseButtonPressed;
+            m_StartButton.Pressed += OnStartButtonPressed;
+        }
     }
-    protected internal override void OnOpen(object userData)
+
+    public override void OnOpen(object userData)
     {
         base.OnOpen(userData);
-        // GF.Sound.PlayBGM(ResourcesCollectionConstant.Menu);
+        GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Menu);
     }
 
     private void OnStartButtonPressed()

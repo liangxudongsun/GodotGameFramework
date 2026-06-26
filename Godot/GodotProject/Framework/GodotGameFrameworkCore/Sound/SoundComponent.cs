@@ -13,24 +13,23 @@ using System.Collections.Generic;
 
 namespace GodotGameFramework.Sound
 {
-    /// <summary>声音组件。封装 ISoundManager，提供音频播放/停止/暂停/恢复及声音组管理。</summary>
+    /// <summary>
+    /// 声音组件。
+    /// </summary>
     public sealed partial class SoundComponent : GameFrameworkComponent
     {
         /// <summary>
         /// 默认背景音乐组名称。
-        /// 与 SoundComponent 初始化时创建的默认组名一致。
         /// </summary>
         public const string DefaultMusicGroup = "Music";
 
         /// <summary>
         /// 默认音效组名称。
-        /// 与 SoundComponent 初始化时创建的默认组名一致。
         /// </summary>
         public const string DefaultSfxGroup = "SFX";
 
         /// <summary>
         /// 默认 UI 音效组名称。
-        /// 与 SoundComponent 初始化时创建的默认组名一致。
         /// </summary>
         public const string DefaultUiGroup = "UI";
 

@@ -1,21 +1,6 @@
-//------------------------------------------------------------
-// EntityExtension - 实体组件便捷扩展方法
-// 提供 EntityComponent 的常用便捷方法，简化游戏代码编写。
-//
-// 使用方式：
-//   GF.Entity.GetEntity<EnemyLogic>(1);
-//   GF.Entity.HideEntitySafe(1);
-//   GF.Entity.GetChildEntities<BulletLogic>(playerEntityId);
-//
-// 对应 UGF 参考项目中的 EntityExtension（游戏特定的路径解析、
-// 特效/浮文创建等逻辑不移植，只保留通用便捷方法）。
-//------------------------------------------------------------
-
 using GameConfig.Entity;
 using GameFramework.Entity;
 using Godot;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,39 +9,11 @@ namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 实体组件扩展方法。
-    ///
-    /// 提供 EntityComponent 的常用便捷方法，
-    /// 包括通过 EntityLogic 类型获取实体、安全隐藏、子实体查询等。
-    ///
     /// </summary>
     public static class EntityExtension
     {
         private static int s_NextEntityId;
 
-        /// <summary>
-        /// 通过实体编号获取 EntityLogic 子类。
-        ///
-        /// 等价于：
-        /// <code>
-        /// IEntity entity = comp.GetEntity(entityId);
-        /// EnemyLogic logic = (entity as Entity)?.Logic as EnemyLogic;
-        /// </code>
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <param name="entityId">实体编号。</param>
-        /// <returns>对应的 EntityLogic 实例，未找到返回 null。</returns>
-        public static TLogic GetEntity<TLogic>(this EntityComponent entityComponent, int entityId)
-            where TLogic : EntityLogic
-        {
-            IEntity entity = entityComponent.GetEntity(entityId);
-            if (entity is Entity ggfEntity)
-            {
-                return ggfEntity.Logic as TLogic;
-            }
-
-            return null;
-        }
         #region 显示实体
         public static int ShowEntity(this EntityComponent entityComponent, EntityId entityId, object userData = null)
         {
@@ -83,14 +40,14 @@ namespace GodotGameFramework.Entity
             return ser;
         }
         /// <summary>
-        /// 异步显示实体。泛型指定 EntityLogic 子类。
+        /// 异步显示实体
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="entityComponent"></param>
         /// <param name="entityId"></param>
         /// <param name="userData"></param>
         /// <returns></returns>
-        public static async Task<T> ShowEntityAsync<T>(this EntityComponent entityComponent, EntityId entityId, object userData = null) where T : EntityLogic
+        public static async Task<T> ShowEntityAsync<T>(this EntityComponent entityComponent, EntityId entityId, object userData = null) where T : Node, IEntity
         {
             if (GF.DataTable?.TbEntityConfig?.DataList == null)
             {
@@ -106,87 +63,10 @@ namespace GodotGameFramework.Entity
 
             int ser = Interlocked.Increment(ref s_NextEntityId);
             IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
-            return (entity as Entity)?.Logic as T;
+            return entity as T;
         }
-        /// <summary>
-        /// 异步显示实体。强转为 EntityLogic 子类。
-        /// </summary>
-        /// <param name="entityComponent"></param>
-        /// <param name="entityId"></param>
-        /// <param name="userData"></param>
-        /// <returns></returns>
-        public static async Task<EntityLogic> ShowEntityAsync(this EntityComponent entityComponent, EntityId entityId, object userData = null)
-        {
-            if (GF.DataTable?.TbEntityConfig?.DataList == null)
-            {
-                Log.Error("EntityConfig data table is not available.");
-                return null;
-            }
-            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
-            if (cfg == null)
-            {
-                Log.Error($"Entity {entityId} not found in EntityConfig");
-                return null;
-            }
 
-            int ser = Interlocked.Increment(ref s_NextEntityId);
-            IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
-            return (entity as Entity)?.Logic;
-        }
         #endregion
-
-        /// <summary>
-        /// 通过实体资源名获取所有匹配的 EntityLogic 子类列表。
-        ///
-        /// 等价于：
-        /// <code>
-        /// IEntity[] entities = comp.GetEntities(assetName);
-        /// // 遍历并转换为 TLogic 列表
-        /// </code>
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <param name="assetName">实体资源路径。</param>
-        /// <returns>匹配的 EntityLogic 实例列表。</returns>
-        public static List<TLogic> GetEntities<TLogic>(this EntityComponent entityComponent, string assetName)
-            where TLogic : EntityLogic
-        {
-            List<TLogic> result = new List<TLogic>();
-            IEntity[] entities = entityComponent.GetEntities(assetName);
-            for (int i = 0; i < entities.Length; i++)
-            {
-                if (entities[i] is Entity ggfEntity && ggfEntity.Logic is TLogic logic)
-                {
-                    result.Add(logic);
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// 通过实体编号获取所有已加载实体的 EntityLogic 子类列表。
-        ///
-        /// 适用于需要遍历所有实体的场景（如批量更新、统计等）。
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <returns>匹配的 EntityLogic 实例列表。</returns>
-        public static List<TLogic> GetAllEntities<TLogic>(this EntityComponent entityComponent)
-            where TLogic : EntityLogic
-        {
-            List<TLogic> result = new List<TLogic>();
-            IEntity[] entities = entityComponent.GetAllLoadedEntities();
-            for (int i = 0; i < entities.Length; i++)
-            {
-                if (entities[i] is Entity ggfEntity && ggfEntity.Logic is TLogic logic)
-                {
-                    result.Add(logic);
-                }
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// 安全隐藏实体。
@@ -221,96 +101,6 @@ namespace GodotGameFramework.Entity
             {
                 entityComponent.HideEntity(entity, userData);
             }
-        }
-
-        /// <summary>
-        /// 获取父实体的 EntityLogic 子类。
-        ///
-        /// 适用于通过子实体反查父实体逻辑的场景。
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <param name="childEntityId">子实体编号。</param>
-        /// <returns>父实体的 EntityLogic 实例，无父实体返回 null。</returns>
-        public static TLogic GetParentEntity<TLogic>(this EntityComponent entityComponent, int childEntityId)
-            where TLogic : EntityLogic
-        {
-            IEntity parentEntity = entityComponent.GetParentEntity(childEntityId);
-            if (parentEntity is Entity ggfEntity)
-            {
-                return ggfEntity.Logic as TLogic;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 获取第一个子实体的 EntityLogic 子类。
-        ///
-        /// 适用于父子实体一对多的场景（如武器挂载到角色上）。
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <param name="parentEntityId">父实体编号。</param>
-        /// <returns>第一个子实体的 EntityLogic 实例，无子实体返回 null。</returns>
-        public static TLogic GetChildEntity<TLogic>(this EntityComponent entityComponent, int parentEntityId)
-            where TLogic : EntityLogic
-        {
-            IEntity childEntity = entityComponent.GetChildEntity(parentEntityId);
-            if (childEntity is Entity ggfEntity)
-            {
-                return ggfEntity.Logic as TLogic;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 获取所有子实体的 EntityLogic 子类列表。
-        ///
-        /// 适用于需要遍历所有子实体的场景（如角色身上的所有装备）。
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <param name="parentEntityId">父实体编号。</param>
-        /// <returns>匹配的子实体 EntityLogic 实例列表。</returns>
-        public static List<TLogic> GetChildEntities<TLogic>(this EntityComponent entityComponent, int parentEntityId)
-            where TLogic : EntityLogic
-        {
-            List<TLogic> result = new List<TLogic>();
-            IEntity[] childEntities = entityComponent.GetChildEntities(parentEntityId);
-            for (int i = 0; i < childEntities.Length; i++)
-            {
-                if (childEntities[i] is Entity ggfEntity && ggfEntity.Logic is TLogic logic)
-                {
-                    result.Add(logic);
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// 通过父实体引用获取所有子实体的 EntityLogic 子类列表。
-        /// </summary>
-        /// <typeparam name="TLogic">EntityLogic 子类类型。</typeparam>
-        /// <param name="entityComponent">实体组件。</param>
-        /// <param name="parentEntity">父实体引用。</param>
-        /// <returns>匹配的子实体 EntityLogic 实例列表。</returns>
-        public static List<TLogic> GetChildEntities<TLogic>(this EntityComponent entityComponent, IEntity parentEntity)
-            where TLogic : EntityLogic
-        {
-            List<TLogic> result = new List<TLogic>();
-            IEntity[] childEntities = entityComponent.GetChildEntities(parentEntity);
-            for (int i = 0; i < childEntities.Length; i++)
-            {
-                if (childEntities[i] is Entity ggfEntity && ggfEntity.Logic is TLogic logic)
-                {
-                    result.Add(logic);
-                }
-            }
-
-            return result;
         }
     }
 }

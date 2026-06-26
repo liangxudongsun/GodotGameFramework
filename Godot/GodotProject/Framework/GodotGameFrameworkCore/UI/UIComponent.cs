@@ -316,9 +316,9 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="serialId">界面序列编号。</param>
         /// <returns>要获取的界面。</returns>
-        public UIForm GetUIForm(int serialId)
+        public IUIForm GetUIForm(int serialId)
         {
-            return (UIForm)m_UIManager.GetUIForm(serialId);
+            return m_UIManager.GetUIForm(serialId);
         }
 
         /// <summary>
@@ -326,9 +326,9 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiFormAssetName">界面资源名称。</param>
         /// <returns>要获取的界面。</returns>
-        public UIForm GetUIForm(string uiFormAssetName)
+        public IUIForm GetUIForm(string uiFormAssetName)
         {
-            return (UIForm)m_UIManager.GetUIForm(uiFormAssetName);
+            return m_UIManager.GetUIForm(uiFormAssetName);
         }
 
         /// <summary>
@@ -336,16 +336,9 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiFormAssetName">界面资源名称。</param>
         /// <returns>要获取的界面。</returns>
-        public UIForm[] GetUIForms(string uiFormAssetName)
+        public IUIForm[] GetUIForms(string uiFormAssetName)
         {
-            IUIForm[] uiForms = m_UIManager.GetUIForms(uiFormAssetName);
-            UIForm[] uiFormImpls = new UIForm[uiForms.Length];
-            for (int i = 0; i < uiForms.Length; i++)
-            {
-                uiFormImpls[i] = (UIForm)uiForms[i];
-            }
-
-            return uiFormImpls;
+            return m_UIManager.GetUIForms(uiFormAssetName);
         }
 
         /// <summary>
@@ -353,7 +346,7 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiFormAssetName">界面资源名称。</param>
         /// <param name="results">要获取的界面。</param>
-        public void GetUIForms(string uiFormAssetName, List<UIForm> results)
+        public void GetUIForms(string uiFormAssetName, List<IUIForm> results)
         {
             if (results == null)
             {
@@ -365,7 +358,7 @@ namespace GodotGameFramework.UI
             m_UIManager.GetUIForms(uiFormAssetName, m_InternalUIFormResults);
             foreach (IUIForm uiForm in m_InternalUIFormResults)
             {
-                results.Add((UIForm)uiForm);
+                results.Add(uiForm);
             }
         }
 
@@ -373,23 +366,16 @@ namespace GodotGameFramework.UI
         /// 获取所有已加载的界面。
         /// </summary>
         /// <returns>所有已加载的界面。</returns>
-        public UIForm[] GetAllLoadedUIForms()
+        public IUIForm[] GetAllLoadedUIForms()
         {
-            IUIForm[] uiForms = m_UIManager.GetAllLoadedUIForms();
-            UIForm[] uiFormImpls = new UIForm[uiForms.Length];
-            for (int i = 0; i < uiForms.Length; i++)
-            {
-                uiFormImpls[i] = (UIForm)uiForms[i];
-            }
-
-            return uiFormImpls;
+            return m_UIManager.GetAllLoadedUIForms(); ;
         }
 
         /// <summary>
         /// 获取所有已加载的界面。
         /// </summary>
         /// <param name="results">所有已加载的界面。</param>
-        public void GetAllLoadedUIForms(List<UIForm> results)
+        public void GetAllLoadedUIForms(List<IUIForm> results)
         {
             if (results == null)
             {
@@ -401,7 +387,7 @@ namespace GodotGameFramework.UI
             m_UIManager.GetAllLoadedUIForms(m_InternalUIFormResults);
             foreach (IUIForm uiForm in m_InternalUIFormResults)
             {
-                results.Add((UIForm)uiForm);
+                results.Add(uiForm);
             }
         }
 
@@ -448,7 +434,7 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiForm">界面。</param>
         /// <returns>界面是否合法。</returns>
-        public bool IsValidUIForm(UIForm uiForm)
+        public bool IsValidUIForm(IUIForm uiForm)
         {
             return m_UIManager.IsValidUIForm(uiForm);
         }
@@ -576,7 +562,7 @@ namespace GodotGameFramework.UI
         /// 关闭界面。
         /// </summary>
         /// <param name="uiForm">要关闭的界面。</param>
-        public void CloseUIForm(UIForm uiForm)
+        public void CloseUIForm(IUIForm uiForm)
         {
             m_UIManager.CloseUIForm(uiForm);
         }
@@ -586,7 +572,7 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiForm">要关闭的界面。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void CloseUIForm(UIForm uiForm, object userData)
+        public void CloseUIForm(IUIForm uiForm, object userData)
         {
             m_UIManager.CloseUIForm(uiForm, userData);
         }
@@ -620,7 +606,7 @@ namespace GodotGameFramework.UI
         /// 激活界面。
         /// </summary>
         /// <param name="uiForm">要激活的界面。</param>
-        public void RefocusUIForm(UIForm uiForm)
+        public void RefocusUIForm(IUIForm uiForm)
         {
             m_UIManager.RefocusUIForm(uiForm);
         }
@@ -638,7 +624,7 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiForm">要激活的界面。</param>
         /// <param name="userData">用户自定义数据。</param>
-        public void RefocusUIForm(UIForm uiForm, object userData)
+        public void RefocusUIForm(IUIForm uiForm, object userData)
         {
             m_UIManager.RefocusUIForm(uiForm, userData);
         }
@@ -648,7 +634,7 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiForm">要设置是否被加锁的界面。</param>
         /// <param name="locked">界面是否被加锁。</param>
-        public void SetUIFormInstanceLocked(UIForm uiForm, bool locked)
+        public void SetUIFormInstanceLocked(IUIForm uiForm, bool locked)
         {
             if (uiForm == null)
             {
@@ -664,7 +650,7 @@ namespace GodotGameFramework.UI
         /// </summary>
         /// <param name="uiForm">要设置优先级的界面。</param>
         /// <param name="priority">界面优先级。</param>
-        public void SetUIFormInstancePriority(UIForm uiForm, int priority)
+        public void SetUIFormInstancePriority(IUIForm uiForm, int priority)
         {
             if (uiForm == null)
             {

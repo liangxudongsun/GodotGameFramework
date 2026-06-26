@@ -11,14 +11,10 @@
 [ext_resource type="Script" uid="uid://dlo8s74qn554q" path="res://Framework/GodotGameFrameworkCore/ObjectPool/ObjectPoolComponent.cs" id="10_op"]
 [ext_resource type="Script" uid="uid://wi0iwoylkik" path="res://Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs" id="11_res"]
 [ext_resource type="Script" uid="uid://bn3yo4hor113j" path="res://Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs" id="12_entity"]
-[ext_resource type="PackedScene" uid="uid://bup2c8ljfa3f6" path="res://TheGame/Entitys/Cat.tscn" id="13_44wmx"]
 [ext_resource type="Script" uid="uid://cqufcdar6i425" path="res://Framework/GodotGameFrameworkCore/UI/UIComponent.cs" id="13_ui"]
 [ext_resource type="Script" uid="uid://4blpnjncpj6y" path="res://Framework/GodotGameFrameworkCore/Sound/SoundComponent.cs" id="14_snd"]
 [ext_resource type="Script" uid="uid://utpdibg2iugi" path="res://Framework/GodotGameFrameworkCore/Localization/LocalizationComponent.cs" id="15_loc"]
 [ext_resource type="Script" uid="uid://d3gyuw0e6gaa5" path="res://TheGame/GameScripts/Scene/SceneComponent.cs" id="15_pcfq2"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mfmie"]
-size = Vector2(194, 55)
 
 [node name="GameFramework" type="Node" unique_id=134030765]
 script = ExtResource("1_781av")
@@ -57,16 +53,6 @@ script = ExtResource("6_set")
 
 [node name="Entity" type="Node" parent="." unique_id=777100001]
 script = ExtResource("12_entity")
-
-[node name="Player" type="CharacterBody2D" parent="Entity" unique_id=1160176952]
-position = Vector2(84.86, 0)
-
-[node name="Cat" parent="Entity/Player" unique_id=223061908 instance=ExtResource("13_44wmx")]
-position = Vector2(0, 0)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Entity/Player" unique_id=1967626328]
-position = Vector2(2.13, 2.5)
-shape = SubResource("RectangleShape2D_mfmie")
 
 [node name="UI" type="Node" parent="." unique_id=274540037]
 script = ExtResource("13_ui")

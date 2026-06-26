@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://4svijd3up51q"]
+
+[ext_resource type="Script" uid="uid://dv8emtkoxg1pd" path="res://TheGame/GameScripts/Entity/CatEntity.cs" id="1_ure82"]
+[ext_resource type="Texture2D" uid="uid://bdy5b5i3jeyx8" path="res://TheGame/Sprites/Y1.png" id="2_ure82"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_44wmx"]
+size = Vector2(195, 52)
+
+[node name="CatEntity" type="CharacterBody2D" unique_id=851013628 node_paths=PackedStringArray("m_CatSprite")]
+motion_mode = 1
+script = ExtResource("1_ure82")
+m_CatSprite = NodePath("Sprite2D")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=738050605]
+position = Vector2(0.5, 0)
+shape = SubResource("RectangleShape2D_44wmx")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=627266117]
+position_smoothing_enabled = true
+drag_horizontal_enabled = true
+drag_vertical_enabled = true
+drag_left_margin = 0.12
+drag_top_margin = 0.1
+drag_right_margin = 0.12
+drag_bottom_margin = 0.1
+editor_draw_limits = true
+editor_draw_drag_margin = true
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1343519282]
+texture = ExtResource("2_ure82")
+region_enabled = true
+region_rect = Rect2(960, 480, 200, 64)

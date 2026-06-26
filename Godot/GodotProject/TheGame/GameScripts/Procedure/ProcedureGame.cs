@@ -29,7 +29,7 @@ public class ProcedureGame : ProcedureBase
     protected internal override async void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
-        await GF.UI.OpenUIFormAsync(UIFormId.MenuForm);
+        await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
     }
 
     /// <summary>

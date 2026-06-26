@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://yx6imnabf3y3"]
+
+[ext_resource type="Script" uid="uid://bx06i5ucobqyb" path="res://TheGame/GameScripts/Entity/GanTanEntity.cs" id="1_kqipa"]
+[ext_resource type="Texture2D" uid="uid://b71iq6o3f47nx" path="res://TheGame/Sprites/fuhao.png" id="2_ps62e"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_44wmx"]
+size = Vector2(20, 75)
+
+[node name="GanTanEntity" type="RigidBody2D" unique_id=1651307245]
+gravity_scale = 0.0
+script = ExtResource("1_kqipa")
+
+[node name="Fuhao" type="Sprite2D" parent="." unique_id=1144455434]
+texture = ExtResource("2_ps62e")
+region_enabled = true
+region_rect = Rect2(1141, 41, 19, 77)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=790920554]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_44wmx")

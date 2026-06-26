@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using GameFramework;
+using GameFramework.Entity;
 using GameFramework.Event;
 using GameFramework.Sound;
 
@@ -95,7 +96,7 @@ namespace GodotGameFramework.Sound
         /// <summary>
         /// 获取声音绑定的实体。
         /// </summary>
-        public GodotGameFramework.Entity.Entity BindingEntity
+        public IEntity BindingEntity
         {
             get;
             private set;

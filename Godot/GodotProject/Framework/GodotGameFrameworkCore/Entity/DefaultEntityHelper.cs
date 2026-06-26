@@ -12,13 +12,9 @@ namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 默认实体辅助器。
-    ///
-    /// 实现 IEntityHelper 接口，提供基于 Godot 引擎的实体实例化、创建和释放功能。
-    ///
     /// InstantiateEntity：从 PackedScene 实例化 Node。
     /// CreateEntity：创建 Entity(Node) 包装器，添加到实体组容器，设置 EntityLogic。
     /// ReleaseEntity：通过 QueueFree 释放节点。
-    ///
     /// </summary>
     public partial class DefaultEntityHelper : EntityHelperBase
     {
@@ -54,19 +50,17 @@ namespace GodotGameFramework.Entity
                 Log.Warning("Entity instance is invalid.");
                 return null;
             }
-            // 创建 Entity 包装器节点
-            Entity entity = new Entity();
-            if (entityInstance is EntityLogic logic)
+            if (entityInstance is IEntity entity)
             {
-                // 将实际的场景节点作为 Entity 的子节点
-                entity.AddChild(logic);
-
                 // 将 Entity 添加到实体组的容器节点下
                 if (entityGroup != null && entityGroup.Helper is EntityGroupHelperBase groupHelper)
                 {
-                    groupHelper.AddChild(entity);
+                    var node = (Node)entity;
+                    if (node.GetParent() != groupHelper)
+                    {
+                        groupHelper.AddChild((Node)entity);
+                    }
                 }
-                entity.SetEntityLogic(logic);
             }
             else
             {

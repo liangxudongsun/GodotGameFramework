@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using GameFramework;
+using GameFramework.Entity;
 using Godot;
 
 
@@ -13,7 +14,7 @@ namespace GodotGameFramework.Sound
 {
     internal sealed class PlaySoundInfo : IReference
     {
-        private Entity.Entity m_BindingEntity;
+        private IEntity m_BindingEntity;
         private Vector3 m_WorldPosition;
         private object m_UserData;
 
@@ -24,7 +25,7 @@ namespace GodotGameFramework.Sound
             m_UserData = null;
         }
 
-        public Entity.Entity BindingEntity
+        public IEntity BindingEntity
         {
             get
             {
@@ -48,7 +49,7 @@ namespace GodotGameFramework.Sound
             }
         }
 
-        public static PlaySoundInfo Create(Entity.Entity bindingEntity, Vector3 worldPosition, object userData)
+        public static PlaySoundInfo Create(IEntity bindingEntity, Vector3 worldPosition, object userData)
         {
             PlaySoundInfo playSoundInfo = ReferencePool.Acquire<PlaySoundInfo>();
             playSoundInfo.m_BindingEntity = bindingEntity;
