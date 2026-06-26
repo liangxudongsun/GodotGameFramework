@@ -21,7 +21,7 @@
 
 - 🧩 **模块化架构** — 13 个独立子系统，高内聚低耦合，可按需替换
 - 🔄 **双层架构** — 纯 C# 核心层（无 Godot 依赖）+ Godot 运行时组件层
-- 🎯 **组件委托模式** — Godot 组件持有核心 Manager 引用，所有操作委托给核心，不重复实现内部状态
+- 🎯 **直接继承模式** — Entity/UI 不再使用包装器，用户脚本直接继承 Godot 原生类型 + 框架接口
 - 📊 **数据管线** — 集成 Luban，Excel 配置 → C# 代码 + 二进制数据
 - 🎨 **Entity/UI 管理** — 支持对象池复用、生命周期管理、层级控制
 - 🔊 **音频系统** — 声音组 + 优先级抢占 + 淡入淡出
@@ -93,6 +93,7 @@
 │  ├── GameFrameworkComponent       自动注册到 GameEntry │
 │  ├── GameEntry                    根节点，驱动 Update  │
 │  ├── GF                           静态门面            │
+│  ├── Abstract*Entity / ControlUIForm  实体/UI 基类   │
 │  └── EntityComponent / UIComponent / SoundComponent   │
 ├─────────────────────────────────────────────────────┤
 │               Pure C# Core Layer                     │
@@ -104,17 +105,17 @@
 └─────────────────────────────────────────────────────┘
 ```
 
-### 组件委托模式
+### 直接继承模式
 
-所有 Godot 组件遵循统一模式：持有核心 Manager 引用，在 `OnInit()` 中初始化，所有操作委托给核心 Manager。
+Entity 和 UI 不再使用包装器 + Logic 双层分离。用户场景根节点直接继承框架抽象基类，基类同时继承 Godot 原生类型和框架接口：
 
 ```
-EntityComponent ──→ IEntityManager
-UIComponent     ──→ IUIManager
-SoundComponent  ──→ ISoundManager
-ResourceComponent ─→ IResourceManager
-... 共 14 个组件
+AbstractSprite2DEntity : Sprite2D, IEntity
+AbstractCharacterBody2DEntity : CharacterBody2D, IEntity
+ControlUIForm : Control, IUIForm
 ```
+
+场景实例本身就是 `IEntity`/`IUIForm`，无需额外包装。
 
 ---
 
@@ -123,19 +124,20 @@ ResourceComponent ─→ IResourceManager
 ### 实体模块 (EntityComponent)
 
 - ✅ 基于 `IEntityManager` 的实体生命周期管理
-- ✅ `ShowEntity<T>()` 泛型创建，支持对象池复用
-- ✅ `ShowEntityAsync()` 异步加载，支持 async/await
+- ✅ `ShowEntity(EntityId)` Luban 配置驱动，支持对象池复用
+- ✅ `ShowEntityAsync<T>()` 异步加载，返回类型安全的 `T : Node, IEntity`
 - ✅ 实体组管理（容量、过期时间、优先级可配）
 - ✅ 父子实体挂载 + Godot 场景树 Node 关系同步
-- ✅ `Entity` 继承 `GodotComponent`，同时拥有框架生命周期和 Godot 节点生命周期
+- ✅ 四个抽象基类：`AbstractSprite2DEntity` / `AbstractNode2DEntity` / `AbstractCharacterBody2DEntity` / `AbstractRb2DEntity`，用户直接继承，子节点通过 `[Export]` 绑定或 `FindChildOfType<T>()` 获取
 
 ### UI 模块 (UIComponent)
 
 - ✅ 基于 `IUIManager` 的窗体管理
 - ✅ 4 个默认 UI 层级：Background / Normal / Popup / Tips
 - ✅ 界面组管理，支持深度排序
-- ✅ `OpenUIForm<T>()` 泛型创建
-- ✅ 事件驱动的窗体生命周期
+- ✅ `OpenUIForm(UIFormId)` Luban 配置驱动
+- ✅ `ControlUIForm : Control, IUIForm` 基类，自动收集 `IStringKey` 子节点并刷新本地化文本
+- ✅ 内置 `Close()` 方法
 
 ### 音频模块 (SoundComponent)
 
@@ -171,6 +173,13 @@ ResourceComponent ─→ IResourceManager
 - ✅ `GF.DataTable` 返回类型安全的 `Tables` 实例
 - ✅ 懒加载支持
 
+### NodeExtension 扩展
+
+`NodeExtension` 提供常用 Node 查询扩展方法：
+- `FindChildOfType<T>()` — 递归查找子节点
+- `FindChildrenOfType<T>()` — 递归查找所有匹配子孙节点
+- `GetChild<T>()` / `GetChildren<T>()` / `GetParent<T>()`
+
 ### Helper 基类体系
 
 每个子系统定义了一套遵循统一可扩展模式的抽象 Helper 基类：
@@ -189,8 +198,6 @@ ResourceComponent ─→ IResourceManager
 
 ```
 Configs/                      ← Excel 配置源数据（Luban 管线输入）
-docs/                         ← Godot 迁移 / 最佳实践文档
-production/                   ← 元数据（stage, review-mode）
 GodotProject/                 ← Godot 项目根
 ├── Framework/
 │   ├── GameFramework/        ← 纯 C# 框架（无 Godot 依赖）
@@ -203,18 +210,24 @@ GodotProject/                 ← Godot 项目根
 │   │   └── Utility/ WebRequest/
 │   └── GodotGameFrameworkCore/  ← Godot 运行时组件
 │       ├── Base/             ← GameEntry, GF, GodotComponent, Log
-│       ├── Entity/           ← EntityComponent, Entity, EntityLogic
-│       ├── UI/               ← UIComponent, UIForm, UIFormLogic
+│       │   └── Node/         ← 抽象实体/UI 基类（Abstract*Entity, ControlUIForm）
+│       ├── Entity/           ← EntityComponent, Entity<T>, EntityExtension
+│       ├── UI/               ← UIComponent, IStringKey
 │       ├── Sound/            ← SoundComponent + Helpers
 │       ├── Resource/         ← ResourceComponent + 资源管线
 │       ├── Event/ Fsm/ Procedure/ Config/
 │       ├── DataTable/ DataNode/ ObjectPool/ Setting/
 │       ├── Localization/ Utility/ Variable/
 │       └── Lib/LubanLib/     ← Luban 运行时（ByteBuf, BeanBase）
-│   └── GameFramework.tscn        ← 主场景
+│   └── GameFramework.tscn    ← 主场景
 ├── TheGame/                  ← 当前活跃游戏项目
+│   ├── Entitys/              ← 实体场景 (.tscn)，根节点为 Godot 原生类型
+│   ├── GameScripts/
+│   │   ├── Entity/           ← 实体脚本（继承 Abstract*Entity）
+│   │   ├── UI/               ← UI 脚本（继承 ControlUIForm）
+│   │   └── GameProto/GameConfig/ ← Luban 生成的 C# 数据类
 │   ├── DataTables/           ← Luban 生成的二进制数据
-│   └── GameScripts/GameProto/ ← Luban 生成的 C# 数据类
+│   ├── UIs/ Sprites/ Scenes/ Audios/
 └── addons/                   ← 编辑器插件
     ├── TopMenu/              ← 日志级别切换
     ├── LocalizationEditor/   ← Excel→TXT 转换
@@ -226,37 +239,75 @@ GodotProject/                 ← Godot 项目根
 ## 🎯 使用示例
 
 ### 实体系统
+
 ```csharp
-// 创建实体组
-GF.Entity.AddEntityGroup("Enemy", 60f, 16, 60f, 0);
+// 1. 定义实体类（继承对应 Godot 类型的抽象基类）
+public partial class CatEntity : AbstractCharacterBody2DEntity
+{
+    [Export] private Sprite2D m_CatSprite; // Inspector 绑定视觉子节点
 
-// 显示实体（指定 EntityLogic 类型）
-GF.Entity.ShowEntity<EnemyLogic>(1, "res://Scenes/Enemy.tscn", "Enemy");
+    public override void OnInit(int entityId, string entityAssetName,
+        IEntityGroup entityGroup, bool isNewInstance, object userData)
+    {
+        base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
+        // 加载配置等初始化逻辑
+    }
 
-// 异步显示
-IEntity entity = await GF.Entity.ShowEntityAsync<EnemyLogic>(1, "res://Enemy.tscn", "Enemy");
+    public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
+    {
+        base.OnUpdate(elapseSeconds, realElapseSeconds);
+        Velocity = new Vector2(Input.GetAxis("ui_left", "ui_right"),
+            Input.GetAxis("ui_up", "ui_down")) * Speed;
+        MoveAndSlide();
+    }
+}
 
-// 父子挂载
-GF.Entity.AttachEntity(2, 1);    // 实体 2 挂到实体 1 下
-GF.Entity.DetachEntity(2);       // 解除
+// 2. 场景结构（CatEntity.tscn）
+// CatEntity (CharacterBody2D, CatEntity 脚本)
+//   ├── CollisionShape2D
+//   └── Sprite2D (视觉)
 
-// 隐藏
-GF.Entity.HideEntity(1);
+// 3. 显示实体
+int catId = GF.Entity.ShowEntity(EntityId.Cat);
 
-// 通过 EntityLogic 类型获取实体
-var logic = GF.Entity.GetEntity<EnemyLogic>(1);
+// 4. 异步显示并获取实体引用
+CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
+cat.GlobalPosition = new Vector2(100, 200);
+
+// 5. 隐藏实体
+GF.Entity.HideEntity(catId);
+GF.Entity.HideEntitySafe(catId); // 安全隐藏（检查存在性）
 ```
 
 ### UI 系统
-```csharp
-// 打开界面
-GF.UI.OpenUIForm<MainMenuForm>("res://MainMenu.tscn", "Normal");
 
-// 关闭
-GF.UI.CloseUIForm(serialId);
+```csharp
+// 1. 定义 UI 类
+public partial class MenuForm : ControlUIForm
+{
+    public override void OnInit(int serialId, string uiFormAssetName,
+        IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
+    {
+        base.OnInit(serialId, uiFormAssetName, uiGroup, pauseCoveredUIForm, isNewInstance, userData);
+        // IStringKey 子节点自动刷新本地化文本
+    }
+
+    public override void OnOpen(object userData)
+    {
+        base.OnOpen(userData);
+        // 播放打开动画
+    }
+}
+
+// 2. 打开界面
+int menuId = GF.UI.OpenUIForm(UIFormId.Menu);
+
+// 3. 关闭界面
+// 在 ControlUIForm 子类中直接调用 Close();
 ```
 
 ### 音频系统
+
 ```csharp
 // 播放背景音乐（Music 组，循环）
 int bgmId = GF.Sound.PlaySound("res://Audio/BGM.mp3", "Music");
@@ -275,6 +326,7 @@ GF.Sound.SetSoundGroupMute("SFX", true);
 ```
 
 ### 资源加载
+
 ```csharp
 // 同步加载
 PackedScene scene = GF.Resource.LoadAsset<PackedScene>("res://Scenes/Enemy.tscn");
@@ -290,6 +342,7 @@ byte[] data = GF.Resource.LoadBinary("res://Data/Config.dat");
 ```
 
 ### 事件系统
+
 ```csharp
 // 自定义事件
 public sealed class ScoreChangedEventArgs : GameEventArgs
@@ -307,13 +360,11 @@ GF.Event.Subscribe(ScoreChangedEventArgs.EventId, OnScoreChanged);
 GF.Event.Fire(this, new ScoreChangedEventArgs(100));
 ```
 
-### 本地化
+### 本地化与日志
+
 ```csharp
 string title = GF.Localization.GetString("GameTitle");
-```
 
-### 日志
-```csharp
 Log.Info("Player {0} scored {1} points", name, score);
 Log.Warning("Health low: {0}", currentHp);
 Log.Error("Failed to load: {0}", path);
@@ -396,28 +447,23 @@ GameFramework (GameEntry)
 
 ## ⚠️ 开发注意事项
 
-### C# 类型层级与 Godot 原生类型
-
-**EntityLogic** 继承自 `GodotComponent`（→ `Node`），**不继承 `Node2D`/`CanvasItem`**。即使场景根节点是 `Sprite2D`（原生 IS-A `Node2D`），C# 侧的 `is Node2D` / `is CanvasItem` 检查会返回 `false`。
-
-> **解决方案**：使用 Godot 的 `Set()` / `Get()` 方法操作原生属性，绕过 C# 类型层级限制：
-> ```csharp
-> // ❌ 错误：CachedNode is Node2D → false（EntityLogic 不继承 Node2D）
-> if (CachedNode is Node2D node) { node.Position = value; }
-> 
-> // ✅ 正确：直接操作原生属性
-> CachedNode?.Set(Node2D.PropertyName.Position, value);
-> ```
-
-**UIFormLogic** 直接继承 `Control`（→ `CanvasItem` → `Node`），无此问题。
-
 ### 实体 ID 生成
 
-实体 ID 使用 `Interlocked.Increment` 原子计数器生成，确保无碰撞。不再使用时间戳（存在整数溢出风险）。
+实体 ID 使用 `Interlocked.Increment` 原子计数器生成，确保无碰撞。不再使用时间戳。
 
 ### 组件事件取消订阅
 
-`EntityComponent` 在 `OnExitTree()` 中取消订阅 `IEntityManager` 事件，防止场景重载时的内存泄漏和事件重复触发。
+`EntityComponent` 在 `OnExitTree()` 中取消订阅 `IEntityManager` 事件，防止场景重载时内存泄漏和事件重复触发。
+
+### 实体类型选择
+
+根据游戏需求选择合适的抽象基类：
+| 基类 | 适用场景 |
+|------|----------|
+| `AbstractSprite2DEntity` | 静态/简单动画精灵 |
+| `AbstractNode2DEntity` | 需要 2D 变换的通用实体 |
+| `AbstractCharacterBody2DEntity` | 玩家/角色（物理交互） |
+| `AbstractRb2DEntity` | 需要 RigidBody 物理模拟的实体（子弹、弹射物） |
 
 ---
 
@@ -429,8 +475,6 @@ GameFramework (GameEntry)
 | **Luban** | 游戏配置解决方案 | [GitHub](https://github.com/focus-creative-games/luban) |
 | **Godot Engine** | 开源游戏引擎 | [GitHub](https://github.com/godotengine/godot) |
 | **CodeGraph** | 代码知识图谱工具 | [GitHub](https://github.com/colbymchenry/codegraph) |
-
----
 
 ---
 
@@ -446,11 +490,7 @@ GameFramework (GameEntry)
 ### UI 系统
 
 - [ ] **`OpenUIForm` 异步版本** — 需要实现 `AddOpenUIFormTask` 方法，通过 `OpenUIFormSuccess`/`OpenUIFormFailure` 事件来完成 `TaskCompletionSource`
-- [ ] **UIItem 字符串键热更新** — `IStringKey` 接口已定义，`UIStringLabelKey` 已部分实现，需完善多语言切换时的自动刷新机制
-
-### 实体系统
-
-- [ ] **EntityLogic 类型层级优化** — 考虑让 `EntityLogic` 继承 `Node2D`（类似 `UIFormLogic` 继承 `Control`），从根本上消除 `is Node2D` / `is CanvasItem` 检查失败的 C# 类型层级问题
+- [ ] **UIItem 字符串键热更新** — `IStringKey` 接口已定义，需完善多语言切换时的自动刷新机制
 
 ### 网络系统
 

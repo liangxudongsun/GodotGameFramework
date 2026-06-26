@@ -22,6 +22,7 @@ GodotProject/                  ← Godot 项目根 (project.godot)
   Framework/
     GameFramework/              ← 纯 C# 框架（无 Godot 依赖）
     GodotGameFrameworkCore/     ← Godot 运行时组件
+      Base/Node/                ← 抽象实体/UI 基类（Abstract*Entity, ControlUIForm）
       Lib/LubanLib/             ← Luban 反序列化运行时（ByteBuf, BeanBase）
     GameFramework.tscn          ← 主场景
   TheGame/                      ← 当前活跃游戏项目
@@ -32,7 +33,7 @@ GodotProject/                  ← Godot 项目根 (project.godot)
     Entitys/                    ← 实体场景 (.tscn)
     GameScripts/                ← 游戏逻辑脚本
       GameProto/GameConfig/     ← Luban 生成的 C# 数据类 + 表入口 (Tables.cs)
-      Entity/                   ← EntityLogic 游戏逻辑脚本
+      Entity/                   ← 实体逻辑脚本（继承 Abstract*Entity）
       Procedure/ Scene/ UI/     ← 各系统游戏逻辑脚本
     Sprites/ UIs/               ← UI 场景文件
     Scenes/                     ← 游戏场景
@@ -90,11 +91,10 @@ Namespace `GameFramework`. **No Godot dependency.**
 - **`GodotComponent`** — `Node` 基类，映射所有 Godot 生命周期为虚方法。顺序：`_EnterTree` → `OnInit()` → `_Ready` → `OnEnter()` → `_Process` → `OnUpdate(float delta)`。还包括 `OnPhysicsUpdate`/`OnExitTree` + 输入系统（`OnInput`/`OnUnhandledInput`/`OnUnhandledKeyInput`/`OnShortcutInput`）+ 通知（`OnPostEnterTree`/`OnParented`/`OnPaused` 等）+ 属性系统。提供静态工具：`GodotComponent.Create<T>(parent)` / `GodotComponent.Destroy(node)`
 - **`GameFrameworkComponent`** — 继承 `GodotComponent`，`OnInit()` 中自动注册到 `GameEntry`
 - **`GameEntry`** — 根节点脚本，静态组件注册表，`_Process` 驱动 `GameFrameworkEntry.Update(elapseSeconds, realElapseSeconds)`。`Shutdown(ShutdownType)` 支持：`ShutdownType.None`（仅清理框架）/ `ShutdownType.Restart`（重载场景）/ `ShutdownType.Quit`（退出进程）
-- **`GF`** — 静态门面，通过 `GameEntry.GetComponent<T>()` 获取各组件。可用的组件：`Event` / `Fsm` / `Procedure` / `ObjectPool` / `DataNode` / `Resource` / `Entity` / `UI` / `Sound` / `DataTable` (返回 `Tables`) / `Localization` / `Setting` / `Base`。扩展方法在 `EntityExtension` 和 `UIExtension` 中提供 Luban 配置驱动 API（见下文 Key Patterns）
+- **`GF`** — 静态门面，位于 `Base/GF.cs`，通过 `GameEntry.GetComponent<T>()` 获取各组件。可用的组件：`Event` / `Fsm` / `Procedure` / `ObjectPool` / `DataNode` / `Resource` / `Entity` / `UI` / `Sound` / `DataTable` (返回 `Tables`) / `Localization` / `Setting` / `Base`
 - **`BaseComponent`** — 基础组件，管理帧率 (`Engine.MaxFps`)、游戏速度 (`Engine.TimeScale`)、暂停/恢复。初始化时按顺序创建 TextHelper → VersionHelper → LogHelper。提供两种资源加载模式：
-  - `BaseComponent.EditorResourceMode`：编辑器中使用 `EditorResourceManager`（`GodotGameFrameworkCore.Resource` 命名空间下的新类，实现 `IResourceManager`，直接用 `ResourceLoader` / `FileAccess` 加载）直接加载资源，跳过发行资源版本管线，方便开发调试
+  - `BaseComponent.EditorResourceMode`：编辑器中使用 `EditorResourceManager`（实现 `IResourceManager`，直接用 `ResourceLoader` / `FileAccess` 加载）直接加载资源，跳过发行资源版本管线，方便开发调试
   - 发布时设为 false 以启用完整资源管线（Version.dat + ResourceManager）
-  - `BaseComponent.EditorResourceManager`：lazy-created 属性，返回 `EditorResourceManager` 单例
 - **`Log`** — `[Conditional]` 门面，委托到 `GameFrameworkLog`。细粒度编译控制：
   - `Log.Debug()`：需要 `ENABLE_LOG` / `ENABLE_DEBUG_LOG` / `ENABLE_DEBUG_AND_ABOVE_LOG`
   - `Log.Info()`：需要 `ENABLE_LOG` / `ENABLE_INFO_LOG` / `ENABLE_DEBUG_AND_ABOVE_LOG` / `ENABLE_INFO_AND_ABOVE_LOG`
@@ -103,18 +103,93 @@ Namespace `GameFramework`. **No Godot dependency.**
 
 ## Key Patterns
 
-- **组件委托模式**：Godot 组件（`UIComponent`/`EntityComponent`/`SoundComponent` 等）通过 `GameFrameworkEntry.GetModule<T>()` 获取纯 C# 层 Manager，所有操作委托给 Manager。Godot 组件主要负责：Inspector 可配置参数、事件转发到 `EventComponent`、Helper 创建和场景树管理
-- **Helper 基类模式**：每个组件系统定义 `XXHelperBase : GodotComponent, IXXHelper` 抽象基类，通过 `Helper.CreateHelper()` 创建。已有：`UIFormHelperBase`/`UIGroupHelperBase`、`EntityHelperBase`/`EntityGroupHelperBase`、`SoundHelperBase`/`SoundGroupHelperBase`/`SoundAgentHelperBase`。Helper 类型名称在 Inspector 中通过 `Export` 字符串属性配置，支持运行时替换
-- **ReferencePool（引用池）**：位于 `GameFramework/Base/ReferencePool/`，提供 `T Acquire<T>()` 和 `Release<T>(T)` 来复用对象，减少 GC。所有事件参数（`GameEventArgs` 子类）和常用数据结构都应实现 `IReference` 接口并使用引用池管理
-- **Variable（变量系统）**：`GameFramework/Base/Variable/` 提供 `Variable<T>` 泛型类，用于在 FSM/Procedure 等模块间传递类型安全的值。基类 `Variable` 提供 `GetValue()`/`SetValue()`，支持通过引用池复用
-- **事件参数模式**：自定义事件参数需继承 `GameEventArgs`（实现 `IReference`），提供 `Create()` 静态工厂方法从引用池获取实例，`Clear()` 方法重置状态。事件 ID 通过 `typeof(T).GetHashCode()` 生成
-- **组件初始化顺序**：`OnInit()` 在 `_EnterTree` 阶段触发（父→子顺序）；`OnEnter()` 在 `_Ready` 阶段触发（子→父顺序，仅一次）。组件间依赖通过 `GameEntry.GetComponent<T>()` 解决。由于 `_EnterTree` 按父→子顺序执行，`OnInit` 中可安全获取场景树中排在前面的组件
-- **Luban 配置驱动 API**：Entity 和 UI 的创建不再使用泛型类型参数，改为 Luban 生成的枚举 ID + 配置表查找。Entity 用 `EntityId` 枚举（`GF.Entity.ShowEntity(EntityId)` 从 `TbEntityConfig` 查 assetPath/groupName），UI 用 `UIFormId` 枚举（`GF.UI.OpenUIForm(UIFormId)` 从 `TbUIFormConfig` 查 assetPath/groupName）。类型安全的 Logic 获取通过扩展方法：`GF.Entity.GetEntity<TLogic>(entityId)` / `GF.UI.GetUIForm<TLogic>(serialId)`
-- **EditorResourceMode**：编辑器开发时，`BaseComponent.EditorResourceMode` 为 true，框架使用 `EditorResourceManager` 直接加载 Godot 资源文件（绕过资源版本管理管线）。`EditorResourceManager` 位于 `GodotGameFrameworkCore/Resource/EditorResourceManager.cs`，实现 `IResourceManager` 接口。发布时设为 false 以启用完整资源管线
-- **新增组件流程**：继承 `GameFrameworkComponent` → 挂到 `GameFramework.tscn` 根节点下 → 在 `GF.cs` 加静态属性
-- **GameFolderConstant**：资源路径常量 `res://TheGame/...`，位于 `Framework/GodotGameFrameworkCore/Config/GameFolderConstant.cs`，含格式模板（如 `AUDIO = "res://TheGame/Audios/{0}.{1}"`、`Entities = "res://TheGame/DataTables/Entitiys/{0}.tscn"`、`GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes"`），手动维护。注意：`Entities` 路径中 `Entitiys` 拼写为历史遗留
-- **Entity / UI 扩展方法**：`EntityExtension` 和 `UIExtension` 提供类型安全的静态扩展方法，位于 `GodotGameFrameworkCore` 对应目录下。Entity：`GetEntity<TLogic>(entityId)`、`ShowEntity(EntityId)`、`ShowEntityAsync(EntityId)`、`HideEntitySafe()`。UI：`GetUIForm<TLogic>(serialId)`、`OpenUIForm(UIFormId)`、`OpenUIFormAsync(UIFormId)`、`OpenUIFormAsync<T>(UIFormId)`、`CloseUIForms(groupName)`、`GetTopUIForm()`
-- **C# 类型层级陷阱与 Set() 模式**：`EntityLogic` 继承 `GodotComponent`（→ `Node`），不继承 `Node2D`/`CanvasItem`。即使场景根节点是 `Sprite2D`（原生 IS-A Node2D），C# 的 `is Node2D` 检查也返回 `false`。操作原生属性必须使用 `node.Set(PropertyName.Xxx, value)` 和 `(Vector2)node.Get(PropertyName.Xxx)`，不能用 `is`/`as` 类型转换。`EntityLogic` 提供属性封装：`Position2D`/`Position3D`、`Rotation2D`/`Rotation3D`、`Scale2D`/`Scale3D`、`GlobalPosition2D`/`GlobalPosition3D`。`UIFormLogic` 直接继承 `Control`（→ `CanvasItem`），无此问题
+### 实体系统（新架构）
+
+不再使用 `Entity` 包装器 + `EntityLogic` 双层分离。改为**抽象基类直接继承 Godot 原生类型 + `IEntity`**，用户场景根节点直接继承对应基类。
+
+`Base/Node/2D/` 下提供四个抽象基类：
+- **`AbstractNode2DEntity`** — `Node2D + IEntity`
+- **`AbstractSprite2DEntity`** — `Sprite2D + IEntity`
+- **`AbstractCharacterBody2DEntity`** — `CharacterBody2D + IEntity`
+- **`AbstractRb2DEntity`** — `RigidBody2D + IEntity`
+
+每个基类提供 `IEntity` 生命周期默认实现：`OnInit`（设置 Id/Name/EntityGroup）、`OnRecycle`（重置 + `Visible = false`）、`OnShow`（`Visible = true`）、`OnHide`（`Visible = false`）。`OnUpdate` 每帧由 `EntityManager` 调用。所有方法均为 `virtual`，用户按需 override。
+
+用户实体示例（`CatEntity : AbstractCharacterBody2DEntity`）：
+```csharp
+public partial class CatEntity : AbstractCharacterBody2DEntity
+{
+    [Export] private Sprite2D m_CatSprite;  // 通过 Inspector 绑定视觉子节点
+
+    public override void OnInit(...) { base.OnInit(...); /* 加载配置 */ }
+    public override void OnShow(...) { base.OnShow(...); /* 播放动画 */ }
+    public override void OnUpdate(...) { /* 输入移动：Velocity + MoveAndSlide() */  }
+}
+```
+
+场景结构：根节点是 Godot 原生类型（如 `CharacterBody2D`），挂载 Entity 脚本，子节点为视觉/碰撞组件。
+
+### UI 系统（新架构）
+
+同样采用**直接继承**模式。`Base/Node/UI/ControlUIForm : Control, IUIForm` 为 UI 面板基类。
+
+- `OnInit` 中自动通过 `FindChildrenOfType<IStringKey>()` 收集并刷新所有本地化文本组件
+- `OnOpen` / `OnClose` 控制 `Visible`
+- `Close()` 快捷方法委托到 `GF.UI.CloseUIForm(this)`
+
+### 组件委托模式
+
+Godot 组件（`UIComponent`/`EntityComponent`/`SoundComponent` 等）通过 `GameFrameworkEntry.GetModule<T>()` 获取纯 C# 层 Manager，所有操作委托给 Manager。Godot 组件主要负责：Inspector 可配置参数、事件转发到 `EventComponent`、Helper 创建和场景树管理。
+
+### Helper 基类模式
+
+每个组件系统定义 `XXHelperBase : GodotComponent, IXXHelper` 抽象基类，通过 `Helper.CreateHelper()` 创建。已有：`UIFormHelperBase`/`UIGroupHelperBase`、`EntityHelperBase`/`EntityGroupHelperBase`、`SoundHelperBase`/`SoundGroupHelperBase`/`SoundAgentHelperBase`。Helper 类型名称在 Inspector 中通过 `Export` 字符串属性配置，支持运行时替换。
+
+`DefaultEntityHelper` 中 `CreateEntity` 不再创建 `Entity` 包装器——场景实例本身就是 `IEntity`，直接添加到实体组容器。
+
+### ReferencePool（引用池）
+
+位于 `GameFramework/Base/ReferencePool/`，提供 `T Acquire<T>()` 和 `Release<T>(T)` 来复用对象，减少 GC。所有事件参数（`GameEventArgs` 子类）和常用数据结构都应实现 `IReference` 接口并使用引用池管理。
+
+### 事件参数模式
+
+自定义事件参数需继承 `GameEventArgs`（实现 `IReference`），提供 `Create()` 静态工厂方法从引用池获取实例，`Clear()` 方法重置状态。事件 ID 通过 `typeof(T).GetHashCode()` 生成。
+
+### Variable（变量系统）
+
+`GameFramework/Base/Variable/` 提供 `Variable<T>` 泛型类，用于在 FSM/Procedure 等模块间传递类型安全的值。基类 `Variable` 提供 `GetValue()`/`SetValue()`，支持通过引用池复用。
+
+### 组件初始化顺序
+
+`OnInit()` 在 `_EnterTree` 阶段触发（父→子顺序）；`OnEnter()` 在 `_Ready` 阶段触发（子→父顺序，仅一次）。组件间依赖通过 `GameEntry.GetComponent<T>()` 解决。由于 `_EnterTree` 按父→子顺序执行，`OnInit` 中可安全获取场景树中排在前面的组件。
+
+### NodeExtension 扩展方法
+
+`Utility/NodeExtension.cs` 提供常用 Node 查询方法：
+- `FindChildOfType<T>()` — 递归深度优先搜索子节点，跳过 C# 类型层级陷阱
+- `FindChildrenOfType<T>()` — 递归搜索所有匹配子孙节点（`ControlUIForm` 用它收集 `IStringKey`）
+- `GetChild<T>()` / `GetChildren<T>()` — 仅查直接子节点
+- `GetParent<T>()` — 获取父节点并类型转换
+
+### Luban 配置驱动 API
+
+Entity 和 UI 的创建使用 Luban 生成的枚举 ID + 配置表查找：
+- Entity 用 `EntityId` 枚举：`GF.Entity.ShowEntity(EntityId.Cat)` 从 `TbEntityConfig` 查 assetPath/groupName
+- UI 用 `UIFormId` 枚举：`GF.UI.OpenUIForm(UIFormId.Menu)` 从 `TbUIFormConfig` 查 assetPath/groupName
+
+类型安全的异步方法：`GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat)`（约束 `where T : Node, IEntity`，返回实体实例）。
+
+### EditorResourceMode
+
+编辑器开发时，`BaseComponent.EditorResourceMode` 为 true，框架使用 `EditorResourceManager` 直接加载 Godot 资源文件（绕过资源版本管理管线）。`EditorResourceManager` 位于 `GodotGameFrameworkCore/Resource/EditorResourceManager.cs`，实现 `IResourceManager` 接口。发布时设为 false 以启用完整资源管线。
+
+### 新增组件流程
+
+继承 `GameFrameworkComponent` → 挂到 `GameFramework.tscn` 根节点下 → 在 `GF.cs` 加静态属性。
+
+### GameFolderConstant
+
+资源路径常量 `res://TheGame/...`，位于 `Framework/GodotGameFrameworkCore/Config/GameFolderConstant.cs`，含格式模板（如 `AUDIO = "res://TheGame/Audios/{0}.{1}"`、`Entities = "res://TheGame/DataTables/Entitiys/{0}.tscn"`、`GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes"`），手动维护。注意：`Entities` 路径中 `Entitiys` 拼写为历史遗留。
 
 ## Editor Plugins
 
