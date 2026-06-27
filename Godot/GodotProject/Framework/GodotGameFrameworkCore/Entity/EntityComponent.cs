@@ -40,6 +40,8 @@ namespace GodotGameFramework.Entity
         public int EntityCount => m_EntityManager.EntityCount;
         public int EntityGroupCount => m_EntityManager.EntityGroupCount;
 
+        private readonly Dictionary<int, TaskCompletionSource<IEntity>> m_LoadingTasks = new();
+
         public override void OnInit()
         {
             base.OnInit();
@@ -159,7 +161,9 @@ namespace GodotGameFramework.Entity
             return await ShowEntityAsyncInternal(entityId, entityAssetName, entityGroupName, priority, userData);
         }
 
-        /// <summary>异步显示实体内部实现。通过 TaskCompletionSource 桥接 IEntityManager 事件。</summary>
+        /// <summary>
+        /// 异步显示实体内部实现。通过 TaskCompletionSource 桥接 IEntityManager 事件。
+        /// </summary>
         private Task<IEntity> ShowEntityAsyncInternal(int entityId, string entityAssetName,
             string entityGroupName, int priority, object userData)
         {
@@ -169,45 +173,10 @@ namespace GodotGameFramework.Entity
                 return Task.FromException<IEntity>(new GameFrameworkException("Entity group name is invalid."));
 
             var tcs = new TaskCompletionSource<IEntity>();
-            EventHandler<ShowEntitySuccessEventArgs> onSuccess = null;
-            EventHandler<ShowEntityFailureEventArgs> onFailure = null;
-
-            onSuccess = (sender, e) =>
-            {
-                if (e.Entity?.Id == entityId)
-                {
-                    m_EntityManager.ShowEntitySuccess -= onSuccess;
-                    m_EntityManager.ShowEntityFailure -= onFailure;
-                    tcs.TrySetResult(e.Entity);
-                }
-            };
-            onFailure = (sender, e) =>
-            {
-                if (e.EntityId == entityId)
-                {
-                    m_EntityManager.ShowEntitySuccess -= onSuccess;
-                    m_EntityManager.ShowEntityFailure -= onFailure;
-                    tcs.TrySetException(new GameFrameworkException(
-                        Utility.Text.Format("Show entity failure '{0}': {1}", entityAssetName, e.ErrorMessage)));
-                }
-            };
-
-            m_EntityManager.ShowEntitySuccess += onSuccess;
-            m_EntityManager.ShowEntityFailure += onFailure;
-
-            try { m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, priority, userData); }
-            catch (Exception ex)
-            {
-                m_EntityManager.ShowEntitySuccess -= onSuccess;
-                m_EntityManager.ShowEntityFailure -= onFailure;
-                tcs.TrySetException(ex);
-            }
+            m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, priority, userData);
+            m_LoadingTasks.TryAdd(entityId, tcs);
             return tcs.Task;
         }
-
-        // ================================================================
-        //  隐藏实体
-        // ================================================================
 
         /// <summary>隐藏实体。</summary>
         public void HideEntity(int entityId, object userData = null) => m_EntityManager.HideEntity(entityId, userData);
@@ -351,17 +320,26 @@ namespace GodotGameFramework.Entity
         /// <summary>获取所有子实体。</summary>
         public IEntity[] GetChildEntities(IEntity parentEntity) => m_EntityManager.GetChildEntities(parentEntity);
 
-        // ================================================================
-        //  事件处理
-        // ================================================================
-
-        private void OnShowEntitySuccess(object sender, ShowEntitySuccessEventArgs e) => m_EventComponent.Fire(this, e);
+        private void OnShowEntitySuccess(object sender, ShowEntitySuccessEventArgs e)
+        {
+            m_EventComponent.Fire(this, e);
+            if (m_LoadingTasks.ContainsKey(e.Entity.Id))
+            {
+                m_LoadingTasks[e.Entity.Id].SetResult(e.Entity);
+                m_LoadingTasks.Remove(e.Entity.Id);
+            }
+        }
 
         private void OnShowEntityFailure(object sender, ShowEntityFailureEventArgs e)
         {
             Log.Warning("Show entity failure, asset '{0}', group '{1}', msg '{2}'.",
                 e.EntityAssetName, e.EntityGroupName, e.ErrorMessage);
             if (m_EnableShowEntityFailureEvent) m_EventComponent.Fire(this, e);
+            if (m_LoadingTasks.ContainsKey(e.EntityId))
+            {
+                m_LoadingTasks[e.EntityId].SetException(new GameFrameworkException(e.ErrorMessage));
+                m_LoadingTasks.Remove(e.EntityId);
+            }
         }
 
         private void OnShowEntityUpdate(object sender, GameFramework.Entity.ShowEntityUpdateEventArgs e)
