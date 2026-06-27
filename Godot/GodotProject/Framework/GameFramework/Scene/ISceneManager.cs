@@ -117,6 +117,19 @@ namespace GameFramework.Scene
         bool HasScene(string sceneAssetName);
 
         /// <summary>
+        /// 设置场景辅助器。
+        /// </summary>
+        /// <param name="sceneHelper">场景辅助器。</param>
+        void SetSceneHelper(ISceneHelper sceneHelper);
+
+        /// <summary>
+        /// 获取已加载场景的实例。
+        /// </summary>
+        /// <param name="sceneAssetName">场景资源名称。</param>
+        /// <returns>场景实例，若未加载则返回 null。</returns>
+        object GetSceneInstance(string sceneAssetName);
+
+        /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>

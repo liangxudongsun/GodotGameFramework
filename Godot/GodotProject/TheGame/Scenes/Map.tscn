@@ -2,9 +2,35 @@
 
 [ext_resource type="Texture2D" uid="uid://bq3u1gc1t7hag" path="res://TheGame/Sprites/map1.png" id="1_r3kxp"]
 
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_r3kxp"]
+a = Vector2(408, 96)
+b = Vector2(416, 1160)
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_ul7p2"]
+a = Vector2(1912, 8)
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_j10l7"]
+a = Vector2(-8, 1040)
+b = Vector2(1936, 1040)
+
 [node name="Node2D" type="Node2D" unique_id=1705836904]
 
 [node name="Map1" type="Sprite2D" parent="." unique_id=607431773]
 position = Vector2(953, 527)
 scale = Vector2(1.43, 1.43)
 texture = ExtResource("1_r3kxp")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=980049824]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=219958920]
+position = Vector2(-416, -96)
+shape = SubResource("SegmentShape2D_r3kxp")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="StaticBody2D" unique_id=1785600657]
+shape = SubResource("SegmentShape2D_ul7p2")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D" unique_id=776971214]
+shape = SubResource("SegmentShape2D_j10l7")
+
+[node name="SpawnPoint" type="Node2D" parent="." unique_id=752150889]
+position = Vector2(944, 504)

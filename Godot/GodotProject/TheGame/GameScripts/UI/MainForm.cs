@@ -11,21 +11,20 @@ using GodotGameFramework.UI;
 
 public partial class MainForm : ControlUIForm
 {
-    public override void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
+    public override async void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
     {
         base.OnInit(serialId, uiFormAssetName, uiGroup, pauseCoveredUIForm, isNewInstance, userData);
-        GF.Scene.LoadScene(ResourcesCollectionConstant.Scenes_Map);
-        GF.Entity.ShowEntity(EntityId.Cat);
+        Node2D scene = (Node2D)await GF.Scene.LoadSceneAsync(ResourcesCollectionConstant.Scenes_Map);
+        Node2D spawnPoint = scene.GetNode<Node2D>("SpawnPoint");
+        var cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
+        cat.Position = spawnPoint.Position;
+        GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Fight);
     }
 
 
     public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
     {
         base.OnUpdate(elapseSeconds, realElapseSeconds);
-        if (Input.IsActionJustPressed("ui_filedialog_show_hidden"))
-        {
-            GF.Entity.ShowEntity(EntityId.Cat);
-        }
     }
 
 

@@ -10,9 +10,7 @@ using System.Collections.Generic;
 namespace GodotGameFrameworkCore.Resource
 {
 	/// <summary>
-	/// Godot 编辑器资源管理器。实现 IResourceManager，直接用 Godot 原生
-	/// ResourceLoader / FileAccess 加载资源，不依赖版本列表或管线。
-	/// 由 GF.Base.EditorResourceMode 切换。
+	/// Godot 编辑器资源管理器。
 	/// </summary>
 	public partial class EditorResourceManager : IResourceManager
 	{
@@ -110,22 +108,22 @@ namespace GodotGameFrameworkCore.Resource
 		public void LoadAsset(string assetName, Type assetType, int priority,
 			LoadAssetCallbacks loadAssetCallbacks)
 		{
-			LoadAssetInternal(assetName, loadAssetCallbacks, null);
+			LoadAssetInternal(assetName, loadAssetCallbacks, null, assetType);
 		}
 
 		public void LoadAsset(string assetName, Type assetType, int priority,
 			LoadAssetCallbacks loadAssetCallbacks, object userData)
 		{
-			LoadAssetInternal(assetName, loadAssetCallbacks, userData);
+			LoadAssetInternal(assetName, loadAssetCallbacks, userData, assetType);
 		}
 
 		public void LoadAsset(string assetName, int priority,
 			LoadAssetCallbacks loadAssetCallbacks, object userData)
 		{
-			LoadAssetInternal(assetName, loadAssetCallbacks, userData);
+			LoadAssetInternal(assetName, loadAssetCallbacks, userData, null);
 		}
 
-		private void LoadAssetInternal(string assetName, LoadAssetCallbacks loadAssetCallbacks, object userData)
+		private void LoadAssetInternal(string assetName, LoadAssetCallbacks loadAssetCallbacks, object userData, Type assetType = null)
 		{
 			if (string.IsNullOrEmpty(assetName))
 			{
@@ -142,12 +140,21 @@ namespace GodotGameFrameworkCore.Resource
 				return;
 			}
 
-			// 同步加载：Godot.ResourceLoader.Load，完成后直接回调
+			// 同步加载并校验类型
 			try
 			{
-				var resource = Godot.ResourceLoader.Load(assetName);
+				Godot.Resource resource = Godot.ResourceLoader.Load(assetName);
+
 				if (resource != null)
 				{
+					// 若指定了类型，校验加载结果是否匹配
+					if (assetType != null && !assetType.IsInstanceOfType(resource))
+					{
+						loadAssetCallbacks.LoadAssetFailureCallback?.Invoke(
+							assetName, LoadResourceStatus.AssetError,
+							Utility.Text.Format("Loaded asset '{0}' is {1}, expected {2}.", assetName, resource.GetType().Name, assetType.Name), userData);
+						return;
+					}
 					loadAssetCallbacks.LoadAssetSuccessCallback?.Invoke(
 						assetName, resource, 0f, userData);
 				}

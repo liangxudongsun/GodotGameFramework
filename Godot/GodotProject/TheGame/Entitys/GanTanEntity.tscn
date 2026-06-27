@@ -6,8 +6,8 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_44wmx"]
 size = Vector2(20, 75)
 
-[node name="GanTanEntity" type="RigidBody2D" unique_id=1651307245]
-gravity_scale = 0.0
+[node name="GanTanEntity" type="Area2D" unique_id=66283502]
+collision_layer = 2
 script = ExtResource("1_kqipa")
 
 [node name="Fuhao" type="Sprite2D" parent="." unique_id=1144455434]

@@ -19,6 +19,7 @@ namespace GameFramework.Scene
         {
             SceneAssetName = null;
             Duration = 0f;
+            SceneInstance = null;
             UserData = null;
         }
 
@@ -41,6 +42,15 @@ namespace GameFramework.Scene
         }
 
         /// <summary>
+        /// 获取场景实例（从 PackedScene 实例化后的 Node）。
+        /// </summary>
+        public object SceneInstance
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// 获取用户自定义数据。
         /// </summary>
         public object UserData
@@ -54,13 +64,15 @@ namespace GameFramework.Scene
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="duration">加载持续时间。</param>
+        /// <param name="sceneInstance">场景实例（从 PackedScene 实例化后的 Node）。</param>
         /// <param name="userData">用户自定义数据。</param>
         /// <returns>创建的加载场景成功事件。</returns>
-        public static LoadSceneSuccessEventArgs Create(string sceneAssetName, float duration, object userData)
+        public static LoadSceneSuccessEventArgs Create(string sceneAssetName, float duration, object sceneInstance, object userData)
         {
             LoadSceneSuccessEventArgs loadSceneSuccessEventArgs = ReferencePool.Acquire<LoadSceneSuccessEventArgs>();
             loadSceneSuccessEventArgs.SceneAssetName = sceneAssetName;
             loadSceneSuccessEventArgs.Duration = duration;
+            loadSceneSuccessEventArgs.SceneInstance = sceneInstance;
             loadSceneSuccessEventArgs.UserData = userData;
             return loadSceneSuccessEventArgs;
         }
@@ -72,6 +84,7 @@ namespace GameFramework.Scene
         {
             SceneAssetName = null;
             Duration = 0f;
+            SceneInstance = null;
             UserData = null;
         }
     }

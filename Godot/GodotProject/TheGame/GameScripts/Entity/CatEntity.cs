@@ -1,9 +1,11 @@
 using GameConfig.Character;
+using GameConfig.Constant;
 using GameConfig.Entity;
 using GameFramework.Entity;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.Sound;
 using System;
 
 public partial class CatEntity : AbstractCharacterBody2DEntity
@@ -33,16 +35,21 @@ public partial class CatEntity : AbstractCharacterBody2DEntity
 		m_ScaleChange.TweenProperty(this, Node2D.PropertyName.Scale.ToString(), Vector2.One, 0.5f)
 			.SetEase(Tween.EaseType.InOut);
 	}
-	public override async void OnUpdate(float elapseSeconds, float realElapseSeconds)
+	public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
 	{
 		base.OnUpdate(elapseSeconds, realElapseSeconds);
 		KeybordMove();
-		m_LastMoveTime += elapseSeconds;
-		if (m_LastMoveTime > 0.5f)
+
+		if (Input.IsActionJustPressed("ui_accept"))
 		{
-			var entity = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan);
-			entity.Position = Position + new Vector2(0, 10);
+			SpawnGanTan();
 		}
+	}
+	private async void SpawnGanTan()
+	{
+		var entity = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan);
+		entity.Position = Position + new Vector2(0, 10);
+		GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Shoot);
 	}
 
 	private void KeybordMove()

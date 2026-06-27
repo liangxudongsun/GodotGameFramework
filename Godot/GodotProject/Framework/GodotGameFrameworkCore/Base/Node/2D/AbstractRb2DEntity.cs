@@ -54,7 +54,8 @@ namespace GodotGameFramework
             EntityAssetName = null;
             Name = "Entity (Recycled)";
             Visible = false;
-
+            Position = Vector2.Zero;
+            Sleeping = true;
         }
 
         /// <summary>
@@ -63,6 +64,7 @@ namespace GodotGameFramework
         public virtual void OnShow(object userData)
         {
             Visible = true;
+            Sleeping = false;
         }
 
         /// <summary>
@@ -71,6 +73,7 @@ namespace GodotGameFramework
         public virtual void OnHide(bool isShutdown, object userData)
         {
             Visible = false;
+
         }
 
         /// <summary>

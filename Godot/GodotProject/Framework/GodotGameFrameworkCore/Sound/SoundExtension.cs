@@ -29,6 +29,8 @@ namespace GodotGameFramework.Sound
         /// <returns>声音序列号，可用于后续停止/暂停操作。</returns>
         public static int PlayBGM(this SoundComponent soundComponent, string soundAssetName)
         {
+            ISoundGroup group = soundComponent.GetSoundGroup(SoundComponent.DefaultMusicGroup);
+            group.StopAllLoadedSounds();
             return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultMusicGroup);
         }
 
@@ -41,6 +43,8 @@ namespace GodotGameFramework.Sound
         /// <returns>声音序列号。</returns>
         public static int PlayBGM(this SoundComponent soundComponent, string soundAssetName, object userData)
         {
+            ISoundGroup group = soundComponent.GetSoundGroup(SoundComponent.DefaultMusicGroup);
+            group.StopAllLoadedSounds();
             return soundComponent.PlaySound(soundAssetName, SoundComponent.DefaultMusicGroup, 0, userData);
         }
 

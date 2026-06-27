@@ -65,6 +65,24 @@ namespace GodotGameFramework.Entity
             IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
             return entity as T;
         }
+        public static async Task<IEntity> ShowEntityAsync(this EntityComponent entityComponent, EntityId entityId, object userData = null)
+        {
+            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            {
+                Log.Error("EntityConfig data table is not available.");
+                return null;
+            }
+            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            if (cfg == null)
+            {
+                Log.Error($"Entity {entityId} not found in EntityConfig");
+                return null;
+            }
+
+            int ser = Interlocked.Increment(ref s_NextEntityId);
+            IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
+            return entity;
+        }
 
         #endregion
 

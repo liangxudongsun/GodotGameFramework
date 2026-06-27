@@ -3,7 +3,7 @@ using Godot;
 using GodotGameFramework;
 using System;
 
-public partial class GanTanEntity : AbstractRb2DEntity
+public partial class GanTanEntity : AbstractArea2DEntity
 {
     float m_LifeTime = 0f;
 
@@ -18,11 +18,12 @@ public partial class GanTanEntity : AbstractRb2DEntity
     public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
     {
         base.OnUpdate(elapseSeconds, realElapseSeconds);
-        LinearVelocity = new Vector2(0, 1) * 200;
         m_LifeTime += elapseSeconds;
+        Position += Vector2.Up * 10f;
         if (m_LifeTime > 2f)
         {
             GF.Entity.HideEntity(this);
+            m_LifeTime = 0f;
         }
     }
 

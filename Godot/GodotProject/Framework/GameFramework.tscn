@@ -14,7 +14,7 @@
 [ext_resource type="Script" uid="uid://cqufcdar6i425" path="res://Framework/GodotGameFrameworkCore/UI/UIComponent.cs" id="13_ui"]
 [ext_resource type="Script" uid="uid://4blpnjncpj6y" path="res://Framework/GodotGameFrameworkCore/Sound/SoundComponent.cs" id="14_snd"]
 [ext_resource type="Script" uid="uid://utpdibg2iugi" path="res://Framework/GodotGameFrameworkCore/Localization/LocalizationComponent.cs" id="15_loc"]
-[ext_resource type="Script" uid="uid://d3gyuw0e6gaa5" path="res://TheGame/GameScripts/Scene/SceneComponent.cs" id="15_pcfq2"]
+[ext_resource type="Script" uid="uid://d3gyuw0e6gaa5" path="res://Framework/GodotGameFrameworkCore/Scene/SceneComponent.cs" id="15_pcfq2"]
 
 [node name="GameFramework" type="Node" unique_id=134030765]
 script = ExtResource("1_781av")
@@ -22,19 +22,18 @@ script = ExtResource("1_781av")
 [node name="Base" type="Node" parent="." unique_id=611780270]
 script = ExtResource("2_781av")
 
-[node name="Procedure" type="Node" parent="." unique_id=1553213140]
-script = ExtResource("5_qii40")
-EntranceProcedureTypeName = "ProcedureLaunch"
+[node name="Event" type="Node" parent="." unique_id=355543369]
+script = ExtResource("3_353g6")
 
 [node name="Resource" type="Node" parent="." unique_id=553100123]
 script = ExtResource("11_res")
 
+[node name="Procedure" type="Node" parent="." unique_id=1553213140]
+script = ExtResource("5_qii40")
+EntranceProcedureTypeName = "ProcedureLaunch"
+
 [node name="Scene" type="Node" parent="." unique_id=883403288]
 script = ExtResource("15_pcfq2")
-m_EnableLoadSceneDependencyAssetEvent = false
-
-[node name="Event" type="Node" parent="." unique_id=355543369]
-script = ExtResource("3_353g6")
 
 [node name="Fsm" type="Node" parent="." unique_id=423859323]
 script = ExtResource("4_ynwf7")

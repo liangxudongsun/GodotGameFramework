@@ -1,10 +1,9 @@
 using GameFramework.Entity;
 using Godot;
-using System;
 namespace GodotGameFramework
 {
     [GlobalClass]
-    public abstract partial class AbstractCharacterBody2DEntity : CharacterBody2D, IEntity
+    public abstract partial class AbstractArea2DEntity : Area2D, IEntity
     {
         #region Base
         /// <summary>
@@ -55,8 +54,6 @@ namespace GodotGameFramework
             Name = "Entity (Recycled)";
             Visible = false;
             Position = Vector2.Zero;
-            Rotation = 0;
-            Velocity = Vector2.Zero;
         }
 
         /// <summary>
@@ -73,6 +70,7 @@ namespace GodotGameFramework
         public virtual void OnHide(bool isShutdown, object userData)
         {
             Visible = false;
+
         }
 
         /// <summary>
@@ -117,3 +115,4 @@ namespace GodotGameFramework
         }
     }
 }
+
