@@ -12,33 +12,6 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// 数据节点组件。
-    ///
-    /// 这是树形数据节点管理系统的封装组件，直接透传核心层的 IDataNodeManager。
-    /// 所谓"透传"是指这个组件只是核心层的薄包装，不添加额外的逻辑。
-    ///
-    /// 数据节点系统提供了一种以树形结构存取数据的机制：
-    /// - 每个节点可以存储一个 Variable 类型的数据
-    /// - 通过路径（如 "Player.Name"）访问任意深度的节点
-    /// - 支持泛型 GetData&lt;T&gt; 和 SetData&lt;T&gt; 操作
-    ///
-    /// 使用场景：
-    /// - 在不同模块之间传递数据（不依赖事件系统）
-    /// - 存储临时的运行时数据（不需要持久化的数据）
-    /// - 构建游戏运行时的数据树
-    ///
-    /// 使用方式：
-    /// <code>
-    /// DataNodeComponent dataNode = GF.DataNode;
-    ///
-    /// // 设置数据
-    /// dataNode.SetData("Player.Name", new VarString("Hero"));
-    /// dataNode.SetData("Player.HP", new VarInt32(100));
-    ///
-    /// // 获取数据
-    /// string name = dataNode.GetData&lt;VarString&gt;("Player.Name");
-    /// int hp = dataNode.GetData&lt;VarInt32&gt;("Player.HP");
-    /// </code>
-    ///
     /// </summary>
     public sealed partial class DataNodeComponent : GameFrameworkComponent
     {

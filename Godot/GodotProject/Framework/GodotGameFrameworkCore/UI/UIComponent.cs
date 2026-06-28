@@ -729,7 +729,16 @@ namespace GodotGameFramework.UI
 
             var task = new TaskCompletionSource<IUIForm>();
             int serialId = m_UIManager.OpenUIForm(uiFormAssetName, uiGroupName, priority, pauseCoveredUIForm, userData);
-            m_UIFormTask.Add(serialId, task);
+            // 检查是否已同步完成（缓存命中 → InternalOpenUIForm 已同步执行）
+            IUIForm uiForm = m_UIManager.GetUIForm(serialId);
+            if (uiForm != null)
+            {
+                task.TrySetResult(uiForm);
+            }
+            else
+            {
+                m_UIFormTask.Add(serialId, task);
+            }
             return task.Task;
         }
     }

@@ -147,13 +147,10 @@ ControlUIForm : Control, IUIForm
 - ✅ 淡入/淡出控制
 - ✅ 组级静音/音量级联
 
-### 资源模块 (ResourceComponent)
+### 资源模块
 
-- ✅ 两种加载模式：**管道模式**（核心 ResourceManager）和 **直接模式**（Godot ResourceLoader）
-- ✅ 同步/异步加载
-- ✅ `LoadAsset<T>()` / `LoadAssetAsync()`
-- ✅ `LoadBinary()` / `LoadText()` 文件读取
-- ✅ 管道模式下，GameFrameworkVersion.dat 版本列表驱动
+- ✅ **ResourceManager 异步队列架构** — 内部 `Queue<LoadAssetTask>` + `LoadThreadedGetStatus` 帧轮询，支持 `Loaded`/`InProgress`/`Failed` 全状态处理
+- ✅ `ResourceComponent` 桥接层：`LoadBinary()` / `LoadText()` / `LoadAssetAsync()`
 
 ### 事件模块 (EventComponent)
 
@@ -214,7 +211,7 @@ GodotProject/                 ← Godot 项目根
 │       ├── Entity/           ← EntityComponent, Entity<T>, EntityExtension
 │       ├── UI/               ← UIComponent, IStringKey
 │       ├── Sound/            ← SoundComponent + Helpers
-│       ├── Resource/         ← ResourceComponent + 资源管线
+│       ├── Resource/         ← ResourceManager（队列轮询引擎）+ ResourceComponent 桥接
 │       ├── Event/ Fsm/ Procedure/ Config/
 │       ├── DataTable/ DataNode/ ObjectPool/ Setting/
 │       ├── Localization/ Utility/ Variable/
@@ -328,17 +325,18 @@ GF.Sound.SetSoundGroupMute("SFX", true);
 ### 资源加载
 
 ```csharp
-// 同步加载
-PackedScene scene = GF.Resource.LoadAsset<PackedScene>("res://Scenes/Enemy.tscn");
-
-// 异步加载
-GF.Resource.LoadAssetAsync("res://Scenes/Enemy.tscn", typeof(PackedScene),
-    asset => { /* 加载成功 */ },
-    error => { /* 加载失败 */ });
-
-// 文本/二进制文件读取
+// 同步加载文本/二进制文件（Godot FileAccess）
 string text = GF.Resource.LoadText("res://Data/Config.txt");
 byte[] data = GF.Resource.LoadBinary("res://Data/Config.dat");
+
+// 异步加载资源（ResourceManager 队列轮询）
+Godot.Resource res = await GF.Resource.LoadAssetAsync("res://Sprites/Player.png", 0);
+
+// 检查资源是否存在
+if (GF.Resource.Exists("res://Scenes/Enemy.tscn"))
+{
+    // ...
+}
 ```
 
 ### 事件系统
@@ -451,6 +449,10 @@ GameFramework (GameEntry)
 
 实体 ID 使用 `Interlocked.Increment` 原子计数器生成，确保无碰撞。不再使用时间戳。
 
+### Async/Task 时序注意
+
+`EntityComponent.ShowEntityAsync` 和 `UIComponent.OpenUIFormAsync` 等异步方法依赖 `TaskCompletionSource` 监听底层事件。如果对应 Manager 在对象池中找到了缓存的实例，事件会**同步触发**。为此需要在调用 Manager 方法**之前**就注册好 tcs，避免事件先于 tcs 注册导致异步操作永远挂起。
+
 ### 组件事件取消订阅
 
 `EntityComponent` 在 `OnExitTree()` 中取消订阅 `IEntityManager` 事件，防止场景重载时内存泄漏和事件重复触发。
@@ -485,11 +487,9 @@ GameFramework (GameEntry)
 ### 资源系统
 
 - [ ] **Updatable / UpdatableWhilePlaying 资源模式** — 需要实现 `IDownloadManager` 和 `IFileSystemManager` 的 Godot 层绑定，当前自动回退到 Package 模式
-- [ ] **EditorResourceManager 事件实现** — `ResourceVerifyStart`、`ResourceApplySuccess` 等 IResourceManager 事件在编辑模式下未触发，当前仅声明了空事件
 
 ### UI 系统
 
-- [ ] **`OpenUIForm` 异步版本** — 需要实现 `AddOpenUIFormTask` 方法，通过 `OpenUIFormSuccess`/`OpenUIFormFailure` 事件来完成 `TaskCompletionSource`
 - [ ] **UIItem 字符串键热更新** — `IStringKey` 接口已定义，需完善多语言切换时的自动刷新机制
 
 ### 网络系统
@@ -498,7 +498,8 @@ GameFramework (GameEntry)
 
 ### 场景系统
 
-- [ ] **SceneComponent 完善** — 当前仅含基础框架，需实现场景加载/卸载、场景切换过渡、异步加载进度回调
+- [ ] **场景切换过渡** — 场景切换时的过渡动画、异步加载进度回调
+- [ ] **SceneComponent 场景卸载完善** — 卸载时的资源释放确保和卸载回调
 
 ### 调试与工具
 

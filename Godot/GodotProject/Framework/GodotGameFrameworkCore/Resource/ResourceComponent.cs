@@ -16,6 +16,7 @@ namespace GodotGameFramework.Resource
 {
     public sealed partial class ResourceComponent : GameFrameworkComponent
     {
+        private EventComponent m_EventComponent;
         private IResourceManager m_ResourceManager;
         private ResourceMode m_EffectiveResourceMode;
         [Export]
@@ -36,6 +37,7 @@ namespace GodotGameFramework.Resource
             base.OnInit();
             m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback, LoadAssetDependencyAssetCallback);
             m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
+            m_EventComponent = GameEntry.GetComponent<EventComponent>();
             m_EffectiveResourceMode = ResolveResourceMode(_resourceMode);
             m_ResourceManager.SetResourceMode(m_EffectiveResourceMode);
 
@@ -132,7 +134,11 @@ namespace GodotGameFramework.Resource
             }
 
             m_ResourceManager.LoadAsset(path, priority, m_LoadAssetCallbacks, userData);
-            m_LoadingTasks.Add(path, tcs);
+            if (!m_LoadingTasks.TryAdd(path, tcs))
+            {
+                tcs.TrySetException(new InvalidOperationException(
+                    Utility.Text.Format("Resource '{0}' is already being loaded.", path)));
+            }
             return tcs.Task;
         }
 

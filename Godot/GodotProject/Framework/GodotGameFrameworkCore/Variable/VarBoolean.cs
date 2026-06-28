@@ -11,19 +11,6 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// bool 变量类。
-    ///
-    /// 继承自 Variable&lt;bool&gt;，用于 DataNode 等需要存储 bool 值的系统。
-    /// 支持与 bool 类型的隐式转换，使用引用池优化内存分配。
-    ///
-    /// 使用方式：
-    /// <code>
-    /// // 通过隐式转换创建（自动从引用池获取）
-    /// VarBoolean varBool = true;
-    ///
-    /// // 读取值
-    /// bool value = varBool.Value;
-    /// bool value2 = varBool; // 隐式转换
-    /// </code>
     /// </summary>
     public sealed class VarBoolean : Variable<bool>
     {
