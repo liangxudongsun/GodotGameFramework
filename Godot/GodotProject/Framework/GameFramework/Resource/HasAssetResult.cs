@@ -36,10 +36,5 @@ namespace GameFramework.Resource
         /// 存在二进制资源且存储在磁盘上。
         /// </summary>
         BinaryOnDisk,
-
-        /// <summary>
-        /// 存在二进制资源且存储在文件系统里。
-        /// </summary>
-        BinaryOnFileSystem
     }
 }

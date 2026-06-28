@@ -7,10 +7,8 @@
 
 using GameFramework;
 using GameFramework.Localization;
-using GameFramework.Resource;
 using Godot;
 using Godot.Collections;
-using GodotGameFrameworkCore.Resource;
 using System;
 
 namespace GodotGameFramework
@@ -20,27 +18,6 @@ namespace GodotGameFramework
     /// </summary>
     public sealed partial class BaseComponent : GameFrameworkComponent
     {
-        [Export]
-        private bool m_EditorResourceMode = true;
-        public bool EditorResourceMode
-        {
-            get
-            {
-                return m_EditorResourceMode && OS.HasFeature("editor");
-            }
-        }
-        private IResourceManager m_ResourceManager;
-        public IResourceManager EditorResourceManager
-        {
-            get
-            {
-                if (m_ResourceManager == null)
-                {
-                    m_ResourceManager = new EditorResourceManager();
-                }
-                return m_ResourceManager;
-            }
-        }
         [Export]
         public Language EditorLanguage;
         [Export]

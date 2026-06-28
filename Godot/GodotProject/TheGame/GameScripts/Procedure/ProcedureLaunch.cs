@@ -49,7 +49,7 @@ public class ProcedureLaunch : ProcedureBase
         Log.Info($"[DataTableComponent]: {(GF.DataTable != null ? "OK" : "缺失")}");
 
 
-        Log.Info("当前资源加载管理：{0}", GF.Base.EditorResourceMode ? "编辑器模式" : "运行时模式");
+        Log.Info("当前资源模式：{0}", GF.Resource.EffectiveResourceMode);
         LoadEntityGroup();
         LoadLocalization();
         LoadUIGroup();

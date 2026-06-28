@@ -469,7 +469,6 @@ namespace GameFramework.Scene
             }
 
             m_UnloadingSceneAssetNames.Add(sceneAssetName);
-            m_ResourceManager.UnloadScene(sceneAssetName, m_UnloadSceneCallbacks, userData);
         }
 
         private void LoadAssetSuccessCallback(string sceneAssetName, object sceneAsset, float duration, object userData)

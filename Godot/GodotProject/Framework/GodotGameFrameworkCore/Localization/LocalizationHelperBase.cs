@@ -22,7 +22,10 @@ namespace GodotGameFramework.Localization
 
         public abstract bool ReadData(ILocalizationManager dataProviderOwner, string dataAssetName, byte[] dataBytes, int startIndex, int length, object userData);
 
-        public abstract void ReleaseDataAsset(ILocalizationManager dataProviderOwner, object dataAsset);
+        public void ReleaseDataAsset(ILocalizationManager dataProviderOwner, object dataAsset)
+        {
+
+        }
         public static string GetLocaleByLanguage(Language language)
         {
             return language switch

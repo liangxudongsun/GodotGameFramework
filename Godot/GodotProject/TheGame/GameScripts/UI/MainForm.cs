@@ -16,7 +16,7 @@ public partial class MainForm : ControlUIForm
         base.OnInit(serialId, uiFormAssetName, uiGroup, pauseCoveredUIForm, isNewInstance, userData);
         Node2D scene = (Node2D)await GF.Scene.LoadSceneAsync(ResourcesCollectionConstant.Scenes_Map);
         Node2D spawnPoint = scene.GetNode<Node2D>("SpawnPoint");
-        var cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
+        CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
         cat.Position = spawnPoint.Position;
         GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Fight);
     }

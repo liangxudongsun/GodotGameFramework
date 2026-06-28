@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using GameFramework;
+using GameFramework.Resource;
 using GameFramework.Sound;
 using Godot;
 using System;
@@ -61,11 +62,7 @@ namespace GodotGameFramework.Sound
             if (m_EnablePlaySoundUpdateEvent) m_SoundManager.PlaySoundUpdate += OnPlaySoundUpdate;
             if (m_EnablePlaySoundDependencyAssetEvent) m_SoundManager.PlaySoundDependencyAsset += OnPlaySoundDependencyAsset;
 
-            var resourceManager = GF.Base.EditorResourceMode
-                ? GF.Base.EditorResourceManager
-                : GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>();
-            if (resourceManager == null) { Log.Fatal("Resource manager is invalid."); return; }
-            m_SoundManager.SetResourceManager(resourceManager);
+            m_SoundManager.SetResourceManager(GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
             SoundHelperBase soundHelper = Helper.CreateHelper(m_SoundHelperTypeName, m_SoundHelper);
             if (soundHelper == null) { Log.Fatal("Can not create sound helper."); return; }
             m_SoundHelper = soundHelper;

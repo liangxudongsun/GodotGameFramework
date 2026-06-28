@@ -160,16 +160,7 @@ namespace GodotGameFramework.Localization
             }
         }
 
-        /// <summary>
-        /// 释放本地化字典资源。
-        /// 在 GGF 单机模式下无需释放（文件内容已在内存中）。
-        /// </summary>
-        /// <param name="localizationManager">本地化管理器。</param>
-        /// <param name="dataAsset">要释放的资源。</param>
-        public override void ReleaseDataAsset(ILocalizationManager localizationManager, object dataAsset)
-        {
-            // GGF 单机模式下不需要释放资源
-        }
+
 
         public override Language SystemLanguage
         {

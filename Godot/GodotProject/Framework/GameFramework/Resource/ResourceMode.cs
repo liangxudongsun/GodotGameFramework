@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 // Game Framework
 // Copyright © 2013-2021 Jiang Yin. All rights reserved.
 // Homepage: https://gameframework.cn/
@@ -7,29 +7,15 @@
 
 namespace GameFramework.Resource
 {
-    /// <summary>
-    /// 资源模式。
-    /// </summary>
     public enum ResourceMode : byte
     {
-        /// <summary>
-        /// 未指定。
-        /// </summary>
-        Unspecified = 0,
+        /// <summary>单机模式。所有资源打包在游戏内，直接加载。</summary>
+        Package = 0,
 
-        /// <summary>
-        /// 单机模式。
-        /// </summary>
-        Package,
-
-        /// <summary>
-        /// 预下载的可更新模式。
-        /// </summary>
+        /// <summary>预下载的可更新模式。启动时检查远程版本，下载差异 .pck。</summary>
         Updatable,
 
-        /// <summary>
-        /// 使用时下载的可更新模式。
-        /// </summary>
+        /// <summary>使用时下载的可更新模式。边玩边下。</summary>
         UpdatableWhilePlaying
     }
 }

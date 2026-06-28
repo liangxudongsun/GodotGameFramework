@@ -1881,3 +1881,165 @@ Godot/production/session-logs/session-log.md
 README.md
 ---
 
+## Session End: 20260628_005259
+### Commits
+d834deb 修改场景逻辑
+### Uncommitted Changes
+Godot/GodotProject/Framework/GameFramework/Resource/IResourceManager.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/EditorResourceManager.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/production/session-logs/agent-audit.log
+---
+
+## Session End: 20260628_014223
+### Commits
+06903d8 1
+d834deb 修改场景逻辑
+### Uncommitted Changes
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260628_015253
+### Commits
+06903d8 1
+d834deb 修改场景逻辑
+### Uncommitted Changes
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260628_150151
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260628_152905
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Base/BaseComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Base/GF.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/EditorResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceExtension.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Scene/SceneComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Sound/SoundComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/UI/UIComponent.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260628_155116
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260628_194627
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/CLAUDE.md
+Godot/GodotProject/Framework/GameFramework/Resource/IResourceManager.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.AssetInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.AssetInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.LoadType.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.LoadType.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ReadWriteResourceInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ReadWriteResourceInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.CheckStatus.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.CheckStatus.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.LocalVersionInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.LocalVersionInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.RemoteVersionInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.RemoteVersionInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.CheckInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceChecker.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceGroup.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceGroup.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceGroupCollection.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceGroupCollection.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceIniter.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceIniter.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.AssetObject.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.AssetObject.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadAssetTask.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadAssetTask.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadBinaryInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadBinaryInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadDependencyAssetTask.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadDependencyAssetTask.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadResourceAgent.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadResourceAgent.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadResourceTaskBase.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadResourceTaskBase.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadSceneTask.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.LoadSceneTask.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.ResourceObject.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.ResourceObject.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceLoader.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceName.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceName.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceNameComparer.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceNameComparer.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceUpdater.ApplyInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceUpdater.ApplyInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceUpdater.UpdateInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceUpdater.UpdateInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceUpdater.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceUpdater.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceVerifier.VerifyInfo.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceVerifier.VerifyInfo.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceVerifier.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.ResourceVerifier.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.VersionListProcessor.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.VersionListProcessor.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.cs
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceManager.cs.uid
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceMode.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Base/BaseComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/DefaultLoadResourceAgentHelper.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/DefaultLoadResourceAgentHelper.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/DefaultResourceHelper.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/DefaultResourceHelper.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/EditorResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/EditorResourceManager.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/GDFBuiltinVersionListSerializer.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/GDFBuiltinVersionListSerializer.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/GDFResourceBuilder.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/GDFResourceBuilder.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/LoadResourceAgentHelperBase.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/LoadResourceAgentHelperBase.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceExtension.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceHelperBase.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceHelperBase.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Scene/SceneComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Sound/SoundComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/UI/UIComponent.cs
+Godot/GodotProject/GameFrameworkVersion.dat
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Procedure/ProcedureLaunch.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/ScorePopupItem.cs
+Godot/GodotProject/addons/Resources/ResourcesCollectionEditor.cs
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+---
+

@@ -51,22 +51,7 @@ namespace GodotGameFramework.Scene
         {
             base.OnEnter();
 
-            BaseComponent baseComponent = GameEntry.GetComponent<BaseComponent>();
-            if (baseComponent == null)
-            {
-                Log.Fatal("Base component is invalid.");
-                return;
-            }
-
-            m_ResourceManager = baseComponent.EditorResourceMode
-                ? baseComponent.EditorResourceManager
-                : GameFrameworkEntry.GetModule<IResourceManager>();
-
-            if (m_ResourceManager == null)
-            {
-                Log.Fatal("Resource manager is invalid.");
-                return;
-            }
+            m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
             m_SceneManager.SetResourceManager(m_ResourceManager);
 
             m_SceneHelper = Helper.CreateHelper(m_SceneHelperTypeName, m_SceneHelper);

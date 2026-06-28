@@ -58,11 +58,7 @@ namespace GodotGameFramework.Entity
             if (m_EnableShowEntityDependencyAssetEvent) m_EntityManager.ShowEntityDependencyAsset += OnShowEntityDependencyAsset;
             if (m_EnableHideEntityCompleteEvent) m_EntityManager.HideEntityComplete += OnHideEntityComplete;
 
-            var resourceManager = GF.Base.EditorResourceMode
-                ? GF.Base.EditorResourceManager
-                : GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>();
-            if (resourceManager == null) { Log.Fatal("Resource manager is invalid."); return; }
-            m_EntityManager.SetResourceManager(resourceManager);
+            m_EntityManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
             m_EntityManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
             m_EntityHelper = Helper.CreateHelper(m_EntityHelperTypeName, m_EntityHelper);
             if (m_EntityHelper == null) { Log.Fatal("Can not create entity helper."); return; }
@@ -173,8 +169,16 @@ namespace GodotGameFramework.Entity
                 return Task.FromException<IEntity>(new GameFrameworkException("Entity group name is invalid."));
 
             var tcs = new TaskCompletionSource<IEntity>();
-            m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, priority, userData);
             m_LoadingTasks.TryAdd(entityId, tcs);
+            try
+            {
+                m_EntityManager.ShowEntity(entityId, entityAssetName, entityGroupName, priority, userData);
+            }
+            catch (Exception ex)
+            {
+                m_LoadingTasks.Remove(entityId);
+                tcs.TrySetException(ex);
+            }
             return tcs.Task;
         }
 

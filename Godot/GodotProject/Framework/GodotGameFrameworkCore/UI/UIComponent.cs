@@ -189,7 +189,7 @@ namespace GodotGameFramework.UI
                 m_UIManager.CloseUIFormComplete += OnCloseUIFormComplete;
             }
 
-            m_UIManager.SetResourceManager(GF.Base.EditorResourceMode ? GF.Base.EditorResourceManager : GameFrameworkEntry.GetModule<IResourceManager>());
+            m_UIManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
             m_UIManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
             m_UIManager.InstanceAutoReleaseInterval = m_InstanceAutoReleaseInterval;
             m_UIManager.InstanceCapacity = m_InstanceCapacity;

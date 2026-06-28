@@ -48,7 +48,7 @@ public partial class CatEntity : AbstractCharacterBody2DEntity
 	private async void SpawnGanTan()
 	{
 		var entity = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan);
-		entity.Position = Position + new Vector2(0, 10);
+		entity.Position = Position;
 		GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Shoot);
 	}
 

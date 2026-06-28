@@ -32,10 +32,6 @@ public partial class ResourcesCollectionEditor : EditorPlugin
 
 	private void OnMenuPressed()
 	{
-		string versionListPath = Utility.Path.GetRegularPath(
-			System.IO.Path.Combine(GameFolderConstant.ReadOnlyPath, GameFolderConstant.GameFrameworkVersionData));
-		GDFResourceBuilder.BuildVersionList(GameFolderConstant.ReadOnlyPath, versionListPath,
-			GameVersion, InternalResourceVersion);
 		CollectionRes();
 	}
 

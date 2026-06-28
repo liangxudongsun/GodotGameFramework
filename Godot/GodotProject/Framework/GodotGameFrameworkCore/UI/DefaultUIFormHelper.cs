@@ -21,8 +21,7 @@ namespace GodotGameFramework.UI
         /// <returns>实例化后的界面（Node）。</returns>
         public override object InstantiateUIForm(object uiFormAsset)
         {
-            PackedScene packedScene = (PackedScene)uiFormAsset;
-            return packedScene.Instantiate();
+            return NodeUtility.InstantiatePack(uiFormAsset);
         }
 
         /// <summary>
@@ -69,10 +68,7 @@ namespace GodotGameFramework.UI
         /// <param name="uiFormInstance">要释放的界面实例。</param>
         public override void ReleaseUIForm(object uiFormAsset, object uiFormInstance)
         {
-            if (uiFormInstance is Node node)
-            {
-                node.QueueFree();
-            }
+            NodeUtility.ReleaseNode(uiFormInstance);
         }
     }
 }
