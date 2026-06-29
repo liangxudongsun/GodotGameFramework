@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://dmushddd85ft5"]
+
+[ext_resource type="Script" uid="uid://bajp84ls5kgxu" path="res://TheGame/GameScripts/Entity/AngerEntity.cs" id="1_g4fl2"]
+[ext_resource type="Texture2D" uid="uid://bdy5b5i3jeyx8" path="res://TheGame/Sprites/Y1.png" id="2_yiar1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_44wmx"]
+size = Vector2(195, 52)
+
+[node name="Anger" type="CharacterBody2D" unique_id=34254536 node_paths=PackedStringArray("m_HSlider")]
+motion_mode = 1
+script = ExtResource("1_g4fl2")
+m_HSlider = NodePath("HSlider")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=738050605]
+position = Vector2(0.5, 0)
+shape = SubResource("RectangleShape2D_44wmx")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1343519282]
+modulate = Color(1, 0.5210043, 1, 1)
+texture = ExtResource("2_yiar1")
+region_enabled = true
+region_rect = Rect2(56, 272, 184, 72)
+
+[node name="HSlider" type="HSlider" parent="." unique_id=1519545269]
+modulate = Color(0.41568628, 1, 0.4862745, 1)
+offset_left = -161.0
+offset_top = -68.0
+offset_right = 160.0
+offset_bottom = -52.0
+value = 22.0
+editable = false
+scrollable = false

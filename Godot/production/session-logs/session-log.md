@@ -2043,3 +2043,45 @@ Godot/production/session-logs/agent-audit.log
 Godot/production/session-logs/session-log.md
 ---
 
+## Session End: 20260629_225003
+### Uncommitted Changes
+Configs/GameConfig/Datas/__enums__.xlsx
+"Configs/GameConfig/Datas/\345\256\236\344\275\223.xlsx"
+"Configs/GameConfig/Datas/\350\247\222\350\211\262.xlsx"
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/Framework/GameFramework/Resource/IResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Utility/NodeExtension.cs
+Godot/GodotProject/TheGame/DataTables/GameConfigs/character_tbcharacterconfig.bytes
+Godot/GodotProject/TheGame/DataTables/GameConfigs/entity_tbentityconfig.bytes
+Godot/GodotProject/TheGame/Entitys/GanTanEntity.tscn
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Character/CharacterConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Character/TbCharacterConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Entity/EntityConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Entity/EntityGroupConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Entity/EntityId.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Entity/EntityId.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Entity/TbEntityConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Entity/TbEntityGroupConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Sound/SoundConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Sound/TbSoundConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Tables.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/TbUIFormConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/TbUIGroupConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/UIFormConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/UIFormId.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/UIGroupConfig.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/vector2.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/vector2int.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/vector3.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/vector3int.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/vector4.cs.uid
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/GodotProject/TheGame/Scenes/Map.tscn
+Godot/GodotProject/TheGame/UIs/MenuForm.tscn
+Godot/GodotProject/addons/Resources/ResourcesCollectionEditor.cs
+---
+

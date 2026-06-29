@@ -21,6 +21,10 @@ namespace GameConfig.Entity
         /// 感叹号
         /// </summary>
         GanTan = 1,
+        /// <summary>
+        /// 愤怒
+        /// </summary>
+        Anger = 2,
     }
 
 } 

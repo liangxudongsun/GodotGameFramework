@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework;
 using GameFramework.Entity;
 using GameFramework.ObjectPool;
@@ -16,7 +9,9 @@ using System.Threading.Tasks;
 
 namespace GodotGameFramework.Entity
 {
-    /// <summary>实体组件。封装 IEntityManager，Godot 场景树管理在组件层处理。</summary>
+    /// <summary>
+    /// 实体组件。
+    /// </summary>
     public sealed partial class EntityComponent : GameFrameworkComponent
     {
         private const int DefaultPriority = 0;

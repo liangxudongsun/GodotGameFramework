@@ -15,8 +15,6 @@ public partial class ResourcesCollectionEditor : EditorPlugin
 	const string MAINFOLDER = "res://TheGame/";
 	const string SCRIPTFOLDER = "res://TheGame/GameScripts/";
 	const string OUTPUT_FILE = "res://TheGame/GameScripts/GameProto/ResourcesCollectionConstant.cs";
-	public string GameVersion = "1.0.0";
-	public int InternalResourceVersion = 1;
 
 	public override void _EnterTree()
 	{

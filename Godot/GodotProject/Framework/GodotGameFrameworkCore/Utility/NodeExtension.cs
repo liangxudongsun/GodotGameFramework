@@ -98,9 +98,7 @@ namespace GodotGameFramework
         }
 
         /// <summary>
-        /// 在所有子孙节点中查找第一个指定类型的节点（深度优先）。
-        ///
-        /// 与 GetChildren&lt;T&gt; 不同，此方法递归搜索整个子树。
+        /// 在所有子孙节点中查找第一个指定类型的节点
         /// </summary>
         /// <typeparam name="T">节点类型。</typeparam>
         /// <param name="parent">父节点。</param>

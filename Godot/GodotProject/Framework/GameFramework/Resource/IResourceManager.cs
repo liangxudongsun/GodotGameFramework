@@ -1,15 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-//
-// 精简：从 97 成员缩减到 8 个核心方法。
-// 移除所有 Unity 管线专属成员（序列化器、事件、资源组等）。
-//
-//------------------------------------------------------------
-
 using System;
 
 namespace GameFramework.Resource

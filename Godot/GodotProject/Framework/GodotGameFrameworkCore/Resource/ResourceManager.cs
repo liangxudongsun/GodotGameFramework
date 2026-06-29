@@ -101,6 +101,8 @@ namespace GameFramework.Resource
                     case ResourceLoader.ThreadLoadStatus.InProgress:
                         {
                             task.Duration += elapseSeconds;
+                            task.Callbacks.LoadAssetUpdateCallback?.Invoke(
+                                task.AssetPath, task.Duration, task.UserData);
                             break;  // 等下一帧
                         }
                     case ResourceLoader.ThreadLoadStatus.Failed:
@@ -121,5 +123,6 @@ namespace GameFramework.Resource
         {
             m_TaskPool.Clear();
         }
+
     }
 }
