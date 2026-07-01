@@ -73,7 +73,7 @@ public partial class GanTanEntity : AbstractArea2DEntity
         Position += m_Direction * m_Speed * elapseSeconds;
 
         // 超时自动销毁
-        if (m_LifeTime > 3f)
+        if (m_LifeTime > 8f)
         {
             m_IsDead = true;
             GF.Entity.HideEntity(this);

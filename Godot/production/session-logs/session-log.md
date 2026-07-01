@@ -2085,3 +2085,62 @@ Godot/GodotProject/TheGame/UIs/MenuForm.tscn
 Godot/GodotProject/addons/Resources/ResourcesCollectionEditor.cs
 ---
 
+## Session End: 20260701_233009
+### Uncommitted Changes
+"Configs/GameConfig/Datas/\350\247\222\350\211\262.xlsx"
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/TheGame/DataTables/GameConfigs/character_tbcharacterconfig.bytes
+Godot/GodotProject/TheGame/GameScripts/Entity/ActorEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockSpawnData.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockSpawnData.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/RedBlockLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/RedBlockLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/ScoreBlockLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/ScoreBlockLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/TestEntityLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/TestEntityLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Character/CharacterConfig.cs
+Godot/GodotProject/TheGame/UIs/TestEntity.tscn
+Godot/GodotProject/TheGame/UIs/TestOverlay.tscn
+---
+
+## Session End: 20260701_233145
+### Uncommitted Changes
+"Configs/GameConfig/Datas/\350\247\222\350\211\262.xlsx"
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/TheGame/DataTables/GameConfigs/character_tbcharacterconfig.bytes
+Godot/GodotProject/TheGame/GameScripts/Entity/ActorEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockSpawnData.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/BlockSpawnData.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/RedBlockLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/RedBlockLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/ScoreBlockLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/ScoreBlockLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/Entity/TestEntityLogic.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/TestEntityLogic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Character/CharacterConfig.cs
+Godot/GodotProject/TheGame/UIs/TestEntity.tscn
+Godot/GodotProject/TheGame/UIs/TestOverlay.tscn
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260702_011229
+### Uncommitted Changes
+Godot/CLAUDE.md
+"Godot/ResourceComponent\345\210\206\346\236\220.md"
+---
+
+## Session End: 20260702_011452
+### Uncommitted Changes
+Godot/CLAUDE.md
+"Godot/ResourceComponent\345\210\206\346\236\220.md"
+Godot/production/session-logs/session-log.md
+README.md
+---
+

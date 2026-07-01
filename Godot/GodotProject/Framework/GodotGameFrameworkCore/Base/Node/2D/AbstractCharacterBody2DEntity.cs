@@ -109,7 +109,7 @@ namespace GodotGameFramework
 
         /// <summary>
         /// 实体轮询。
-        /// 每帧调用，转发给 EntityLogic。
+        /// 每帧调用，用于处理实体逻辑。
         /// </summary>
         public virtual void OnUpdate(float elapseSeconds, float realElapseSeconds)
         {

@@ -1,6 +1,9 @@
+using GameConfig.Character;
+using GameFramework;
 using GameFramework.Entity;
 using Godot;
 using GodotGameFramework;
+
 
 /// <summary>
 /// 实体阵营
@@ -15,6 +18,8 @@ public partial class ActorEntity : AbstractCharacterBody2DEntity, IActor
 {
     protected ActorData m_ActorData;
     public bool IsDead => m_ActorData.Hp <= 0;
+    protected CharacterConfig m_Config;
+    protected PhysicsCheck2D m_Check;
 
     /// <summary>
     /// 实体所属阵营
@@ -36,7 +41,13 @@ public partial class ActorEntity : AbstractCharacterBody2DEntity, IActor
         m_ActorData.MaxHp = 100;
         m_ActorData.Hp = m_ActorData.MaxHp;
     }
-
+    public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
+    {
+        base.OnUpdate(elapseSeconds, realElapseSeconds);
+#if TOOLS
+        QueueRedraw();
+#endif
+    }
     /// <summary>
     /// 受伤
     /// </summary>
@@ -64,12 +75,22 @@ public partial class ActorEntity : AbstractCharacterBody2DEntity, IActor
             m_ActorData.Hp = m_ActorData.MaxHp;
         }
     }
-
+    public override void _Draw()
+    {
+        base._Draw();
+        if (m_Config != null)
+        {
+            DrawCircle(Vector2.Zero, m_Config.CheckRange, Colors.Red, false, 2f);
+        }
+        m_Check?.DrawDebugLines(Colors.Green);
+    }
     /// <summary>
     /// 死亡
     /// </summary>
     protected virtual void Die()
     {
         GF.Entity.HideEntity(this);
+        if (m_Check != null)
+            ReferencePool.Release(m_Check);
     }
 }

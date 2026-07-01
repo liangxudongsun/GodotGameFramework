@@ -18,7 +18,10 @@ public sealed partial class CharacterConfig : Luban.BeanBase
     {
         Id = _buf.ReadInt();
         EntityId = (Entity.EntityId)_buf.ReadInt();
+        Hp = _buf.ReadInt();
         Speed = _buf.ReadInt();
+        AtkSpeed = _buf.ReadFloat();
+        CheckRange = _buf.ReadInt();
     }
 
     public static CharacterConfig DeserializeCharacterConfig(ByteBuf _buf)
@@ -34,10 +37,13 @@ public sealed partial class CharacterConfig : Luban.BeanBase
     /// 实体名称
     /// </summary>
     public readonly Entity.EntityId EntityId;
+    public readonly int Hp;
     /// <summary>
     /// 移动速度
     /// </summary>
     public readonly int Speed;
+    public readonly float AtkSpeed;
+    public readonly int CheckRange;
    
     public const int __ID__ = -1306483002;
     public override int GetTypeId() => __ID__;
@@ -51,7 +57,10 @@ public sealed partial class CharacterConfig : Luban.BeanBase
         return "{ "
         + "id:" + Id + ","
         + "EntityId:" + EntityId + ","
+        + "Hp:" + Hp + ","
         + "Speed:" + Speed + ","
+        + "AtkSpeed:" + AtkSpeed + ","
+        + "CheckRange:" + CheckRange + ","
         + "}";
     }
 }

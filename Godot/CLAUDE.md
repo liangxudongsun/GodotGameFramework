@@ -4,126 +4,70 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** 移植自 [Game Framework](https://gameframework.cn/)（Jiang Yin）。模块化架构：事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置等。
+**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, Setting.
 
-- `dotnet build` (quick) / `--build-solutions` (when adding .cs files)
-- 默认日志编译开关：`ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG`（见 `GodotProject.csproj` 的 `DefineConstants`）。`Log.*` 使用 `[Conditional]` 零开销移除
-- `AllowUnsafeBlocks=true` — `Utility.Converter.cs` 使用指针操作
-- 当前活跃游戏项目：`TheGame/`
-- CodeGraph 知识图谱索引目录：`.codegraph/`（daemon.pid、索引文件等）
+- Build: `cd GodotProject && dotnet build`
+- Add .cs files: `"<godot_exe>" --build-solutions --path . --no-window -q`
+- Godot editor: `"<godot_exe>" --path . --editor` (path: `E:\Godot\Godot_v4.6.2-stable_mono_win64\...\Godot_v4.6.2-stable_mono_win64.exe`)
+- Active game project: `TheGame/`
+- No test framework detected — game is runtime-only (no test files found)
 
-## Repository Layout
+## Dual-Layer Architecture
 
-Git 仓库根 `E:/Godot/GodotProject/GodotGameFramework`。当前工作目录为 `Godot/` 子目录。
-
-```
-../Configs/GameConfig/         ← Excel 配置源数据 + Luban 生成脚本
-GodotProject/                  ← Godot 项目根 (project.godot)
-  Framework/
-    GameFramework/              ← 纯 C# 框架（部分无 Godot 依赖，部分已 Godot 化）
-      Base/DataProvider/       ← IResourceManager 数据加载消费者
-      Resource/                ← IResourceManager 接口 + 回调类型定义
-    GodotGameFrameworkCore/    ← Godot 运行时组件
-      Resource/                ← ResourceManager（IResourceManager 实现）+ ResourceComponent
-      Base/                    ← GF.cs 门面, GameEntry, BaseComponent
-      Entity/ UI/ Sound/ Scene/ ← 各系统桥接组件
-    GameFramework.tscn         ← 主场景（GameFramework 根节点）
-  TheGame/                     ← 当前活跃游戏项目
-    Audios/ DataTables/ Entitys/ GameScripts/ Scenes/ Sprites/ UIs/
-  addons/                      ← 编辑器插件
-```
-
-## Scene Tree
-
-主场景 `Framework/GameFramework.tscn`（uid `bggentry001`），注册为 `run/main_scene`：
+The framework has a strict **two-layer separation** that mirrors the original Game Framework design:
 
 ```
-GameFramework (GameEntry)
+GameFramework/                    ← Pure C# modules (zero Godot dependency)
+  Base/                           ← GameFrameworkEntry, GameFrameworkModule, ReferencePool, EventPool
+  Fsm/                            ← State machine system
+  Procedure/                      ← Procedure (game state) manager
+  Entity/ UI/ Sound/ Scene/       ← Manager interfaces + logic (no Godot types)
+  DataNode/ DataTable/ ObjectPool/
+  Resource/                       ← IResourceManager interface
+  Utility/                        ← Text, compression, random, etc.
+
+GodotGameFrameworkCore/           ← Godot runtime components
+  Base/                           ← GF.cs facade, GameEntry (SceneTree root), GameFrameworkComponent
+  Entity/ UI/ Sound/ Resource/    ← Godot bridge components (each delegates to the corresponding Manager)
+  SingletonSystem/                ← SingletonNode<T> pattern
+  Utility/                        ← PhysicsCheck2D etc.
+```
+
+**Key rule:** `GameFramework/` knows nothing about Godot. `GodotGameFrameworkCore/` depends on both `GameFramework/` and Godot. This means any new system should have its interface/logic in `GameFramework/` and its Godot bridge in `GodotGameFrameworkCore/`.
+
+## Scene Tree & Startup
+
+Main scene: `Framework/GameFramework.tscn` (uid `bggentry001`), set as `run/main_scene`.
+
+```
+GameFramework (GameEntry : GodotComponent)
 ├── Base / Event / Resource / ResourceService
 ├── Procedure / Scene / Fsm
 ├── DataTable / DataNode / ObjectPool
 ├── Setting / Entity / UI / Sound / Localization
 ```
 
-每种组件类型只允许注册一个实例。所有组件列表见 `GF.cs` 静态门面。
+Each component type can only register one instance. Component list mirrors the `GF.cs` static facade.
 
-### 启动流程
+### Startup Sequence
 
-1. Godot 加载 `Framework/GameFramework.tscn`
-2. `GameEntry.OnInit()` 自动注册所有 `GameFrameworkComponent` 子节点
-3. `GameEntry._Process()` 每帧驱动 `GameFrameworkEntry.Update()`，轮询 `GameFrameworkModule`
-4. `GameEntry.CheckProcedure()` 检测 `ProcedureComponent` 注册完成后自动调用 `StartProcedure()`
+1. Godot loads `Framework/GameFramework.tscn`
+2. `GameFrameworkComponent.OnInit()` auto-calls `GameEntry.RegisterComponent(this)`
+3. `GameEntry._Process()` drives `GameFrameworkEntry.Update()` each frame, polling all `GameFrameworkModule`s
+4. `GameEntry.CheckProcedure()` detects `ProcedureComponent` registration, then auto-calls `StartProcedure()` → enters `ProcedureLaunch`
 
-## 资源系统（P0 精简版）
-
-`IResourceManager` 从 97 个成员精简为 8 个，移除所有 Unity 管线遗留代码。
-
-### 接口定义
-
-```csharp
-public interface IResourceManager
-{
-    ResourceMode ResourceMode { get; }
-    void SetResourceMode(ResourceMode resourceMode);
-    HasAssetResult HasAsset(string assetName);
-    void LoadAsset(string assetName, int priority, LoadAssetCallbacks loadAssetCallbacks, object userData);
-    void UnloadAsset(object asset);
-    void UnloadScene(string sceneAssetName, UnloadSceneCallbacks unloadSceneCallbacks, object userData);
-    void LoadBinary(string binaryAssetName, LoadBinaryCallbacks loadBinaryCallbacks, object userData);
-    int GetBinaryLength(string binaryAssetName);
-    int LoadBinaryFromFileSystem(string binaryAssetName, byte[] buffer);
-}
-```
-
-### 实现架构
+### Component Lifecycle (GodotComponent)
 
 ```
-ResourceManager : GameFrameworkModule, IResourceManager（GodotGameFrameworkCore/Resource/）
-  ├─ m_AssetTaskPool（TaskPool<LoadAssetTask>）
-  │   └─ LoadAssetAgent：同步 Godot.ResourceLoader.Load + 回调
-  ├─ m_BinaryTaskPool（TaskPool<LoadBinaryTask>）
-  │   └─ LoadBinaryAgent：同步 FileAccess + 回调
-  └─ GameFrameworkEntry.GetModule<IResourceManager>() 自动注册
-
-ResourceComponent : GameFrameworkComponent（GodotGameFrameworkCore/Resource/）
-  ├─ 创建时通过 GameFrameworkEntry.GetModule<IResourceManager>() 获取 ResourceManager
-  ├─ 便捷方法：LoadBinary() / LoadText() / LoadAsync<T>() / LoadSceneAsync()
-  └─ ResourceMode 模式选择（Package / Updatable / UpdatableWhilePlaying）
-
-桥接组件（Entity/Sound/Scene/UI Component）：
-  └─ GameFrameworkEntry.GetModule<IResourceManager>() → SetResourceManager()
+OnInit()       → OnEnter()   → OnUpdate(delta)   → OnExit()   → OnShutdown()
+ (constructor)   (ready)       (every frame)        (removed)    (destroyed)
 ```
 
-### 资源模式
+`GameFrameworkComponent : GodotComponent` overrides `OnInit()` to self-register with `GameEntry`.
 
-| 模式 | 说明 | 状态 |
-|------|------|------|
-| `ResourceMode.Package` | 单机模式，Godot.ResourceLoader 直接加载 | ✅ 当前可用 |
-| `ResourceMode.Updatable` | 预下载热更模式 | 📅 P2 规划（.pck） |
-| `ResourceMode.UpdatableWhilePlaying` | 边玩边更 | 📅 P2 规划 |
+## GF Static Facade
 
-### 删除的内容
-
-| 删除项 | 原因 |
-|--------|------|
-| `IResourceManager` ~89 个冗余成员 | Unity 管线概念（序列化器、事件、资源组等） |
-| `EditorResourceManager.cs` | 不再需要区分编辑器/运行时模式 |
-| `EditorResourceMode` | Godot 编辑器与运行时加载行为相同 |
-| 管线 29 个 partial 文件 | Unity 版本列表/文件系统/更新管线 |
-| `GameFramework/FileSystem/`, `Download/` | Godot 无虚拟文件系统 |
-| 各种序列化器/事件/管线回调类型 | 对应接口成员已移除 |
-
-### TaskPool 使用
-
-框架的 `TaskPool<T>` 提供优先级任务队列和并发管理。两套独立的 TaskPool：
-- `m_AssetTaskPool`（<LoadAssetTask>）：1 个 agent，同步加载 Godot 资源
-- `m_BinaryTaskPool`（<LoadBinaryTask>）：1 个 agent，同步读取文件
-
-任务通过 `ReferencePool` 复用，`LoadAssetTask.Create()` / `ReferencePool.Release(task)`。
-
-## GF 静态门面
-
-`Base/GF.cs` 提供所有组件的静态入口：
+`GodotGameFrameworkCore/Base/GF.cs` provides lazy-cached static access to all components:
 
 ```csharp
 GF.Event / GF.Fsm / GF.Procedure
@@ -131,53 +75,133 @@ GF.Resource / GF.Entity / GF.UI / GF.Sound
 GF.DataTable / GF.Localization / GF.Setting / GF.Base / GF.Scene
 ```
 
+Each property calls `GameEntry.GetComponent<T>()` and caches the result.
+
 ## Key Patterns
 
-### 实体系统
+### Entity System
 
-抽象基类直接继承 Godot 原生类型 + `IEntity`：
+Abstract base classes directly inherit Godot types + implement `IEntity`:
 - `AbstractNode2DEntity : Node2D, IEntity`
 - `AbstractCharacterBody2DEntity : CharacterBody2D, IEntity`
 - `AbstractSprite2DEntity : Sprite2D, IEntity`
 - `AbstractRb2DEntity : RigidBody2D, IEntity`
 
-### UI 系统
+All provide `OnInit/OnRecycle/OnShow/OnHide/OnUpdate` lifecycle matching the Game Framework entity lifecycle.
 
-`ControlUIForm : Control, IUIForm` 为 UI 面板基类，自动处理本地化文本收集。
+**TheGame project entity hierarchy:**
+```
+AbstractCharacterBody2DEntity
+  └── ActorEntity              ← Has ActorData (Hp/MaxHp), EntityTeam, PhysicsCheck2D, Die()
+       ├── CatEntity           ← Player cat: keyboard move, auto-aim, spawns GanTanEntity
+       ├── AngerEntity         ← Enemy
+       └── GanTanEntity        ← Projectile with BulletData (Direction, Speed, IsPlayerBullet)
+```
 
-### 组件委托模式
+Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<T>(EntityId.Xxx, userData)` — config-driven from `TbEntityConfig`.
 
-Godot 组件 → `GameFrameworkEntry.GetModule<T>()` 获取纯 C# Manager → 委托给 Manager。
+### UI System
 
-### Luban 配置驱动
+`ControlUIForm : Control, IUIForm` is the base class. Auto-collects localization text nodes.
 
-- Entity：`GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` 查路径
-- UI：`GF.UI.OpenUIForm(UIFormId.Menu)` → `TbUIFormConfig` 查路径
-- `GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat)`（返回实体实例）
+UI lifecycle: `OnInit` → `OnOpen` → `OnCover`/`OnReveal` → `OnUpdate` → `OnClose`.
 
-### 初始化顺序
+Opening: `GF.UI.OpenUIForm(UIFormId.MenuForm)` or `await GF.UI.OpenUIFormAsync<T>(UIFormId.MenuForm)`.
 
-场景树中节点的顺序决定初始化顺序（父→子 `OnInit` / 子→父 `OnEnter`）。
+TheGame UIs: `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`.
 
-## Editor Plugins
+### Procedure (FSM) System
 
-**Project > Tools** 菜单下：
-- **TopMenu** — 切换日志级别（修改 csproj 的 DefineConstants）
-- **LocalizationEditor** — `../Configs/Localization/*.xlsx` → `.txt`
-- **ResourcesCollection** — 扫描 `res://TheGame/` 资源，生成 `ResourcesCollectionConstant.cs`
+Procedures manage top-level game states. TheGame procedures:
+- `ProcedureLaunch` — validates components, loads entity/UI/sound groups and localization, then transitions to `ProcedureGame`
+- `ProcedureGame` — gameplay loop, opens `MenuForm` on entry
 
-## Build
+Change state: `ChangeState<T>(procedureOwner)`. Each procedure can have its own nested FSM for sub-states.
+
+### Component Delegate Pattern
+
+```
+Godot Component (e.g., EntityComponent)
+  → GameFrameworkEntry.GetModule<IEntityManager>()
+  → Pure C# Manager (e.g., EntityManager)
+  → Delegates all real work to the Manager
+```
+
+### SingletonNode<T>
+
+`SingletonSystem/SingletonNode<T> : Node` — a generic singleton pattern for Godot nodes:
+- `SingletonNode<T>.Instance` creates the node on first access if none exists in the scene tree
+- `_Ready()` ensures only one instance survives (duplicates `QueueFree()`)
+
+### PhysicsCheck2D
+
+`Utility/PhysicsCheck2D : IReference` — wraps `PhysicsDirectSpaceState2D.IntersectShape` with object pooling (`ReferencePool`). Auto-excludes the target node, supports sorted results by distance, and debug drawing. Usage: `PhysicsCheck2D.Create(targetNode, shape, ...)`.
+
+### Event System
+
+Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClickedEventArgs`, `ScoreChangedEventArgs`, `TestPhaseChangedEventArgs`. Fire via `GF.Event.Fire(this, e)`.
+
+### ReferencePool / Object Pool
+
+`IReference` interface + `ReferencePool.Acquire<T>()`/`Release()` for lightweight object reuse. `ObjectPoolComponent` wraps `ObjectPoolManager` for pooled Godot objects.
+
+## Luban Config Pipeline
+
+Excel configs in `../Configs/GameConfig/Datas/` (实体.xlsx, 界面UI.xlsx, 角色.xlsx, etc.) → Luban code generation:
+
+```
+../Configs/GameConfig/
+  Datas/              ← Excel source files (*.xlsx)
+  Defines/            ← Luban type definitions
+  luban.conf          ← Luban configuration
+  gen_code_bin_to_project.bat/sh  ← Generate C# code + binary data
+```
+
+Generated code: `TheGame/GameScripts/GameProto/GameConfig/` (e.g., `EntityConfig.cs`, `EntityId.cs`, `TbEntityConfig.cs`). Auto-generated `ResourcesCollectionConstant.cs` via the ResourcesCollection editor plugin.
+
+Config-driven entities: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` resolves the scene path.
+
+## Editor Plugins (`addons/`)
+
+**Project > Tools** menu:
+- **TopMenu** — toggle log level (rewrites csproj `DefineConstants`)
+- **LocalizationEditor** — `../Configs/Localization/*.xlsx` → `.txt` localization files
+- **ResourcesCollection** — scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs`
+
+## Logging System
+
+Compile-time conditional via `DefineConstants`: `ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG` in `GodotProject.csproj`.
+
+Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and composite `ENABLE_DEBUG_AND_ABOVE_LOG` etc.
+
+`Log.Debug/Info/Warning/Error/Fatal` are `[Conditional]` — zero runtime overhead when the symbol is undefined.
+
+## Resource System (P0 Minimal)
+
+`IResourceManager` with 8 members (reduced from ~97 Unity-era members):
+
+| Mode | Status |
+|------|--------|
+| `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader) |
+| `Updatable` / `UpdatableWhilePlaying` | 📅 P2 (.pck hot-update) |
+
+Two `TaskPool<T>` instances for async loading:
+- `m_AssetTaskPool` (LoadAssetTask) — Godot.ResourceLoader.Load + callback
+- `m_BinaryTaskPool` (LoadBinaryTask) — FileAccess + callback
+
+Convenience on `ResourceComponent`: `LoadBinary()`, `LoadText()`, `LoadAsync<T>()`, `LoadSceneAsync()`.
+
+## Build & Development Commands
 
 ```bash
 cd GodotProject
-dotnet build                              # 日常开发
-"<godot_exe>" --build-solutions --path . --no-window -q   # 添加 .cs 文件后执行
-"<godot_exe>" --path . --editor                             # 打开编辑器
+dotnet build                              # Daily development build
+"<godot_exe>" --build-solutions --path . --no-window -q   # After adding .cs files
+"<godot_exe>" --path . --editor                             # Open Godot editor
 ```
 
-Godot 编辑器路径：`E:\Godot\Godot_v4.6.2-stable_mono_win64\...\Godot_v4.6.2-stable_mono_win64.exe`
+## MCP & Claude Code Config
 
-## Claude Code Configuration
-
-- **MCP**: CodeGraph (`@colbymchenry/codegraph`) 已配置在 `.mcp.json`
-- **Hooks**: SessionStart, PreToolUse (Bash 验证), PostToolUse (Write/Edit 验证), Notification, PreCompact/PostCompact, Stop, SubagentStart/SubagentStop
+- **MCP**: CodeGraph (`@colbymchenry/codegraph`) in `.mcp.json` — provides code intelligence via SQLite knowledge graph of all symbols/edges/files
+- **Hooks**: SessionStart, PreToolUse (Bash validation), PostToolUse (Write/Edit validation), Notification, PreCompact/PostCompact, Stop, SubagentStart/SubagentStop
+- **Agent definitions**: `.claude/agents/` — godot-csharp-specialist, godot-specialist, gameplay-programmer, etc. for targeted sub-tasks

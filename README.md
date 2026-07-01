@@ -21,12 +21,13 @@
 
 - 🧩 **模块化架构** — 13 个独立子系统，高内聚低耦合，可按需替换
 - 🔄 **双层架构** — 纯 C# 核心层（无 Godot 依赖）+ Godot 运行时组件层
-- 🎯 **直接继承模式** — Entity/UI 不再使用包装器，用户脚本直接继承 Godot 原生类型 + 框架接口
+- 🎯 **直接继承模式** — Entity/UI 用户脚本直接继承 Godot 原生类型 + 框架接口
 - 📊 **数据管线** — 集成 Luban，Excel 配置 → C# 代码 + 二进制数据
-- 🎨 **Entity/UI 管理** — 支持对象池复用、生命周期管理、层级控制
-- 🔊 **音频系统** — 声音组 + 优先级抢占 + 淡入淡出
+- ♻️ **对象池** — 实体、UI、音频等资源自动池化管理复用
+- 🔊 **音频系统** — 声音组 + 优先级抢占 + 扩展方法 `PlayBGM()`/`PlaySFX()`
 - 📝 **条件日志** — `[Conditional("ENABLE_LOG")]` 编译时零开销移除，编辑器插件可切换
 - 🔧 **编辑器插件** — 日志切换、本地化导出、资源路径常量生成
+- 🧬 **单例模式** — 泛型 `SingletonNode<T>` 提供类型安全的 Godot 节点单例
 
 ---
 
@@ -94,7 +95,9 @@
 │  ├── GameEntry                    根节点，驱动 Update  │
 │  ├── GF                           静态门面            │
 │  ├── Abstract*Entity / ControlUIForm  实体/UI 基类   │
-│  └── EntityComponent / UIComponent / SoundComponent   │
+│  ├── EntityComponent / UIComponent / SoundComponent   │
+│  ├── SingletonNode<T>             泛型节点单例        │
+│  └── PhysicsCheck2D               物理检测工具类      │
 ├─────────────────────────────────────────────────────┤
 │               Pure C# Core Layer                     │
 │  GameFramework/                                      │
@@ -105,13 +108,17 @@
 └─────────────────────────────────────────────────────┘
 ```
 
+**核心规则：** `GameFramework/` 不引用任何 Godot 类型。`GodotGameFrameworkCore/` 依赖 `GameFramework/` 和 Godot。新增系统应保持此分层。
+
 ### 直接继承模式
 
-Entity 和 UI 不再使用包装器 + Logic 双层分离。用户场景根节点直接继承框架抽象基类，基类同时继承 Godot 原生类型和框架接口：
+场景根节点直接继承框架抽象基类，基类同时继承 Godot 原生类型和框架接口：
 
 ```
 AbstractSprite2DEntity : Sprite2D, IEntity
 AbstractCharacterBody2DEntity : CharacterBody2D, IEntity
+AbstractNode2DEntity : Node2D, IEntity
+AbstractRb2DEntity : RigidBody2D, IEntity
 ControlUIForm : Control, IUIForm
 ```
 
@@ -128,7 +135,16 @@ ControlUIForm : Control, IUIForm
 - ✅ `ShowEntityAsync<T>()` 异步加载，返回类型安全的 `T : Node, IEntity`
 - ✅ 实体组管理（容量、过期时间、优先级可配）
 - ✅ 父子实体挂载 + Godot 场景树 Node 关系同步
-- ✅ 四个抽象基类：`AbstractSprite2DEntity` / `AbstractNode2DEntity` / `AbstractCharacterBody2DEntity` / `AbstractRb2DEntity`，用户直接继承，子节点通过 `[Export]` 绑定或 `FindChildOfType<T>()` 获取
+- ✅ 四个抽象基类，用户脚本直接继承，子节点通过 `[Export]` 绑定或 `NodeExtension` 扩展方法获取
+
+**当前 TheGame 项目实体层级：**
+```
+AbstractCharacterBody2DEntity
+  └── ActorEntity               ← 阵营 (EntityTeam)、血量、PhysicsCheck2D 检测、Die()
+       ├── CatEntity            ← 玩家猫：键盘移动、自动瞄准、发射 GanTan
+       ├── AngerEntity          ← 敌人
+       └── GanTanEntity         ← 弹射物（BulletData：方向/速度/归属）
+```
 
 ### UI 模块 (UIComponent)
 
@@ -139,30 +155,37 @@ ControlUIForm : Control, IUIForm
 - ✅ `ControlUIForm : Control, IUIForm` 基类，自动收集 `IStringKey` 子节点并刷新本地化文本
 - ✅ 内置 `Close()` 方法
 
+当前 TheGame UI：`MenuForm`、`MainForm`、`GameOverForm`、`PauseMenuForm`、`TestOverlayForm`。
+
 ### 音频模块 (SoundComponent)
 
 - ✅ 基于 `ISoundManager` 的音频管理
-- ✅ 声音组管理（Music / SFX / UI 默认组）
+- ✅ 默认声音组：Music / SFX / UI（通过 LoadEntityGroup 阶段从 `TbSoundConfig` 配置）
 - ✅ 优先级抢占算法
 - ✅ 淡入/淡出控制
 - ✅ 组级静音/音量级联
+- ✅ 扩展方法：`GF.Sound.PlayBGM(assetName)` / `GF.Sound.PlaySFX(assetName)`
 
-### 资源模块
+### 资源模块 (ResourceModule)
 
-- ✅ **ResourceManager 异步队列架构** — 内部 `Queue<LoadAssetTask>` + `LoadThreadedGetStatus` 帧轮询，支持 `Loaded`/`InProgress`/`Failed` 全状态处理
-- ✅ `ResourceComponent` 桥接层：`LoadBinary()` / `LoadText()` / `LoadAssetAsync()`
+- ✅ **精简 IResourceManager** — 从 97 个成员精简为 8 个，移除所有 Unity 管线遗留代码
+- ✅ **同步加载 + TaskPool 任务队列** — `Godot.ResourceLoader.Load` 同步加载，通过 `TaskPool<LoadAssetTask>` 管理优先级和并发
+- ✅ 两套独立 TaskPool：`m_AssetTaskPool`（场景/贴图等资源）、`m_BinaryTaskPool`（二进制文件）
+- ✅ 当前仅支持 `ResourceMode.Package`（单机模式），`Updatable`/`UpdatableWhilePlaying` 为 P2 规划
+- ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`, `LoadAsync<T>()`, `LoadSceneAsync()`
 
 ### 事件模块 (EventComponent)
 
 - ✅ 基于 `IEventManager` 的线程安全事件系统
 - ✅ 延迟分发（Fire）和立即分发（FireNow）
-- ✅ 组件事件自动转发到 EventComponent
+- ✅ 自定义事件继承 `GameFrameworkEventArgs`
 
 ### 流程模块 (ProcedureComponent)
 
 - ✅ 基于 `IFsmManager` 的流程状态机
 - ✅ Inspector 配置可用的 Procedure 类型
-- ✅ 流程间切换：`TestLaunchProcedure` → `TestMenuProcedure` → `TestGameProcedure`
+- ✅ 启动流程：`ProcedureLaunch`（组件验证、数据表加载、组初始化）→ `ProcedureGame`（游戏主循环）
+- ✅ 通过 `ChangeState<T>(procedureOwner)` 切换流程
 
 ### 数据表模块 (DataTableComponent)
 
@@ -172,22 +195,26 @@ ControlUIForm : Control, IUIForm
 
 ### NodeExtension 扩展
 
-`NodeExtension` 提供常用 Node 查询扩展方法：
+`GodotGameFrameworkCore/Utility/NodeExtension.cs` 提供常用 Node 查询扩展方法：
 - `FindChildOfType<T>()` — 递归查找子节点
 - `FindChildrenOfType<T>()` — 递归查找所有匹配子孙节点
 - `GetChild<T>()` / `GetChildren<T>()` / `GetParent<T>()`
+- `GetOrAddChild<T>()` — 获取或创建指定类型子节点
+- `RemoveAllChildren()` — 移除所有子节点
 
-### Helper 基类体系
+### SingletonNode&lt;T&gt;
 
-每个子系统定义了一套遵循统一可扩展模式的抽象 Helper 基类：
+`SingletonSystem/SingletonNode<T> : Node` — 泛型单例模式。在场景树中确保只有一个实例存活：
+- `SingletonNode<T>.Instance` 静态属性首次访问时自动创建
+- `_Ready()` 检测并销毁重复实例
 
-| 系统 | Helper 基类 | 职责 |
-|------|------------|------|
-| UI | `UIFormHelperBase` / `UIGroupHelperBase` | 界面实例化 / 组容器 |
-| Entity | `EntityHelperBase` / `EntityGroupHelperBase` | 实体创建 / 组容器 |
-| Sound | `SoundHelperBase` / `SoundGroupHelperBase` / `SoundAgentHelperBase` | 音频加载 / 组容器 / 播放代理 |
+### PhysicsCheck2D
 
-通过 `Helper.CreateHelper<T>()` 创建，可在编辑器插件中自定义替换。
+`Utility/PhysicsCheck2D : IReference` — 封装 `PhysicsDirectSpaceState2D.IntersectShape`：
+- 通过 `ReferencePool` 池化复用（`PhysicsCheck2D.Create()` / `ReferencePool.Release()`）
+- 自动排除自身节点
+- 支持按距离排序、Debug 绘制
+- 在实体 `OnUpdate` 中每帧调用检测
 
 ---
 
@@ -195,6 +222,8 @@ ControlUIForm : Control, IUIForm
 
 ```
 Configs/                      ← Excel 配置源数据（Luban 管线输入）
+  GameConfig/                 ← 表定义 + 业务 Excel
+  Localization/               ← 多语言 Excel 源
 GodotProject/                 ← Godot 项目根
 ├── Framework/
 │   ├── GameFramework/        ← 纯 C# 框架（无 Godot 依赖）
@@ -202,32 +231,37 @@ GodotProject/                 ← Godot 项目根
 │   │   ├── Entity/ UI/ Sound/ Resource/ Event/
 │   │   ├── Fsm/ Procedure/ Config/ DataTable/
 │   │   ├── DataNode/ ObjectPool/ Setting/
-│   │   ├── Localization/ Network/ Download/
-│   │   ├── Debugger/ FileSystem/ Scene/
+│   │   ├── Localization/ Scene/
+│   │   ├── Download/ Network/ Debugger/  ← 接口已定义，Godot 组件待实现
 │   │   └── Utility/ WebRequest/
 │   └── GodotGameFrameworkCore/  ← Godot 运行时组件
 │       ├── Base/             ← GameEntry, GF, GodotComponent, Log
 │       │   └── Node/         ← 抽象实体/UI 基类（Abstract*Entity, ControlUIForm）
-│       ├── Entity/           ← EntityComponent, Entity<T>, EntityExtension
+│       ├── Entity/           ← EntityComponent, EntityExtension
 │       ├── UI/               ← UIComponent, IStringKey
-│       ├── Sound/            ← SoundComponent + Helpers
-│       ├── Resource/         ← ResourceManager（队列轮询引擎）+ ResourceComponent 桥接
+│       ├── Sound/            ← SoundComponent + PlayBGM/PlaySFX 扩展
+│       ├── Resource/         ← ResourceManager（TaskPool 同步加载）+ ResourceComponent 桥接
 │       ├── Event/ Fsm/ Procedure/ Config/
 │       ├── DataTable/ DataNode/ ObjectPool/ Setting/
-│       ├── Localization/ Utility/ Variable/
-│       └── Lib/LubanLib/     ← Luban 运行时（ByteBuf, BeanBase）
+│       ├── SingletonSystem/  ← SingletonNode<T> 泛型单例
+│       ├── Utility/          ← NodeExtension, PhysicsCheck2D
+│       └── Lib/              ← Newtonsoft.Json, LubanLib (ByteBuf, BeanBase)
 │   └── GameFramework.tscn    ← 主场景
 ├── TheGame/                  ← 当前活跃游戏项目
-│   ├── Entitys/              ← 实体场景 (.tscn)，根节点为 Godot 原生类型
+│   ├── Entitys/              ← 实体场景 (.tscn)
 │   ├── GameScripts/
-│   │   ├── Entity/           ← 实体脚本（继承 Abstract*Entity）
-│   │   ├── UI/               ← UI 脚本（继承 ControlUIForm）
+│   │   ├── Entity/           ← 实体脚本（CatEntity, AngerEntity, GanTanEntity, ActorEntity）
+│   │   ├── UI/               ← UI 脚本（MenuForm, MainForm, GameOverForm 等）
+│   │   ├── Event/            ← 自定义事件参数（BlockClickedEventArgs 等）
+│   │   ├── Procedure/        ← 流程（ProcedureLaunch, ProcedureGame）
+│   │   ├── ObjectPool/       ← 自定义池对象
 │   │   └── GameProto/GameConfig/ ← Luban 生成的 C# 数据类
-│   ├── DataTables/           ← Luban 生成的二进制数据
-│   ├── UIs/ Sprites/ Scenes/ Audios/
+│   ├── DataTables/           ← Luban 生成的二进制数据 (.bytes)
+│   ├── UIs/                  ← UI 场景 (.tscn)
+│   ├── Sprites/ Scenes/ Audios/
 └── addons/                   ← 编辑器插件
     ├── TopMenu/              ← 日志级别切换
-    ├── LocalizationEditor/   ← Excel→TXT 转换
+    ├── LocalizationEditor/   ← Excel → TXT 转换
     └── Resources/            ← 资源路径常量生成
 ```
 
@@ -239,123 +273,134 @@ GodotProject/                 ← Godot 项目根
 
 ```csharp
 // 1. 定义实体类（继承对应 Godot 类型的抽象基类）
-public partial class CatEntity : AbstractCharacterBody2DEntity
+public partial class CatEntity : ActorEntity
 {
-    [Export] private Sprite2D m_CatSprite; // Inspector 绑定视觉子节点
+    [Export] private Sprite2D m_CatSprite;
 
     public override void OnInit(int entityId, string entityAssetName,
         IEntityGroup entityGroup, bool isNewInstance, object userData)
     {
         base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
-        // 加载配置等初始化逻辑
+        m_Config = GF.DataTable.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
+        // 初始化物理检测、阵营等
     }
 
     public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
     {
         base.OnUpdate(elapseSeconds, realElapseSeconds);
-        Velocity = new Vector2(Input.GetAxis("ui_left", "ui_right"),
-            Input.GetAxis("ui_up", "ui_down")) * Speed;
-        MoveAndSlide();
+        // 每帧移动、自动攻击逻辑
     }
 }
 
-// 2. 场景结构（CatEntity.tscn）
-// CatEntity (CharacterBody2D, CatEntity 脚本)
-//   ├── CollisionShape2D
-//   └── Sprite2D (视觉)
-
-// 3. 显示实体
+// 2. 显示实体
 int catId = GF.Entity.ShowEntity(EntityId.Cat);
 
-// 4. 异步显示并获取实体引用
+// 3. 异步显示并获取实体引用
 CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
 cat.GlobalPosition = new Vector2(100, 200);
 
-// 5. 隐藏实体
+// 4. 隐藏实体
 GF.Entity.HideEntity(catId);
-GF.Entity.HideEntitySafe(catId); // 安全隐藏（检查存在性）
+GF.Entity.HideEntitySafe(catId);
 ```
 
 ### UI 系统
 
 ```csharp
-// 1. 定义 UI 类
 public partial class MenuForm : ControlUIForm
 {
     public override void OnInit(int serialId, string uiFormAssetName,
         IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
     {
         base.OnInit(serialId, uiFormAssetName, uiGroup, pauseCoveredUIForm, isNewInstance, userData);
-        // IStringKey 子节点自动刷新本地化文本
+        if (isNewInstance) m_StartButton.Pressed += OnStartButtonPressed;
     }
 
     public override void OnOpen(object userData)
     {
         base.OnOpen(userData);
-        // 播放打开动画
+        GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Menu);
+    }
+
+    private void OnStartButtonPressed()
+    {
+        Close();
+        GF.UI.OpenUIForm(UIFormId.MainForm);
     }
 }
 
-// 2. 打开界面
-int menuId = GF.UI.OpenUIForm(UIFormId.Menu);
-
-// 3. 关闭界面
-// 在 ControlUIForm 子类中直接调用 Close();
+// 打开界面
+int menuId = GF.UI.OpenUIForm(UIFormId.MenuForm);
+// 或异步
+await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
 ```
 
 ### 音频系统
 
 ```csharp
-// 播放背景音乐（Music 组，循环）
-int bgmId = GF.Sound.PlaySound("res://Audio/BGM.mp3", "Music");
+// 播放背景音乐（Music 组）
+int bgmId = GF.Sound.PlayBGM("res://Audio/background.mp3");
 
-// 播放音效
-PlaySoundParams sfxParams = PlaySoundParams.Create();
+// 播放音效（SFX 组）
+int sfxId = GF.Sound.PlaySFX("res://Audio/Click.wav");
+
+// 使用完整 PlaySound API
+var sfxParams = PlaySoundParams.Create();
 sfxParams.VolumeInSoundGroup = 0.8f;
-GF.Sound.PlaySound("res://Audio/Click.wav", "SFX", sfxParams);
+GF.Sound.PlaySound("res://Audio/Shoot.wav", "SFX", sfxParams);
 
-// 停止（带淡出）
+// 停止
 GF.Sound.StopSound(bgmId, 1f);
-
-// 声音组控制
-GF.Sound.SetSoundGroupVolume("Music", 0.5f);
-GF.Sound.SetSoundGroupMute("SFX", true);
 ```
 
 ### 资源加载
 
 ```csharp
-// 同步加载文本/二进制文件（Godot FileAccess）
+// 同步加载文本/二进制文件
 string text = GF.Resource.LoadText("res://Data/Config.txt");
 byte[] data = GF.Resource.LoadBinary("res://Data/Config.dat");
 
-// 异步加载资源（ResourceManager 队列轮询）
+// 异步加载资源
 Godot.Resource res = await GF.Resource.LoadAssetAsync("res://Sprites/Player.png", 0);
 
 // 检查资源是否存在
-if (GF.Resource.Exists("res://Scenes/Enemy.tscn"))
-{
-    // ...
-}
+if (GF.Resource.Exists("res://Scenes/Enemy.tscn")) { }
 ```
 
 ### 事件系统
 
 ```csharp
-// 自定义事件
-public sealed class ScoreChangedEventArgs : GameEventArgs
+// 定义自定义事件
+public sealed class ScoreChangedEventArgs : GameFrameworkEventArgs
 {
     public static readonly int EventId = typeof(ScoreChangedEventArgs).GetHashCode();
     public override int Id => EventId;
     public int Score { get; private set; }
-    // ...
 }
 
-// 订阅
+// 订阅 / 触发
 GF.Event.Subscribe(ScoreChangedEventArgs.EventId, OnScoreChanged);
-
-// 触发
 GF.Event.Fire(this, new ScoreChangedEventArgs(100));
+```
+
+### PhysicsCheck2D 检测
+
+```csharp
+var shape = new CircleShape2D { Radius = 100f };
+var check = PhysicsCheck2D.Create(
+    this, shape,
+    collisionMask: 1,
+    maxResults: 16,
+    collideWithBodies: true);
+
+if (check.IsColliding())
+{
+    var sorted = check.GetCollidingNodesSorted();
+    // sorted[0] 为最近节点
+}
+
+// 使用完毕后归还对象池
+ReferencePool.Release(check);
 ```
 
 ### 本地化与日志
@@ -385,10 +430,10 @@ TheGame/GameScripts/GameProto/GameConfig/*.cs   ← C# 数据类（具类型访�
 TheGame/DataTables/*.bytes                        ← 二进制数据（运行时加载）
 ```
 
-- **源文件**: `__tables__.xlsx`（表定义）、`__beans__.xlsx`（数据结构）、`__enums__.xlsx`（枚举）+ 业务 Excel
+- **源文件**: `__tables__.xlsx`（表定义）、`__beans__.xlsx`（数据结构）、`__enums__.xlsx`（枚举）+ 业务 Excel（实体.xlsx、界面UI.xlsx、角色.xlsx 等）
 - **运行时**: `LubanLib/ByteBuf` + `BeanBase` 反序列化
 - **入口**: `GF.DataTable` 返回类型安全的 `Tables` 实例
-- **完整管线**: `luban.conf` → 自定义模板 → 目标代码
+- **完整管线**: `luban.conf` → 自定义模板 → C# 代码 + `.bytes` 数据
 
 ---
 
@@ -416,6 +461,14 @@ GameFramework (GameEntry)
 ```
 
 每种组件类型只允许注册一个实例，`GameEntry.RegisterComponent()` 会校验唯一性。
+
+### 启动顺序
+
+1. Godot 加载 `Framework/GameFramework.tscn`
+2. `GameFrameworkComponent.OnInit()` → `GameEntry.RegisterComponent(this)`
+3. `GameEntry._Process()` 驱动 `GameFrameworkEntry.Update()` 轮询所有模块
+4. `GameEntry.CheckProcedure()` 在 `ProcedureComponent` 注册后自动调用 `StartProcedure()`
+5. `ProcedureLaunch` 验证组件、加载组配置和本地化 → 切换到 `ProcedureGame`
 
 ---
 
@@ -447,25 +500,19 @@ GameFramework (GameEntry)
 
 ### 实体 ID 生成
 
-实体 ID 使用 `Interlocked.Increment` 原子计数器生成，确保无碰撞。不再使用时间戳。
+实体 ID 使用 `Interlocked.Increment` 原子计数器生成，确保无碰撞。
 
 ### Async/Task 时序注意
 
-`EntityComponent.ShowEntityAsync` 和 `UIComponent.OpenUIFormAsync` 等异步方法依赖 `TaskCompletionSource` 监听底层事件。如果对应 Manager 在对象池中找到了缓存的实例，事件会**同步触发**。为此需要在调用 Manager 方法**之前**就注册好 tcs，避免事件先于 tcs 注册导致异步操作永远挂起。
+`ShowEntityAsync` 和 `OpenUIFormAsync` 等异步方法依赖 `TaskCompletionSource` 监听底层事件。如果 Manager 在对象池中找到了缓存的实例，事件会**同步触发**。需在调用 Manager 方法**之前**注册 tcs，避免事件先于 tcs 注册导致异步操作永远挂起。
 
 ### 组件事件取消订阅
 
 `EntityComponent` 在 `OnExitTree()` 中取消订阅 `IEntityManager` 事件，防止场景重载时内存泄漏和事件重复触发。
 
-### 实体类型选择
+### 物理检测工具
 
-根据游戏需求选择合适的抽象基类：
-| 基类 | 适用场景 |
-|------|----------|
-| `AbstractSprite2DEntity` | 静态/简单动画精灵 |
-| `AbstractNode2DEntity` | 需要 2D 变换的通用实体 |
-| `AbstractCharacterBody2DEntity` | 玩家/角色（物理交互） |
-| `AbstractRb2DEntity` | 需要 RigidBody 物理模拟的实体（子弹、弹射物） |
+`PhysicsCheck2D` 实现了 `IReference` 接口，使用完毕后必须调用 `ReferencePool.Release(check)` 归还对象池。检测时自动用当前帧的 `GlobalTransform` 更新查询位置。
 
 ---
 
@@ -482,33 +529,26 @@ GameFramework (GameEntry)
 
 ## 🚧 待实现功能
 
-以下功能已规划但尚未实现，欢迎贡献：
-
 ### 资源系统
 
-- [ ] **Updatable / UpdatableWhilePlaying 资源模式** — 需要实现 `IDownloadManager` 和 `IFileSystemManager` 的 Godot 层绑定，当前自动回退到 Package 模式
-
-### UI 系统
-
-- [ ] **UIItem 字符串键热更新** — `IStringKey` 接口已定义，需完善多语言切换时的自动刷新机制
+- [ ] **Updatable / UpdatableWhilePlaying 资源模式** — P2 规划，需通过 .pck 热更新机制实现
 
 ### 网络系统
 
-- [ ] **NetworkComponent** — 纯 C# 层 `INetworkManager` 已有接口定义，需在 Godot 层实现网络组件、Helper 基类及默认实现
+- [ ] **NetworkComponent** — 纯 C# 层 `INetworkManager` / `INetworkChannel` 已有接口定义，需在 Godot 层实现网络组件
 
 ### 场景系统
 
-- [ ] **场景切换过渡** — 场景切换时的过渡动画、异步加载进度回调
-- [ ] **SceneComponent 场景卸载完善** — 卸载时的资源释放确保和卸载回调
+- [ ] **场景切换过渡** — 过渡动画、异步加载进度回调
+- [ ] **场景卸载完善** — 资源释放确保和卸载回调
 
 ### 调试与工具
 
-- [ ] **DebuggerComponent** — 纯 C# 层 `IDebuggerManager` 已有接口定义，需在 Godot 层实现调试窗口组件
-- [ ] **单元测试框架** — 当前项目未配置测试框架，建议引入 `xUnit` + `NSubstitute` 覆盖核心模块
+- [ ] **DebuggerComponent** — 纯 C# 层 `IDebuggerManager` 已有实现，需在 Godot 层实现调试窗口
+- [ ] **单元测试** — 建议引入测试框架覆盖核心模块
 
 ### 编辑器插件
 
-- [ ] **Entity/UI 可视化编辑器** — 在 Godot 编辑器中提供实体组、界面组的可视化配置面板
 - [ ] **Luban 一键生成菜单** — 将 `gen_code_bin_to_project.bat` 集成到 Godot 编辑器菜单中
 
 ---

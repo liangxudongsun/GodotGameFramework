@@ -1,12 +1,13 @@
 using GameConfig.Character;
 using GameConfig.Constant;
 using GameConfig.Entity;
+using GameFramework;
 using GameFramework.Entity;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
 using GodotGameFramework.Sound;
-using System;
+using System.Linq;
 
 public interface IActor
 {
@@ -24,26 +25,28 @@ public partial class CatEntity : ActorEntity
 {
 	[Export]
 	private Sprite2D m_CatSprite;
-	private CharacterConfig m_CatConfig;
 	private bool m_IsMoving;
 	private Tween m_ScaleChange;
-	float m_LastMoveTime;
-
-	// 自动瞄准参数
-	[Export]
-	private float m_AimRange = 350f;
-
+	float m_LastAtkTime;
 	private CircleShape2D m_AimShape;
+
 
 	public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
 	{
 		base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
 		if (isNewInstance)
 		{
-			m_CatConfig = GF.DataTable.TbCharacterConfig.Get(1);
+			m_Config = GF.DataTable.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 
 			m_AimShape = new CircleShape2D();
-			m_AimShape.Radius = m_AimRange;
+			m_AimShape.Radius = m_Config.CheckRange;
+			m_Check = PhysicsCheck2D.Create(
+			this,
+			m_AimShape,
+			collisionMask: 1,     // 检测默认碰撞层
+			maxResults: 16,
+			collideWithBodies: true,
+			collideWithAreas: false);
 		}
 		Team = EntityTeam.Player;
 	}
@@ -62,53 +65,30 @@ public partial class CatEntity : ActorEntity
 	public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
 	{
 		base.OnUpdate(elapseSeconds, realElapseSeconds);
+
+
 		KeybordMove();
-		if (Input.IsActionJustPressed("ui_accept"))
+		m_LastAtkTime += elapseSeconds;
+		if (m_LastAtkTime >= m_Config.AtkSpeed)
 		{
+			m_LastAtkTime = 0;
+			if (!m_Check.IsColliding())
+				return;
 			SpawnGanTan();
 		}
 	}
 
 	/// <summary>
-	/// 以玩家为中心做射线（圆形区域）检测，返回最近敌人的方向。
-	/// 如果没有敌人，返回 Vector2.Up（默认向上）。
+	/// 以玩家为中心做圆形区域检测，返回最近敌人的方向。
+	/// 如果没有敌人，返回 <see cref="Vector2.Up"/>。
 	/// </summary>
 	private Vector2 GetAimDirection()
 	{
-		var spaceState = GetWorld2D().DirectSpaceState;
-
-		var query = new PhysicsShapeQueryParameters2D();
-		query.Shape = m_AimShape;
-		query.Transform = new Transform2D(0, GlobalPosition);
-		query.CollisionMask = 1; // 检测默认碰撞层上的物体
-
-		var results = spaceState.IntersectShape(query, 16);
-
-		ActorEntity nearestEnemy = null;
-		float nearestDistSq = float.MaxValue;
-
-		foreach (var result in results)
-		{
-			if (result["collider"].Obj is ActorEntity actor
-				&& actor.Team == EntityTeam.Enemy
-				&& !actor.IsDead
-				&& IsInstanceValid(actor))
-			{
-				float distSq = GlobalPosition.DistanceSquaredTo(actor.GlobalPosition);
-				if (distSq < nearestDistSq)
-				{
-					nearestDistSq = distSq;
-					nearestEnemy = actor;
-				}
-			}
-		}
-
+		ActorEntity nearestEnemy = m_Check.GetCollidingNodesSorted().FirstOrDefault() as ActorEntity;
 		if (nearestEnemy != null)
-		{
 			return (nearestEnemy.GlobalPosition - GlobalPosition).Normalized();
-		}
 
-		return Vector2.Up; // 没有敌人时默认向上
+		return Vector2.Up;
 	}
 
 	private async void SpawnGanTan()
@@ -134,16 +114,15 @@ public partial class CatEntity : ActorEntity
 	{
 		float hor = Input.GetAxis("ui_left", "ui_right");
 		float ver = Input.GetAxis("ui_up", "ui_down");
-		Velocity = new Vector2(hor, ver) * m_CatConfig.Speed;
+		Velocity = new Vector2(hor, ver) * m_Config.Speed;
 		MoveAndSlide();
 		m_IsMoving = hor != 0 || ver != 0;
 		if (hor != 0) m_CatSprite.FlipH = hor < 0;
 	}
 
-	public override void _Draw()
-	{
-		base._Draw();
-		DrawCircle(Vector2.Zero, m_AimRange, Colors.Orange, false, 2f);
-	}
+
+
+
+
 
 }

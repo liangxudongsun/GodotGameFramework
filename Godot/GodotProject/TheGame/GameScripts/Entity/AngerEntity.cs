@@ -1,9 +1,11 @@
 using GameConfig.Entity;
+using GameFramework;
 using GameFramework.Entity;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 
@@ -12,12 +14,6 @@ public partial class AngerEntity : ActorEntity
 
     [Export]
     private HSlider m_HSlider;
-
-    // 攻击参数
-    [Export]
-    private float m_AttackRange = 350f;
-    [Export]
-    private float m_AttackInterval = 1.5f;
     [Export]
     private float m_MoveSpeed = 80f;
     [Export]
@@ -29,7 +25,10 @@ public partial class AngerEntity : ActorEntity
     public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
     {
         base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
-
+        if (isNewInstance)
+        {
+            m_Config = GF.DataTable.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
+        }
         Team = EntityTeam.Enemy;
         m_HSlider.MaxValue = m_ActorData.MaxHp;
         m_HSlider.Value = m_ActorData.Hp;
@@ -56,13 +55,13 @@ public partial class AngerEntity : ActorEntity
 
         float distance = GlobalPosition.DistanceTo(m_TargetPlayer.GlobalPosition);
 
-        if (distance <= m_AttackRange)
+        if (distance <= m_Config.CheckRange)
         {
             // 在攻击范围内 — 面向玩家并攻击
             FaceDirection(m_TargetPlayer.GlobalPosition - GlobalPosition);
 
             m_AttackTimer += elapseSeconds;
-            if (m_AttackTimer >= m_AttackInterval)
+            if (m_AttackTimer >= m_Config.AtkSpeed)
             {
                 m_AttackTimer = 0f;
                 _ = ShootAtPlayer();
