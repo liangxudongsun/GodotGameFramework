@@ -66,7 +66,7 @@ namespace GodotGameFramework.Editor
             AddCustomControl(title);
 
             ScrollContainer scroll = new ScrollContainer();
-            scroll.CustomMinimumSize = new Vector2(0, Math.Min(procedureTypes.Length * 30, 240));
+            scroll.CustomMinimumSize = new Vector2(0, 240);
             var scrollBg = new StyleBoxFlat();
             scrollBg.BgColor = new Color(0.12f, 0.12f, 0.12f, 1.0f);
             scroll.AddThemeStyleboxOverride("panel", scrollBg);
