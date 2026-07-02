@@ -70,12 +70,11 @@ public class ProcedureLaunch : ProcedureBase
     private void LoadUIGroup()
     {
         m_LoadFlagDic.TryAdd(m_LoadFlagKeys[1], false);
-        var groups = GF.DataTable.TbUIGroupConfig.DataList;
-        for (int i = 0; i < groups.Count; i++)
+        for (int i = 0; i < GF.UI.UIGroupRes.Groups.Length; i++)
         {
-            if (!GF.UI.AddUIGroup(groups[i].Name, groups[i].Depth))
+            if (!GF.UI.AddUIGroup(GF.UI.UIGroupRes.Groups[i].Name, GF.UI.UIGroupRes.Groups[i].Depth))
             {
-                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
+                Log.Warning("Add UI group '{0}' failure.", GF.UI.UIGroupRes.Groups[i].Name);
                 return;
             }
         }
@@ -84,12 +83,12 @@ public class ProcedureLaunch : ProcedureBase
     private void LoadEntityGroup()
     {
         m_LoadFlagDic.TryAdd(m_LoadFlagKeys[2], false);
-        var groups = GF.DataTable.TbEntityGroupConfig.DataList;
-        for (int i = 0; i < groups.Count; i++)
+        var groups = GF.Entity.EntityGroupRes.EntityGroups;
+        for (int i = 0; i < groups.Length; i++)
         {
             if (!GF.Entity.AddEntityGroup(groups[i].Name, groups[i].ReleaseInterval, groups[i].Capacity, groups[i].ExpireTime, groups[i].Priority))
             {
-                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
+                Log.Warning("Add Entity group '{0}' failure.", groups[i].Name);
                 return;
             }
         }
@@ -98,8 +97,8 @@ public class ProcedureLaunch : ProcedureBase
     private void LoadSoundGroup()
     {
         m_LoadFlagDic.TryAdd(m_LoadFlagKeys[3], false);
-        var groups = GF.DataTable.TbSoundConfig.DataList;
-        for (int i = 0; i < groups.Count; i++)
+        var groups = GF.Sound.SoundGroupRes.SoundGroups;
+        for (int i = 0; i < groups.Length; i++)
         {
             if (!GF.Sound.AddSoundGroup(groups[i].Name, groups[i].AgentCounts, groups[i].AvoidBeingReplacedBySamePriority))
             {

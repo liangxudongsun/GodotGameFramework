@@ -13,32 +13,23 @@ namespace GameConfig
 {
 public partial class Tables
 {
-    public TbUIFormConfig TbUIFormConfig {get; }
-    public TbUIGroupConfig TbUIGroupConfig {get; }
-    public Entity.TbEntityGroupConfig TbEntityGroupConfig {get; }
-    public Entity.TbEntityConfig TbEntityConfig {get; }
-    public Sound.TbSoundConfig TbSoundConfig {get; }
+    public UI.TbUIFormConfig TbUIFormConfig {get; }
     public Character.TbCharacterConfig TbCharacterConfig {get; }
+    public Entity.TbEntityConfig TbEntityConfig {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
-        TbUIFormConfig = new TbUIFormConfig(loader("tbuiformconfig"));
-        TbUIGroupConfig = new TbUIGroupConfig(loader("tbuigroupconfig"));
-        TbEntityGroupConfig = new Entity.TbEntityGroupConfig(loader("entity_tbentitygroupconfig"));
-        TbEntityConfig = new Entity.TbEntityConfig(loader("entity_tbentityconfig"));
-        TbSoundConfig = new Sound.TbSoundConfig(loader("sound_tbsoundconfig"));
+        TbUIFormConfig = new UI.TbUIFormConfig(loader("ui_tbuiformconfig"));
         TbCharacterConfig = new Character.TbCharacterConfig(loader("character_tbcharacterconfig"));
+        TbEntityConfig = new Entity.TbEntityConfig(loader("entity_tbentityconfig"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
         TbUIFormConfig.ResolveRef(this);
-        TbUIGroupConfig.ResolveRef(this);
-        TbEntityGroupConfig.ResolveRef(this);
-        TbEntityConfig.ResolveRef(this);
-        TbSoundConfig.ResolveRef(this);
         TbCharacterConfig.ResolveRef(this);
+        TbEntityConfig.ResolveRef(this);
     }
 }
 

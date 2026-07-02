@@ -10,21 +10,21 @@
 using Luban;
 
 
-namespace GameConfig.Sound
+namespace GameConfig.UI
 {
-public sealed partial class SoundConfig : Luban.BeanBase
+public sealed partial class UIFormConfig : Luban.BeanBase
 {
-    public SoundConfig(ByteBuf _buf) 
+    public UIFormConfig(ByteBuf _buf) 
     {
         Id = _buf.ReadInt();
-        Name = _buf.ReadString();
-        AgentCounts = _buf.ReadInt();
-        AvoidBeingReplacedBySamePriority = _buf.ReadBool();
+        UIFormId = (UIFormId)_buf.ReadInt();
+        AssetPath = _buf.ReadString();
+        UIGroupName = _buf.ReadString();
     }
 
-    public static SoundConfig DeserializeSoundConfig(ByteBuf _buf)
+    public static UIFormConfig DeserializeUIFormConfig(ByteBuf _buf)
     {
-        return new Sound.SoundConfig(_buf);
+        return new UI.UIFormConfig(_buf);
     }
 
     /// <summary>
@@ -32,19 +32,19 @@ public sealed partial class SoundConfig : Luban.BeanBase
     /// </summary>
     public readonly int Id;
     /// <summary>
-    /// 实体组名称
+    /// 名字
     /// </summary>
-    public readonly string Name;
+    public readonly UIFormId UIFormId;
     /// <summary>
-    /// 可使用声音代理数量
+    /// 资源名
     /// </summary>
-    public readonly int AgentCounts;
+    public readonly string AssetPath;
     /// <summary>
-    /// 避免被同等优先级替换
+    /// 处于哪个组
     /// </summary>
-    public readonly bool AvoidBeingReplacedBySamePriority;
+    public readonly string UIGroupName;
    
-    public const int __ID__ = 1536834194;
+    public const int __ID__ = 1938393076;
     public override int GetTypeId() => __ID__;
 
     public  void ResolveRef(Tables tables)
@@ -55,9 +55,9 @@ public sealed partial class SoundConfig : Luban.BeanBase
     {
         return "{ "
         + "id:" + Id + ","
-        + "Name:" + Name + ","
-        + "AgentCounts:" + AgentCounts + ","
-        + "AvoidBeingReplacedBySamePriority:" + AvoidBeingReplacedBySamePriority + ","
+        + "UIFormId:" + UIFormId + ","
+        + "AssetPath:" + AssetPath + ","
+        + "UIGroupName:" + UIGroupName + ","
         + "}";
     }
 }

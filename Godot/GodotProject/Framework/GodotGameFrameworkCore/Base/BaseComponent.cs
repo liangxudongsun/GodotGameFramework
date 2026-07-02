@@ -5,6 +5,7 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
+using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Localization;
 using Godot;
@@ -18,6 +19,10 @@ namespace GodotGameFramework
     /// </summary>
     public sealed partial class BaseComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string JsonHelper = "m_JsonHelper";
+        }
         [Export]
         public Language EditorLanguage;
         [Export]
@@ -144,13 +149,10 @@ namespace GodotGameFramework
         public override void OnInit()
         {
             base.OnInit();
-            // 按顺序初始化各个 Helper
-            // 注意：LogHelper 必须最后初始化，因为前面的初始化可能需要日志输出
+            InitLogHelper();
             InitTextHelper();
             InitVersionHelper();
-            InitLogHelper();
             InitJsonHelper();
-
             // 输出框架版本信息
             Log.Info("Game Framework Version: {0}", GameFramework.Version.GameFrameworkVersion);
             Log.Info("Game Version: {0} ({1})", GameFramework.Version.GameVersion,
@@ -205,6 +207,7 @@ namespace GodotGameFramework
                 if (textHelperType != null)
                 {
                     Utility.Text.SetTextHelper((Utility.Text.ITextHelper)Activator.CreateInstance(textHelperType));
+                    Log.Info("TextHelper: {0}", textHelperType.FullName);
                 }
             }
             catch (Exception exception)
@@ -227,6 +230,7 @@ namespace GodotGameFramework
                 if (versionHelperType != null)
                 {
                     GameFramework.Version.SetVersionHelper((GameFramework.Version.IVersionHelper)Activator.CreateInstance(versionHelperType));
+                    Log.Info("VersionHelper: {0}", versionHelperType.FullName);
                 }
             }
             catch (Exception exception)
@@ -249,6 +253,7 @@ namespace GodotGameFramework
                 if (logHelperType != null)
                 {
                     GameFrameworkLog.SetLogHelper((GameFrameworkLog.ILogHelper)Activator.CreateInstance(logHelperType));
+                    Log.Info("LogHelper: {0}", logHelperType.FullName);
                 }
             }
             catch (Exception exception)
@@ -265,6 +270,7 @@ namespace GodotGameFramework
                 if (jsonHelperType != null)
                 {
                     Utility.Json.SetJsonHelper((Utility.Json.IJsonHelper)Activator.CreateInstance(jsonHelperType));
+                    Log.Info("JsonHelper: {0}", jsonHelperType.FullName);
                 }
             }
             catch (Exception exception)

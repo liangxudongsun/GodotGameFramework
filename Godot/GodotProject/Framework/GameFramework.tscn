@@ -2,8 +2,11 @@
 
 [ext_resource type="Script" uid="uid://dy40qx6wyrv8g" path="res://Framework/GodotGameFrameworkCore/Base/GameEntry.cs" id="1_781av"]
 [ext_resource type="Script" uid="uid://yk6hi8dq3v4k" path="res://Framework/GodotGameFrameworkCore/Base/BaseComponent.cs" id="2_781av"]
+[ext_resource type="Resource" uid="uid://ba21sy164x4rl" path="res://TheGame/Resources/UIGroupRes.tres" id="3_44wmx"]
 [ext_resource type="Script" uid="uid://xp0bm5th5yki" path="res://Framework/GodotGameFrameworkCore/Event/EventComponent.cs" id="3_353g6"]
+[ext_resource type="Resource" uid="uid://djctqe5r5p4nl" path="res://TheGame/Resources/EntityGroupRes.tres" id="4_mfmie"]
 [ext_resource type="Script" uid="uid://cgmgsagnrr8o2" path="res://Framework/GodotGameFrameworkCore/Fsm/FsmComponent.cs" id="4_ynwf7"]
+[ext_resource type="Resource" uid="uid://deyi8ww2xxbrd" path="res://TheGame/Resources/SoundGroupRes.tres" id="5_6l6dh"]
 [ext_resource type="Script" uid="uid://chpprc2tan5wv" path="res://Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs" id="5_qii40"]
 [ext_resource type="Script" uid="uid://cbq1w80o80jck" path="res://Framework/GodotGameFrameworkCore/Setting/SettingComponent.cs" id="6_set"]
 [ext_resource type="Script" uid="uid://b1rixcpdvl3ij" path="res://Framework/GodotGameFrameworkCore/DataTable/DataTableComponent.cs" id="8_dt"]
@@ -21,6 +24,7 @@ script = ExtResource("1_781av")
 
 [node name="Base" type="Node" parent="." unique_id=611780270]
 script = ExtResource("2_781av")
+m_JsonHelper = "GodotGameFramework.NewtonsoftJsonHelper"
 
 [node name="Event" type="Node" parent="." unique_id=355543369]
 script = ExtResource("3_353g6")
@@ -30,7 +34,8 @@ script = ExtResource("11_res")
 
 [node name="Procedure" type="Node" parent="." unique_id=1553213140]
 script = ExtResource("5_qii40")
-EntranceProcedureTypeName = "ProcedureLaunch"
+EnterProcedure = "ProcedureLaunch"
+Procedures = PackedStringArray("ProcedureGame", "ProcedureLaunch")
 
 [node name="Scene" type="Node" parent="." unique_id=883403288]
 script = ExtResource("15_pcfq2")
@@ -52,12 +57,15 @@ script = ExtResource("6_set")
 
 [node name="Entity" type="Node" parent="." unique_id=777100001]
 script = ExtResource("12_entity")
+EntityGroupRes = ExtResource("4_mfmie")
 
 [node name="UI" type="Node" parent="." unique_id=274540037]
 script = ExtResource("13_ui")
+UIGroupRes = ExtResource("3_44wmx")
 
 [node name="Sound" type="Node" parent="." unique_id=334327208]
 script = ExtResource("14_snd")
+SoundGroupRes = ExtResource("5_6l6dh")
 
 [node name="Localization" type="Node" parent="." unique_id=445100001]
 script = ExtResource("15_loc")

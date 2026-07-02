@@ -70,7 +70,7 @@ namespace GameFramework
             /// <summary>
             /// 获得已加载的程序集中的指定类型的所有子类。
             /// </summary>
-            public static Type[] GetTypes(Type parent)
+            public static Type[] GetChildTypes(Type parent)
             {
                 if (parent == null)
                 {
@@ -84,7 +84,23 @@ namespace GameFramework
                 }
                 return results.ToArray();
             }
+            /// <summary>
+            /// 获得已加载的程序集中的指定类型的所有实现类。
+            /// </summary>
+            public static Type[] GetAssignableFormTypes(Type target)
+            {
+                if (target == null)
+                {
+                    throw new GameFrameworkException("Filter is invalid.");
+                }
 
+                List<Type> results = new List<Type>();
+                foreach (System.Reflection.Assembly assembly in s_Assemblies)
+                {
+                    results.AddRange(assembly.GetTypes().Where(t => target.IsAssignableFrom(t)));
+                }
+                return results.ToArray();
+            }
             /// <summary>
             /// 获取已加载的程序集中的指定类型。
             /// </summary>

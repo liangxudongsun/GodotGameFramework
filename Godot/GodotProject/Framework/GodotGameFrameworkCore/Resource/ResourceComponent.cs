@@ -9,6 +9,7 @@ namespace GodotGameFramework.Resource
 {
     public sealed partial class ResourceComponent : GameFrameworkComponent
     {
+        private const int DefaultPriority = 0;
         private EventComponent m_EventComponent;
         private IResourceManager m_ResourceManager;
         private ResourceMode m_EffectiveResourceMode;
@@ -98,6 +99,26 @@ namespace GodotGameFramework.Resource
                 return null;
             }
         }
+        /// <summary>
+        /// 加载资源。
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public T LoadAsset<T>(string path) where T : Godot.Resource
+        {
+            if (string.IsNullOrEmpty(path)) return null;
+            if (!Exists(path)) return null;
+            try
+            {
+                return (T)Godot.ResourceLoader.Load(path);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[ResourceComponent] LoadAsset failed: {0}", ex.Message);
+            }
+            return null;
+        }
 
         /// <summary>
         /// 检查资源是否存在。
@@ -106,7 +127,7 @@ namespace GodotGameFramework.Resource
         {
             return !string.IsNullOrEmpty(path) && (Godot.ResourceLoader.Exists(path) || FileAccess.FileExists(path));
         }
-
+        public Task<Godot.Resource> LoadAssetAsync(string path) => LoadAssetAsync(path, DefaultPriority);
         /// <summary>
         /// 异步加载资源。
         /// </summary>

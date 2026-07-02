@@ -7,7 +7,7 @@ namespace GodotGameFramework
     /// <summary>
     /// 默认的Json序列化工具
     /// </summary>
-    public partial class DefaultJsonHelper : IJsonHelper
+    public partial class NewtonsoftJsonHelper : IJsonHelper
     {
         public string ToJson(object obj)
         {

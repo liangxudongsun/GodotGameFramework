@@ -12,7 +12,7 @@ config_version=5
 
 config/name="GodotProject"
 run/main_scene="uid://bggentry001"
-config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
 [audio]
@@ -32,7 +32,7 @@ project/assembly_name="GodotProject"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/LocalizationEditor/plugin.cfg", "res://addons/Resources/plugin.cfg", "res://addons/TopMenu/plugin.cfg")
+enabled=PackedStringArray("res://addons/ComponentInsoector/plugin.cfg", "res://addons/LocalizationEditor/plugin.cfg", "res://addons/Resources/plugin.cfg", "res://addons/TopMenu/plugin.cfg")
 
 [file_customization]
 

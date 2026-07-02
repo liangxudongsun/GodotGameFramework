@@ -67,7 +67,8 @@ namespace GodotGameFramework.UI
         [Export]
         private string m_UIGroupHelperTypeName = "GodotGameFramework.UI.DefaultUIGroupHelper";
 
-
+        [Export]
+        public UIGroupRes UIGroupRes;
         /// <summary>
         /// 获取界面组数量。
         /// </summary>

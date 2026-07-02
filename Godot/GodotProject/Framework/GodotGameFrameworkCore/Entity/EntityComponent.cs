@@ -31,7 +31,8 @@ namespace GodotGameFramework.Entity
         [Export] private int m_InstancePriority = 0;
         [Export] private string m_EntityHelperTypeName = "GodotGameFramework.Entity.DefaultEntityHelper";
         [Export] private string m_EntityGroupHelperTypeName = "GodotGameFramework.Entity.DefaultEntityGroupHelper";
-
+        [Export]
+        public EntityGroupRes EntityGroupRes;
         public int EntityCount => m_EntityManager.EntityCount;
         public int EntityGroupCount => m_EntityManager.EntityGroupCount;
 

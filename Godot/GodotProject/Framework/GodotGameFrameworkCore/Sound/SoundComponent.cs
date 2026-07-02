@@ -45,7 +45,8 @@ namespace GodotGameFramework.Sound
         [Export] private string m_SoundHelperTypeName = "GodotGameFramework.Sound.DefaultSoundHelper";
         [Export] private string m_SoundGroupHelperTypeName = "GodotGameFramework.Sound.DefaultSoundGroupHelper";
         [Export] private string m_SoundAgentHelperTypeName = "GodotGameFramework.Sound.DefaultSoundAgentHelper";
-
+        [Export]
+        public SoundGroupRes SoundGroupRes;
 
         public int SoundGroupCount => m_SoundManager.SoundGroupCount;
 
