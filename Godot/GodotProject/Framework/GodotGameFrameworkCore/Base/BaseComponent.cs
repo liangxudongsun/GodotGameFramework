@@ -22,6 +22,9 @@ namespace GodotGameFramework
         public static class Parameters
         {
             public static readonly string JsonHelper = "m_JsonHelper";
+            public static readonly string TextHelper = "m_TextHelper";
+            public static readonly string VersionHelper = "m_VersionHelper";
+            public static readonly string LogHelper = "m_LogHelper";
         }
         [Export]
         public Language EditorLanguage;

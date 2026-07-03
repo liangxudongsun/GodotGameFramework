@@ -19,6 +19,12 @@ namespace GodotGameFramework.Sound
     /// </summary>
     public sealed partial class SoundComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string SoundHelper = "m_SoundHelperTypeName";
+            public static readonly string SoundGroupHelper = "m_SoundGroupHelperTypeName";
+            public static readonly string SoundAgentHelper = "m_SoundAgentHelperTypeName";
+        }
         /// <summary>
         /// 默认背景音乐组名称。
         /// </summary>

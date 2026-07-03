@@ -20,7 +20,7 @@ public partial class AngerEntity : ActorEntity
     private int m_AttackDamage = 15;
 
     private float m_AttackTimer = 0f;
-    private CatEntity m_TargetPlayer = null;
+    private ActorEntity m_TargetPlayer = null;
 
     public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
     {
@@ -41,16 +41,18 @@ public partial class AngerEntity : ActorEntity
         m_AttackTimer = 0f;
         m_HSlider.Value = m_ActorData.Hp;
     }
-
+    public void SetTarget(ActorEntity target)
+    {
+        m_TargetPlayer = target;
+    }
     public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
     {
         base.OnUpdate(elapseSeconds, realElapseSeconds);
 
         // 查找玩家
-        if (m_TargetPlayer == null || !IsInstanceValid(m_TargetPlayer))
+        if (m_TargetPlayer == null || !IsInstanceValid(m_TargetPlayer) || m_TargetPlayer.IsDead)
         {
-            m_TargetPlayer = FindPlayer();
-            if (m_TargetPlayer == null) return;
+            return;
         }
 
         float distance = GlobalPosition.DistanceTo(m_TargetPlayer.GlobalPosition);
@@ -89,27 +91,6 @@ public partial class AngerEntity : ActorEntity
         }
     }
 
-    /// <summary>
-    /// 查找场景中的 CatEntity（玩家）
-    /// </summary>
-    private CatEntity FindPlayer()
-    {
-        // 方法1：通过 Godot 场景树查找
-        var cat = GetTree().GetFirstNodeInGroup("Player");
-        if (cat is CatEntity catEntity)
-            return catEntity;
-
-        // 方法2：通过实体管理器查找
-        // 遍历所有已加载实体，找到 CatEntity
-        var allEntities = GF.Entity.GetAllLoadedEntities();
-        foreach (var entity in allEntities)
-        {
-            if (entity is CatEntity ce && IsInstanceValid(ce))
-                return ce;
-        }
-
-        return null;
-    }
 
     /// <summary>
     /// 朝玩家方向发射子弹

@@ -22,6 +22,11 @@ namespace GodotGameFramework.UI
     /// </summary>
     public sealed partial class UIComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string UIFormHelper = "m_UIFormHelperTypeName";
+            public static readonly string UIGroupHelper = "m_UIGroupHelperTypeName";
+        }
         private const int DefaultPriority = 0;
 
         private IUIManager m_UIManager = null;

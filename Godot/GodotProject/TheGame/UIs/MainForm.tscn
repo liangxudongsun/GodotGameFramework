@@ -18,10 +18,10 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -491.0
-offset_top = 61.0
-offset_right = -58.0
-offset_bottom = 181.0
+offset_left = -385.0
+offset_top = 16.0
+offset_right = -19.0
+offset_bottom = 85.0
 grow_horizontal = 0
 
 [node name="Margin" type="MarginContainer" parent="TopBar" unique_id=418909686]
@@ -38,7 +38,7 @@ theme_override_constants/separation = 20
 [node name="ScoreLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832063107]
 layout_mode = 2
 size_flags_stretch_ratio = 1.39
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 25
 text = "Score: 0"
 script = ExtResource("2_sjr3c")
 Key = "MainForm.Score"
@@ -49,7 +49,7 @@ size_flags_horizontal = 3
 
 [node name="TimerLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832024025]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 25
 text = "Time: 30s"
 horizontal_alignment = 2
 script = ExtResource("2_sjr3c")

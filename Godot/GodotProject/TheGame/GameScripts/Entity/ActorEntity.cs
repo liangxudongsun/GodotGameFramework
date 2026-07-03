@@ -90,7 +90,11 @@ public partial class ActorEntity : AbstractCharacterBody2DEntity, IActor
     protected virtual void Die()
     {
         GF.Entity.HideEntity(this);
-        if (m_Check != null)
-            ReferencePool.Release(m_Check);
     }
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+        ReferencePool.Release(m_Check);
+    }
+
 }

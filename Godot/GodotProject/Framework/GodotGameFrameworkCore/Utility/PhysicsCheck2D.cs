@@ -116,7 +116,6 @@ public partial class PhysicsCheck2D : IReference
     /// <summary>
     /// 必须从 <see cref="CanvasItem._Draw()"/> 内部调用，否则不生效。
     /// </summary>
-    /// <param name="canvasNode">绘制目标节点（通常是 this，即节点自身）。</param>
     /// <param name="color">连线颜色，默认绿色。</param>
     /// <param name="lineWidth">线宽，默认 2。</param>
     public void DrawDebugLines(Color? color = null, float lineWidth = 2f)

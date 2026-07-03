@@ -6,34 +6,73 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, Setting.
 
-- Build: `cd GodotProject && dotnet build`
-- Add .cs files: `"<godot_exe>" --build-solutions --path . --no-window -q`
-- Godot editor: `"<godot_exe>" --path . --editor` (path: `E:\Godot\Godot_v4.6.2-stable_mono_win64\...\Godot_v4.6.2-stable_mono_win64.exe`)
-- Active game project: `TheGame/`
-- No test framework detected — game is runtime-only (no test files found)
+- **Godot .NET SDK**: `Godot.NET.Sdk/4.7.0` (NuGet)
+- **Build**: `cd GodotProject && dotnet build`
+- **Add .cs files**: `"<godot_exe>" --build-solutions --path GodotProject --no-window -q`
+- **Open editor**: `"<godot_exe>" --path GodotProject --editor`
+- **Godot path**: `E:\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64.exe`
+- **Active game project**: `TheGame/`
+- **No test framework detected** — game is runtime-only (no test files found)
+- **Rendering**: D3D12 (Forward Plus), **Physics**: Jolt Physics (3D), **Stretch**: canvas_items / expand
 
 ## Dual-Layer Architecture
 
-The framework has a strict **two-layer separation** that mirrors the original Game Framework design:
+The framework has a strict **two-layer separation** mirroring the original Game Framework design. **Key rule:** `GameFramework/` knows nothing about Godot. `GodotGameFrameworkCore/` depends on both `GameFramework/` and Godot — new systems put interface/logic in `GameFramework/` and Godot bridge in `GodotGameFrameworkCore/`.
 
 ```
-GameFramework/                    ← Pure C# modules (zero Godot dependency)
-  Base/                           ← GameFrameworkEntry, GameFrameworkModule, ReferencePool, EventPool
-  Fsm/                            ← State machine system
-  Procedure/                      ← Procedure (game state) manager
-  Entity/ UI/ Sound/ Scene/       ← Manager interfaces + logic (no Godot types)
-  DataNode/ DataTable/ ObjectPool/
-  Resource/                       ← IResourceManager interface
-  Utility/                        ← Text, compression, random, etc.
-
-GodotGameFrameworkCore/           ← Godot runtime components
-  Base/                           ← GF.cs facade, GameEntry (SceneTree root), GameFrameworkComponent
-  Entity/ UI/ Sound/ Resource/    ← Godot bridge components (each delegates to the corresponding Manager)
-  SingletonSystem/                ← SingletonNode<T> pattern
-  Utility/                        ← PhysicsCheck2D etc.
+GodotProject/
+  Framework/
+    GameFramework/                  ← Pure C# modules (zero Godot dependency)
+      Base/                         ← GameFrameworkEntry, GameFrameworkModule, ReferencePool, EventPool
+      Fsm/                          ← State machine system
+      Procedure/                    ← Procedure (game state) manager
+      Entity/ UI/ Sound/ Scene/     ← Manager interfaces + logic (no Godot types)
+      DataNode/ DataTable/ ObjectPool/
+      Resource/                     ← IResourceManager interface
+      Config/ Debugger/ Download/   ← Config, debugger windows, download manager
+      Event/ Localization/          ← Event manager, localization system
+      Network/ WebRequest/          ← Network channels, HTTP requests
+      Properties/ Utility/          ← Assembly info, text/compression utilities
+    GodotGameFrameworkCore/         ← Godot runtime components
+      Base/                         ← GF.cs facade, GameEntry, GameFrameworkComponent, GodotComponent
+      Base/Node/2D/                 ← Abstract entity base classes (Node2D, CharacterBody2D, Rb2D, Sprite2D, Area2D)
+      Base/Node/UI/                 ← ControlUIForm base class
+      Entity/ UI/ Sound/ Scene/    ← Godot bridge components (each delegates to the corresponding Manager)
+      Resource/                     ← ResourceComponent, async load tasks (LoadAssetTask, LoadBinaryTask)
+      DataTable/ DataNode/ Setting/ Localization/
+      Event/ Fsm/ Procedure/ ObjectPool/
+      Config/ Variable/             ← GameFolderConstant, VarInt32/VarString/VarBoolean/VarSingle
+      Json/                         ← Newtonsoft.Json helper (local .dll reference)
+      Lib/LubanLib/                 ← Luban runtime (ByteBuf, BeanBase, StringUtil)
+      SingletonSystem/              ← SingletonNode<T> pattern
+      Utility/                      ← PhysicsCheck2D, NodeExtension, Log helper, Version helper
+  TheGame/                          ← Active game project
+    GameScripts/
+      Entity/                       ← ActorEntity, CatEntity, AngerEntity, GanTanEntity
+      UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm
+      Procedure/                    ← ProcedureLaunch, ProcedureGame
+      Event/                        ← BlockClickedEventArgs, ScoreChangedEventArgs, TestPhaseChangedEventArgs
+      Resources/                    ← EntityGroup, SoundGroup, UIGroup definitions
+      GameProto/GameConfig/         ← Luban-generated C# (EntityConfig, TbEntityConfig, EntityId, etc.)
+  addons/                           ← Editor plugins
+    ComponentInsoector/             ← Custom Godot Inspector for framework components
+    LocalizationEditor/             ← Excel → .txt localization export
+    Resources/                      ← Resources collection scanner
+    TopMenu/                        ← Log level toggler (rewrites csproj DefineConstants)
 ```
 
-**Key rule:** `GameFramework/` knows nothing about Godot. `GodotGameFrameworkCore/` depends on both `GameFramework/` and Godot. This means any new system should have its interface/logic in `GameFramework/` and its Godot bridge in `GodotGameFrameworkCore/`.
+### Newtonsoft.Json
+
+Referenced from a local .dll (not NuGet):
+```xml
+<Reference Include="Newtonsoft.Json">
+  <HintPath>.\Framework\GodotGameFrameworkCore\Lib\Json\Newtonsoft.Json.dll</HintPath>
+</Reference>
+```
+
+### Unsafe Code
+
+`<AllowUnsafeBlocks>true</AllowUnsafeBlocks>` is enabled for pointer operations in `Utility.Converter.cs`.
 
 ## Scene Tree & Startup
 
@@ -86,6 +125,7 @@ Abstract base classes directly inherit Godot types + implement `IEntity`:
 - `AbstractCharacterBody2DEntity : CharacterBody2D, IEntity`
 - `AbstractSprite2DEntity : Sprite2D, IEntity`
 - `AbstractRb2DEntity : RigidBody2D, IEntity`
+- `AbstractArea2DEntity : Area2D, IEntity`
 
 All provide `OnInit/OnRecycle/OnShow/OnHide/OnUpdate` lifecycle matching the Game Framework entity lifecycle.
 
@@ -102,13 +142,15 @@ Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<
 
 ### UI System
 
-`ControlUIForm : Control, IUIForm` is the base class. Auto-collects localization text nodes.
+`ControlUIForm : Control, IUIForm` is the base class. Auto-collects `UIStringLabelKey` localization text nodes.
 
 UI lifecycle: `OnInit` → `OnOpen` → `OnCover`/`OnReveal` → `OnUpdate` → `OnClose`.
 
 Opening: `GF.UI.OpenUIForm(UIFormId.MenuForm)` or `await GF.UI.OpenUIFormAsync<T>(UIFormId.MenuForm)`.
 
 TheGame UIs: `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`.
+
+`UIItemBase : Control` for reusable UI widgets (e.g., `ScorePopupItem`). Pooled via `UIItemInstanceObject`.
 
 ### Procedure (FSM) System
 
@@ -145,36 +187,68 @@ Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClic
 
 `IReference` interface + `ReferencePool.Acquire<T>()`/`Release()` for lightweight object reuse. `ObjectPoolComponent` wraps `ObjectPoolManager` for pooled Godot objects.
 
+## Component Inspector Addon
+
+`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, and `SettingComponentInspectorPlugin` to display framework component properties in the Godot editor inspector panel, making runtime states visible during development.
+
 ## Luban Config Pipeline
 
-Excel configs in `../Configs/GameConfig/Datas/` (实体.xlsx, 界面UI.xlsx, 角色.xlsx, etc.) → Luban code generation:
+Excel configs in `Configs/GameConfig/Datas/` → Luban code generation:
 
 ```
-../Configs/GameConfig/
-  Datas/              ← Excel source files (*.xlsx)
-  Defines/            ← Luban type definitions
-  luban.conf          ← Luban configuration
-  gen_code_bin_to_project.bat/sh  ← Generate C# code + binary data
+Configs/                            ← Repo root (sibling to Godot/)
+  GameConfig/
+    Datas/
+      __beans__.xlsx                ← Shared type definitions
+      __enums__.xlsx                ← Enum definitions
+      __tables__.xlsx               ← Table/index definitions
+      实体.xlsx                     ← Entity configs (scenes, paths, groups)
+      界面UI.xlsx                   ← UI form configs
+      角色.xlsx                     ← Character/actor configs
+    Defines/                        ← Luban type definitions (XML)
+    luban.conf                      ← Luban configuration
+    gen_code_bin_to_project.bat/sh  ← Generate C# code + binary data
 ```
 
-Generated code: `TheGame/GameScripts/GameProto/GameConfig/` (e.g., `EntityConfig.cs`, `EntityId.cs`, `TbEntityConfig.cs`). Auto-generated `ResourcesCollectionConstant.cs` via the ResourcesCollection editor plugin.
+Generated code: `TheGame/GameScripts/GameProto/GameConfig/` (e.g., `EntityConfig.cs`, `EntityId.cs`, `TbEntityConfig.cs`). Auto-generated `ResourcesCollectionConstant.cs` via the Resources editor plugin.
 
-Config-driven entities: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` resolves the scene path.
+Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` resolves the scene path.
+
+## Source Generators (Tools/)
+
+`Tools/GameEventSourceGenerator/` at the repo root contains a C# Source Generator project:
+- `GameEventAnalyzer/` — Roslyn analyzer for game events
+- `SourceGenerator/` — Roslyn source generator (auto-generates event boilerplate)
 
 ## Editor Plugins (`addons/`)
 
-**Project > Tools** menu:
-- **TopMenu** — toggle log level (rewrites csproj `DefineConstants`)
-- **LocalizationEditor** — `../Configs/Localization/*.xlsx` → `.txt` localization files
-- **ResourcesCollection** — scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs`
+| Plugin | Function |
+|--------|----------|
+| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Scene, Setting) |
+| **TopMenu** | Toggle log level (rewrites csproj `DefineConstants`) |
+| **LocalizationEditor** | `Configs/Localization/*.xlsx` → `.txt` localization files |
+| **Resources** | Scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs` |
+
+Enabled in `project.godot`:
+```
+editor_plugins/enabled = [
+  "res://addons/ComponentInsoector/plugin.cfg",
+  "res://addons/LocalizationEditor/plugin.cfg",
+  "res://addons/Resources/plugin.cfg",
+  "res://addons/TopMenu/plugin.cfg"
+]
+```
 
 ## Logging System
 
-Compile-time conditional via `DefineConstants`: `ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG` in `GodotProject.csproj`.
+Compile-time conditional via `DefineConstants` in `GodotProject.csproj`:
+```xml
+<DefineConstants>ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG</DefineConstants>
+```
 
 Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and composite `ENABLE_DEBUG_AND_ABOVE_LOG` etc.
 
-`Log.Debug/Info/Warning/Error/Fatal` are `[Conditional]` — zero runtime overhead when the symbol is undefined.
+`Log.Debug/Info/Warning/Error/Fatal` are `[Conditional]` — zero runtime overhead when the symbol is undefined. Release builds can remove the entire `DefineConstants` line.
 
 ## Resource System (P0 Minimal)
 
@@ -194,14 +268,20 @@ Convenience on `ResourceComponent`: `LoadBinary()`, `LoadText()`, `LoadAsync<T>(
 ## Build & Development Commands
 
 ```bash
+# From the Godot/ directory:
 cd GodotProject
+
 dotnet build                              # Daily development build
-"<godot_exe>" --build-solutions --path . --no-window -q   # After adding .cs files
-"<godot_exe>" --path . --editor                             # Open Godot editor
+
+# After adding new .cs files (regenerate solution):
+"<godot_exe>" --build-solutions --path GodotProject --no-window -q
+
+# Open Godot editor:
+"<godot_exe>" --path GodotProject --editor
 ```
 
 ## MCP & Claude Code Config
 
 - **MCP**: CodeGraph (`@colbymchenry/codegraph`) in `.mcp.json` — provides code intelligence via SQLite knowledge graph of all symbols/edges/files
 - **Hooks**: SessionStart, PreToolUse (Bash validation), PostToolUse (Write/Edit validation), Notification, PreCompact/PostCompact, Stop, SubagentStart/SubagentStop
-- **Agent definitions**: `.claude/agents/` — godot-csharp-specialist, godot-specialist, gameplay-programmer, etc. for targeted sub-tasks
+- **Agent definitions**: `.claude/agents/` — specialized agents (godot-csharp-specialist, godot-specialist, gameplay-programmer, etc.) for targeted sub-tasks

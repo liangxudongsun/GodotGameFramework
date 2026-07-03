@@ -18,6 +18,10 @@ namespace GodotGameFramework.Localization
     /// </summary>
     public sealed partial class LocalizationComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string LocalizationHelper = "m_LocalizationHelperTypeName";
+        }
         private ILocalizationManager m_LocalizationManager = null;
 
         /// <summary>

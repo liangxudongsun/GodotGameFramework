@@ -14,6 +14,11 @@ namespace GodotGameFramework.Entity
     /// </summary>
     public sealed partial class EntityComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string EntityHelper = "m_EntityHelperTypeName";
+            public static readonly string EntityGroupHelper = "m_EntityGroupHelperTypeName";
+        }
         private const int DefaultPriority = 0;
 
         private IEntityManager m_EntityManager = null;

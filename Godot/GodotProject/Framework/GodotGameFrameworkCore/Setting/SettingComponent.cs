@@ -15,40 +15,13 @@ namespace GodotGameFramework.Setting
 {
     /// <summary>
     /// 游戏设置组件。
-    ///
-    /// 这是游戏持久化设置系统的封装组件，透传核心层的 ISettingManager。
-    /// 设置数据会被保存到用户的本地文件系统中（user://settings.cfg）。
-    ///
-    /// 使用场景：
-    /// - 保存玩家的偏好设置（音量、画质、语言等）
-    /// - 保存游戏进度标记（已通过的关卡等）
-    /// - 保存玩家自定义键位配置
-    ///
-    /// 使用方式：
-    /// <code>
-    /// SettingComponent setting = GF.Setting;
-    ///
-    /// // 写入设置
-    /// setting.SetFloat("MusicVolume", 0.8f);
-    /// setting.SetBool("Fullscreen", true);
-    /// setting.SetString("PlayerName", "Hero");
-    ///
-    /// // 读取设置（带默认值）
-    /// float volume = setting.GetFloat("MusicVolume", 1.0f);
-    /// bool fullscreen = setting.GetBool("Fullscreen", false);
-    ///
-    /// // 保存到磁盘
-    /// setting.Save();
-    /// </code>
-    ///
-    /// 初始化流程：
-    /// 1. _Ready() 中获取核心层 ISettingManager
-    /// 2. 创建 DefaultSettingHelper 并设置到 Manager
-    /// 3. CallDeferred 延迟加载配置文件（确保所有组件就绪）
-    ///
     /// </summary>
     public sealed partial class SettingComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string SettingHelper = "m_SettingHelperTypeName";
+        }
         [Export]
         private string m_SettingHelperTypeName = "GodotGameFramework.Setting.DefaultSettingHelper";
         /// <summary>
@@ -61,10 +34,6 @@ namespace GodotGameFramework.Setting
         /// </summary>
         public int Count => m_SettingManager.Count;
 
-        /// <summary>
-        /// 节点初始化回调。
-        /// 获取核心层 ISettingManager，创建 Helper 并初始化。
-        /// </summary>
         public override void OnInit()
         {
             base.OnInit();

@@ -26,6 +26,7 @@ public partial class MainForm : ControlUIForm
             var point = line2D.Points[i];
             var enemy = await GF.Entity.ShowEntityAsync<AngerEntity>(EntityId.Anger);
             enemy.Position = point;
+            enemy.SetTarget(cat);
         }
     }
 

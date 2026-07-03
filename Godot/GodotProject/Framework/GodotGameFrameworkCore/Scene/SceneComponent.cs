@@ -13,6 +13,10 @@ namespace GodotGameFramework.Scene
     /// </summary>
     public partial class SceneComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string SceneHelper = "m_SceneHelperTypeName";
+        }
         private const int DefaultPriority = 0;
         private ISceneManager m_SceneManager;
         private EventComponent m_EventComponent;
