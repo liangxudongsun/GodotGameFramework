@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build**: `cd GodotProject && dotnet build`
 - **Add .cs files**: `"<godot_exe>" --build-solutions --path GodotProject --no-window -q`
 - **Open editor**: `"<godot_exe>" --path GodotProject --editor`
-- **Godot path**: `E:\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64.exe`
+- **Godot path**: `E:\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64.exe` (note: the exe is nested two directory levels deep — `Godot_v4.6.2-stable_mono_win64/Godot_v4.6.2-stable_mono_win64/`). Bash on Windows here needs forward slashes.
 - **Active game project**: `TheGame/`
 - **No test framework detected** — game is runtime-only (no test files found)
 - **Rendering**: D3D12 (Forward Plus), **Physics**: Jolt Physics (3D), **Stretch**: canvas_items / expand
@@ -191,6 +191,15 @@ Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClic
 
 `addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, and `SettingComponentInspectorPlugin` to display framework component properties in the Godot editor inspector panel, making runtime states visible during development.
 
+### UIForm Script Generation
+
+The same addon hosts `ScriptGenerateInspector` (an `EditorInspectorPlugin`) — a "Generate Script" button shown in the inspector for any `Control` node. It scaffolds a UIForm as a **split partial class**:
+
+- `<ClassName>.Ge.cs` — regenerated boilerplate (fields, properties, `IUIForm` state). **Always overwritten.**
+- `<ClassName>.Logic.cs` — user lifecycle code (`OnInit`/`OnOpen`/`OnClose`/…). **Only created if absent** (never clobbers edits).
+
+Templates live in `Framework/GodotGameFrameworkCore/Templet/` (`UIFormTemplet.txt` = Ge, `UIFormLogicTemplet.txt` = Logic) with `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` placeholders. Output namespace + directory come from `TheGame/Resources/ScriptGenerateRes.tres` (`ScriptGenerateRes : Resource`, fields `NameSpace`/`OutPutPath`). The plugin reads that config **by property name** off the base `Resource` (not a typed cast) so it works even before the C# type is registered in the editor. After writing, it attaches the Ge script to the node via `node.SetScript(...)` — but the new class isn't compiled until a solution rebuild + assembly reload, so the freshly-attached script shows errors until then.
+
 ## Luban Config Pipeline
 
 Excel configs in `Configs/GameConfig/Datas/` → Luban code generation:
@@ -224,7 +233,7 @@ Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` r
 
 | Plugin | Function |
 |--------|----------|
-| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Scene, Setting) |
+| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Scene, Setting) + UIForm script generator (`ScriptGenerateInspector`) |
 | **TopMenu** | Toggle log level (rewrites csproj `DefineConstants`) |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `.txt` localization files |
 | **Resources** | Scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs` |

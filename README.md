@@ -26,7 +26,7 @@
 - ♻️ **对象池** — 实体、UI、音频等资源自动池化管理复用
 - 🔊 **音频系统** — 声音组 + 优先级抢占 + 扩展方法 `PlayBGM()`/`PlaySFX()`
 - 📝 **条件日志** — `[Conditional("ENABLE_LOG")]` 编译时零开销移除，编辑器插件可切换
-- 🔧 **编辑器插件** — 日志切换、本地化导出、资源路径常量生成
+- 🔧 **编辑器插件** — 组件监视、UIForm 脚本生成、日志切换、本地化导出、资源路径常量生成
 - 🧬 **单例模式** — 泛型 `SingletonNode<T>` 提供类型安全的 Godot 节点单例
 
 ---
@@ -260,6 +260,7 @@ GodotProject/                 ← Godot 项目根
 │   ├── UIs/                  ← UI 场景 (.tscn)
 │   ├── Sprites/ Scenes/ Audios/
 └── addons/                   ← 编辑器插件
+    ├── ComponentInsoector/   ← 框架组件监视 + UIForm 脚本生成器
     ├── TopMenu/              ← 日志级别切换
     ├── LocalizationEditor/   ← Excel → TXT 转换
     └── Resources/            ← 资源路径常量生成
@@ -439,13 +440,23 @@ TheGame/DataTables/*.bytes                        ← 二进制数据（运行�
 
 ## 🔧 编辑器插件
 
-Godot 编辑器 **Project > Tools** 菜单下有三个内置工具：
-
 | 插件 | 功能 |
 |------|------|
+| **ComponentInsoector** | 框架组件（Base / Scene / Setting）属性监视 + UIForm 脚本生成器（详见下方） |
 | **TopMenu** | 切换日志级别（Debug / Info / Warning / Error / Fatal / 全部关闭） |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `res://TheGame/DataTables/Localizations/*.txt` |
 | **ResourcesCollection** | 扫描 `res://TheGame/` 非脚本资源，生成 `ResourcesCollectionConstant.cs`（文件路径常量） |
+
+> 💡 TopMenu / LocalizationEditor / ResourcesCollection 通过 **Project > Tools** 菜单调用；ComponentInsoector 直接作用于检视面板。
+
+### UIForm 脚本生成
+
+选中任意 **Control** 节点后，检视面板会出现 **Generate Script** 按钮，一键脚手架一个 UIForm 拆分为**双 partial 文件**：
+
+- `<类名>.Ge.cs` — 框架样板（字段、属性、`IUIForm` 状态），**每次生成都覆盖**
+- `<类名>.Logic.cs` — 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` …），**仅首次创建，不会覆盖已有逻辑**
+
+模板位于 `Framework/GodotGameFrameworkCore/Templet/`（`UIFormTemplet.txt` = Ge，`UIFormLogicTemplet.txt` = Logic），占位符 `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_`。输出命名空间与目录由 `TheGame/Resources/ScriptGenerateRes.tres`（字段 `NameSpace` / `OutPutPath`）配置。生成后自动将 Ge 脚本挂到选中节点（`node.SetScript`）——但新类需一次完整构建 + 程序集重载后才可用。
 
 ---
 
