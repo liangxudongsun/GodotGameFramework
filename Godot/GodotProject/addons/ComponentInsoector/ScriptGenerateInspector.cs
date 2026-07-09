@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 namespace GodotGameFramework.Editor
 {
@@ -12,7 +14,9 @@ namespace GodotGameFramework.Editor
         const string ClassNameReplace = "_CLASSNAME_";
         const string DefaultNameSpace = "GameLogic";
         const string DefaultOutputPath = "res://TheGame/";
-        private Button m_GenerateButton;
+        const string ChildNodes = "_CHILDNODES_";
+        private Dictionary<string, string> m_Prs = new Dictionary<string, string>(); // 参数
+        private List<Node> m_MatchingChildren = new List<Node>(); // 匹配到的子节点，用于自动赋值
         public override bool _CanHandle(GodotObject @object)
         {
             // 模板生成的是 UIForm（IUIForm 需要 Control 基类），只对 Control 节点显示按钮
@@ -30,9 +34,8 @@ namespace GodotGameFramework.Editor
                 GD.PushWarning($"[ScriptGenerateInspector] 找不到配置资源: {Resc}");
                 return;
             }
-
-            m_GenerateButton = new Button();
-            m_GenerateButton.Text = "Generate Script";
+            Button m_GenerateButton = new Button();
+            m_GenerateButton.Text = "Bind UI Script";
             m_GenerateButton.Pressed += () => OnGeneratePressed(@object);
             AddCustomControl(m_GenerateButton);
         }
@@ -60,15 +63,18 @@ namespace GodotGameFramework.Editor
             if (!outputDirLogic.EndsWith("/")) outputDirLogic += "/";
 
             // 生成部分（Ge）：包含框架样板代码，每次都覆盖重写
+            m_Prs.Clear();
+            m_MatchingChildren.Clear();
             string geScript = geTemplate
                 .Replace(NameSpaceReplace, namespaceStr)
                 .Replace(ParentClassReplace, parent)
-                .Replace(ClassNameReplace, className);
-            string gePath = outputDirGe + className + ".Ge.cs";
+                .Replace(ClassNameReplace, className)
+                .Replace(ChildNodes, ReadChildNodes(node, config));
+            string gePath = outputDirGe + className + ".cs"; // Godot只有文件名与类名相同才可显示在Inspector上，否则无法
             if (!WriteText(gePath, geScript)) return;
 
             // 逻辑部分（Logic）：用户业务代码，仅在首次生成时创建，避免覆盖已有逻辑
-            string logicPath = outputDirLogic + className + ".Logic.cs";
+            string logicPath = outputDirLogic + className + ".cs";
             if (!FileAccess.FileExists(logicPath))
             {
                 string logicTemplate = ReadText(LOGIC_TEMPLATE);
@@ -79,26 +85,62 @@ namespace GodotGameFramework.Editor
                         .Replace(ClassNameReplace, className);
                     WriteText(logicPath, logicScript);
                 }
-
-                // 刷新文件系统，让 Godot 立即识别新生成的脚本文件
-                var fs = EditorInterface.Singleton.GetResourceFilesystem();
-                fs.UpdateFile(gePath);
-                if (FileAccess.FileExists(logicPath)) fs.UpdateFile(logicPath);
-
-                // 加载 Ge 脚本并赋值给选中的节点
-                var script = ResourceLoader.Load<Script>(gePath);
-                if (script != null)
-                {
-                    node.SetScript(script);
-                    EditorInterface.Singleton.GetResourceFilesystem().Scan();
-                    GD.Print($"[ScriptGenerateInspector] 已生成并赋值脚本: {gePath}");
-                }
-                else
-                {
-                    GD.PushWarning($"[ScriptGenerateInspector] 脚本已生成，但尚未编译完成，无法立即赋值。请重新构建后手动附加: {gePath}");
-                }
             }
 
+            // 刷新文件系统，让 Godot 识别新生成或更新的脚本文件
+            var fs = EditorInterface.Singleton.GetResourceFilesystem();
+            fs.UpdateFile(gePath);
+            if (FileAccess.FileExists(logicPath)) fs.UpdateFile(logicPath);
+            fs.Scan();
+
+            // 加载 CSharpScript 资源并赋值给节点
+            var script = GD.Load<CSharpScript>(gePath);
+            if (script != null)
+            {
+                node.SetScript(script);
+
+                // 自动赋值子节点到 [Export] 字段
+                foreach (var child in m_MatchingChildren)
+                {
+                    node.Set(child.Name, child);
+                }
+
+                // 标记场景为已修改
+                EditorInterface.Singleton.MarkSceneAsUnsaved();
+                GD.Print($"[ScriptGenerateInspector] 已生成并赋值脚本: {gePath}");
+            }
+            else
+            {
+                GD.PushWarning($"[ScriptGenerateInspector] 脚本已生成，但无法加载。请重新构建后手动附加: {gePath}");
+            }
+
+        }
+        private string ReadChildNodes(GodotObject @object, Godot.Resource config)
+        {
+            string prefix = ReadProp(config, ScriptGenerateRes.Parameters.NodePrefix, "m_");
+            if (@object is Node node)
+            {
+                foreach (var child in node.GetChildren())
+                {
+                    if (child.GetChildCount() > 0)
+                    {
+                        ReadChildNodes(child, config);
+                    }
+                    if (child.Name.ToString().StartsWith(prefix))
+                    {
+                        if (!m_Prs.ContainsKey(child.Name))
+                        {
+                            m_Prs.Add(child.Name, child.GetType().Name);
+                            m_MatchingChildren.Add(child);
+                        }
+                        else
+                        {
+                            GD.PushWarning($"[ScriptGenerateInspector] {child.Name}重复");
+                        }
+                    }
+                }
+            }
+            return string.Join("\n", m_Prs.Select(x => $"\t\t\t[Export]\n\t\t\tprivate {x.Value} {x.Key};"));
         }
 
         private static string ReadProp(Godot.Resource res, string prop, string fallback)

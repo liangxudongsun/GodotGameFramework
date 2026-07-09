@@ -4,12 +4,12 @@ using GodotGameFramework.UI;
 using GodotGameFramework;
 using System;
 using System.Collections.Generic;
-namespace _NAMESPACE_
+namespace GameLogic
 {
 	/// <summary>
 	/// 界面
 	/// </summary>
-	public partial class _CLASSNAME_ : _PARENT_, IUIForm
+	public partial class GameOver : Control, IUIForm
 	{
 		/// <summary>
 		/// 界面序列编号。
@@ -79,7 +79,10 @@ namespace _NAMESPACE_
 			}
 		}
 		
-		_CHILDNODES_
+					[Export]
+			public ColorRect m_Overlay;
+			[Export]
+			public Label m_Title;
 		
 	}
 }

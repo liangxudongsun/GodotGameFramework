@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://c2hxcrmwyhjkx"]
 
-[ext_resource type="Script" uid="uid://b0k4i6trx03n6" path="res://TheGame/GameScripts/GameProto/UIGe/GameOver.Ge.cs" id="1_pbmgy"]
+[ext_resource type="Script" uid="uid://bot7k857eqfa6" path="res://TheGame/GameScripts/GameProto/UIGe/GameOver.cs" id="1_pbmgy"]
 
-[node name="GameOver" type="Control" unique_id=195321382]
+[node name="GameOver" type="Control" unique_id=195321382 node_paths=PackedStringArray("m_Overlay", "m_Title")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,8 +10,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_pbmgy")
+m_Overlay = NodePath("m_Overlay")
+m_Title = NodePath("Panel/Margin/VBox/m_Title")
 
-[node name="Overlay" type="ColorRect" parent="." unique_id=439735814]
+[node name="m_Overlay" type="ColorRect" parent="." unique_id=439735814]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -45,7 +47,7 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Panel/Margin/VBox" unique_id=333229008]
+[node name="m_Title" type="Label" parent="Panel/Margin/VBox" unique_id=333229008]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "GAME OVER"

@@ -189,16 +189,41 @@ Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClic
 
 ## Component Inspector Addon
 
-`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, and `SettingComponentInspectorPlugin` to display framework component properties in the Godot editor inspector panel, making runtime states visible during development.
+`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `ProcedureComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, `SettingComponentInspectorPlugin`, `EntityComponentInspectorPlugin`, `UIComponentInspectorPlugin`, `SoundComponentInspectorPlugin`, `LocalizationComponentInspectorPlugin`, and `ScriptGenerateInspector` — each providing custom property editors, dropdowns, and debug info in the Godot editor inspector panel.
 
 ### UIForm Script Generation
 
-The same addon hosts `ScriptGenerateInspector` (an `EditorInspectorPlugin`) — a "Generate Script" button shown in the inspector for any `Control` node. It scaffolds a UIForm as a **split partial class**:
+`ScriptGenerateInspector` (an `EditorInspectorPlugin`) — shows a **"Generate Script"** button in the inspector for **any `Control` node** (`_CanHandle` returns `@object is Control`). It scaffolds a UIForm as a **split partial class** across two files in separate output directories:
 
-- `<ClassName>.Ge.cs` — regenerated boilerplate (fields, properties, `IUIForm` state). **Always overwritten.**
-- `<ClassName>.Logic.cs` — user lifecycle code (`OnInit`/`OnOpen`/`OnClose`/…). **Only created if absent** (never clobbers edits).
+- `<ClassName>.cs` (output: `OutPutPathGe`) — regenerated boilerplate: `[Export]` child-node fields, `IUIForm` properties, localization collector. **Always overwritten.**
+- `<ClassName>.cs` (output: `OutPutPathLogic`) — user lifecycle code (`OnInit`/`OnOpen`/`OnClose`/…). **Only created if absent** (never clobbers edits).
 
-Templates live in `Framework/GodotGameFrameworkCore/Templet/` (`UIFormTemplet.txt` = Ge, `UIFormLogicTemplet.txt` = Logic) with `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` placeholders. Output namespace + directory come from `TheGame/Resources/ScriptGenerateRes.tres` (`ScriptGenerateRes : Resource`, fields `NameSpace`/`OutPutPath`). The plugin reads that config **by property name** off the base `Resource` (not a typed cast) so it works even before the C# type is registered in the editor. After writing, it attaches the Ge script to the node via `node.SetScript(...)` — but the new class isn't compiled until a solution rebuild + assembly reload, so the freshly-attached script shows errors until then.
+> ⚠️ **Godot 要求文件名必须与类名一致**，否则 Inspector 无法识别 `[Export]` 字段。因此 Ge 和 Logic 输出在不同目录，文件名都是 `<类名>.cs`。
+
+**Template placeholders:** `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` / `_CHILDNODES_`
+
+Templates: `Framework/GodotGameFrameworkCore/Templet/UIFormTemplet.txt` (Ge), `UIFormLogicTemplet.txt` (Logic).
+
+**Config:** `TheGame/Resources/ScriptGenerateRes.tres` (`ScriptGenerateRes : Resource`):
+| Field | Purpose | Default |
+|-------|---------|---------|
+| `NameSpace` | 生成的命名空间 | `"GameLogic"` |
+| `OutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
+| `OutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
+| `NodePrefix` | 子节点名称前缀（用于自动收集） | `"m_"` |
+
+The plugin reads config **by property name** off the base `Resource` (not a typed cast) so it works even before the C# type is registered in the editor.
+
+**子节点自动收集与赋值 (`ReadChildNodes`):**
+- 递归遍历节点树，收集名称以 `NodePrefix`（默认 `m_`）开头的子节点
+- 生成 `[Export] public Type NodeName;` 字段，替换模板中的 `_CHILDNODES_` 占位符
+- `SetScript` 之后自动调用 `node.Set(child.Name, child)` 为每个 `[Export]` 字段赋值子节点引用
+- 调用 `MarkSceneAsUnsaved()` 标记场景已修改
+
+**生成流程:**
+1. 写入 `.cs` 文件 → 刷新文件系统 → `fs.Scan()`
+2. `GD.Load<CSharpScript>(gePath)` → `node.SetScript(script)` → 自动赋值子节点
+3. 新生成的脚本需要一次构建（`dotnet build`）后才能编译并通过 Inspector 显示 `[Export]` 字段
 
 ## Luban Config Pipeline
 
@@ -233,7 +258,7 @@ Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` r
 
 | Plugin | Function |
 |--------|----------|
-| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Scene, Setting) + UIForm script generator (`ScriptGenerateInspector`) |
+| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Procedure, Scene, Setting, Entity, UI, Sound, Localization) + UIForm script generator (`ScriptGenerateInspector`) with auto child-node collection and assignment |
 | **TopMenu** | Toggle log level (rewrites csproj `DefineConstants`) |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `.txt` localization files |
 | **Resources** | Scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs` |

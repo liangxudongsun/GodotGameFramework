@@ -8,6 +8,7 @@ public partial class ScriptGenerateRes : Resource
         public static readonly string NameSpace = "NameSpace";
         public static readonly string OutPutPathGe = "OutPutPathGe";
         public static readonly string OutPutPathLogic = "OutPutPathLogic";
+        public static readonly string NodePrefix = "NodePrefix";
     }
     [Export]
     public string NameSpace = "GameLogic";
@@ -15,4 +16,6 @@ public partial class ScriptGenerateRes : Resource
     public string OutPutPathGe = "res://TheGame/";
     [Export(PropertyHint.Dir)]
     public string OutPutPathLogic = "res://TheGame/";
+    [Export]
+    public string NodePrefix = "m_";
 }

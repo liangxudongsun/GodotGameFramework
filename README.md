@@ -442,7 +442,7 @@ TheGame/DataTables/*.bytes                        ← 二进制数据（运行�
 
 | 插件 | 功能 |
 |------|------|
-| **ComponentInsoector** | 框架组件（Base / Scene / Setting）属性监视 + UIForm 脚本生成器（详见下方） |
+| **ComponentInsoector** | 框架组件（Base / Procedure / Scene / Setting / Entity / UI / Sound / Localization）属性监视 + UIForm 脚本生成器（详见下方）——自动收集子节点、自动赋值 `[Export]` 字段 |
 | **TopMenu** | 切换日志级别（Debug / Info / Warning / Error / Fatal / 全部关闭） |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `res://TheGame/DataTables/Localizations/*.txt` |
 | **ResourcesCollection** | 扫描 `res://TheGame/` 非脚本资源，生成 `ResourcesCollectionConstant.cs`（文件路径常量） |
@@ -453,10 +453,25 @@ TheGame/DataTables/*.bytes                        ← 二进制数据（运行�
 
 选中任意 **Control** 节点后，检视面板会出现 **Generate Script** 按钮，一键脚手架一个 UIForm 拆分为**双 partial 文件**：
 
-- `<类名>.Ge.cs` — 框架样板（字段、属性、`IUIForm` 状态），**每次生成都覆盖**
-- `<类名>.Logic.cs` — 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` …），**仅首次创建，不会覆盖已有逻辑**
+- `<类名>.cs`（`OutPutPathGe` 目录）— 框架样板（`[Export]` 子节点字段、`IUIForm` 属性、本地化收集器），**每次生成都覆盖**
+- `<类名>.cs`（`OutPutPathLogic` 目录）— 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` …），**仅首次创建，不会覆盖已有逻辑**
 
-模板位于 `Framework/GodotGameFrameworkCore/Templet/`（`UIFormTemplet.txt` = Ge，`UIFormLogicTemplet.txt` = Logic），占位符 `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_`。输出命名空间与目录由 `TheGame/Resources/ScriptGenerateRes.tres`（字段 `NameSpace` / `OutPutPath`）配置。生成后自动将 Ge 脚本挂到选中节点（`node.SetScript`）——但新类需一次完整构建 + 程序集重载后才可用。
+> ⚠️ **Godot 要求文件名与类名一致**，否则 Inspector 无法正确显示 `[Export]` 字段。两个 partial 文件输出在不同目录。
+
+**模板占位符:** `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` / `_CHILDNODES_`
+
+模板位于 `Framework/GodotGameFrameworkCore/Templet/`（`UIFormTemplet.txt` = Ge，`UIFormLogicTemplet.txt` = Logic）。
+
+**配置文件** `TheGame/Resources/ScriptGenerateRes.tres`（`ScriptGenerateRes : Resource`）:
+
+| 字段 | 说明 | 默认值 |
+|------|------|--------|
+| `NameSpace` | 生成代码的命名空间 | `"GameLogic"` |
+| `OutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
+| `OutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
+| `NodePrefix` | 子节点名称前缀（用于自动收集） | `"m_"` |
+
+**子节点自动收集与赋值：** 递归遍历节点树，收集名称以 `NodePrefix`（默认 `m_`）开头的子节点，生成 `[Export] public Type NodeName;` 字段。`SetScript` 之后自动调用 `node.Set(child.Name, child)` 为每个 `[Export]` 字段赋值子节点引用，无需手动拖拽。
 
 ---
 

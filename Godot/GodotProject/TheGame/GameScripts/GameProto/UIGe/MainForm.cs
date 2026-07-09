@@ -9,7 +9,7 @@ namespace GameLogic
 	/// <summary>
 	/// 界面
 	/// </summary>
-	public partial class GameOver : Control, IUIForm
+	public partial class MainForm : Control, IUIForm
 	{
 		/// <summary>
 		/// 界面序列编号。
@@ -78,6 +78,11 @@ namespace GameLogic
 				return m_UIStringKeys;
 			}
 		}
+		
+					[Export]
+			public Label m_ScoreLabel;
+			[Export]
+			public Label m_TimerLabel;
 		
 	}
 }

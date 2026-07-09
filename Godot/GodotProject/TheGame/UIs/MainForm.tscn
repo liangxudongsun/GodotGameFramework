@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://cymxn7v3et51l"]
 
-[ext_resource type="Script" uid="uid://b8p38yuebgnp1" path="res://TheGame/GameScripts/UI/MainForm.cs" id="1_h2ej1"]
+[ext_resource type="Script" uid="uid://67jif6lbg6cv" path="res://TheGame/GameScripts/GameProto/UIGe/MainForm.cs" id="1_sjr3c"]
 [ext_resource type="Script" uid="uid://c1xds3as1e25b" path="res://Framework/GodotGameFrameworkCore/UI/UIStringLabelKey.cs" id="2_sjr3c"]
 
-[node name="MainForm" type="Control" unique_id=1859845138]
+[node name="MainForm" type="Control" unique_id=1859845138 node_paths=PackedStringArray("m_ScoreLabel", "m_TimerLabel")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("1_h2ej1")
+script = ExtResource("1_sjr3c")
+m_ScoreLabel = NodePath("TopBar/Margin/HBox/m_ScoreLabel")
+m_TimerLabel = NodePath("TopBar/Margin/HBox/m_TimerLabel")
 
 [node name="TopBar" type="PanelContainer" parent="." unique_id=489537559]
 layout_mode = 1
@@ -35,7 +37,7 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="ScoreLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832063107]
+[node name="m_ScoreLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832063107]
 layout_mode = 2
 size_flags_stretch_ratio = 1.39
 theme_override_font_sizes/font_size = 25
@@ -47,7 +49,7 @@ Key = "MainForm.Score"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TimerLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832024025]
+[node name="m_TimerLabel" type="Label" parent="TopBar/Margin/HBox" unique_id=832024025]
 layout_mode = 2
 theme_override_font_sizes/font_size = 25
 text = "Time: 30s"
