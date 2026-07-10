@@ -31,8 +31,8 @@ namespace GameLogic
 		/// </summary>
 		private int m_DepthInUIGroup;
 
-		/// <summary
-		/// >是否暂停被覆盖的界面。
+		/// <summary>
+		/// 是否暂停被覆盖的界面。
 		/// </summary>
 		private bool m_PauseCoveredUIForm;
 
@@ -78,11 +78,11 @@ namespace GameLogic
 				return m_UIStringKeys;
 			}
 		}
-		
-					[Export]
-			public ColorRect m_Overlay;
-			[Export]
-			public Label m_Title;
-		
+
+		[Export]
+		private ColorRect m_Overlay;
+		[Export]
+		private Label m_Title;
+
 	}
 }

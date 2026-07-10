@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -34,10 +35,98 @@ namespace GodotGameFramework.Editor
                 GD.PushWarning($"[ScriptGenerateInspector] 找不到配置资源: {Resc}");
                 return;
             }
+            VBoxContainer vbox = new VBoxContainer();
             Button m_GenerateButton = new Button();
             m_GenerateButton.Text = "Bind UI Script";
+            vbox.AddChild(m_GenerateButton);
+            Button m_DeleteGeButton = new Button();
+            m_DeleteGeButton.Text = "Delete Gen";
+            m_DeleteGeButton.AddThemeColorOverride("font_color", Colors.Red);
+            vbox.AddChild(m_DeleteGeButton);
+            Button m_DeleteLogicButton = new Button();
+            m_DeleteLogicButton.Text = "Delete Logic";
+            m_DeleteLogicButton.AddThemeColorOverride("font_color", Colors.Red);
+            vbox.AddChild(m_DeleteLogicButton);
             m_GenerateButton.Pressed += () => OnGeneratePressed(@object);
-            AddCustomControl(m_GenerateButton);
+            m_DeleteGeButton.Pressed += () => OnDeleteGenPressed(@object);
+            m_DeleteLogicButton.Pressed += () => OnDeleteLogicPressed(@object);
+            AddCustomControl(vbox);
+        }
+
+        private void OnDeleteGenPressed(GodotObject @object)
+        {
+            if (@object is not Node node) return;
+
+            string className = Sanitize(node.Name);
+            if (string.IsNullOrEmpty(className)) return;
+
+            Godot.Resource config = ResourceLoader.Load(Resc);
+            string outputDirGe = ReadProp(config, ScriptGenerateRes.Parameters.OutPutPathGe, DefaultOutputPath);
+            if (!outputDirGe.EndsWith("/")) outputDirGe += "/";
+            string gePath = outputDirGe + className + ".cs";
+
+            if (!FileAccess.FileExists(gePath))
+            {
+                GD.PushWarning($"[ScriptGenerateInspector] 文件不存在: {gePath}");
+                return;
+            }
+
+            ShowConfirmDialog($"确定删除 Generated 脚本？\n{gePath}", () =>
+            {
+                DirAccess.RemoveAbsolute(gePath);
+
+                // 如果当前节点挂载了该脚本，一并清除引用
+                if (node.GetScript().AsGodotObject() is CSharpScript currentScript && currentScript.ResourcePath == gePath)
+                {
+                    node.SetScript(default);
+                    EditorInterface.Singleton.MarkSceneAsUnsaved();
+                    GD.Print($"[ScriptGenerateInspector] 已清除节点上的脚本引用: {node.Name}");
+                }
+
+                EditorInterface.Singleton.GetResourceFilesystem().Scan();
+                GD.Print($"[ScriptGenerateInspector] 已删除: {gePath}");
+            });
+        }
+
+        private void OnDeleteLogicPressed(GodotObject @object)
+        {
+            if (@object is not Node node) return;
+
+            string className = Sanitize(node.Name);
+            if (string.IsNullOrEmpty(className)) return;
+
+            Godot.Resource config = ResourceLoader.Load(Resc);
+            string outputDirLogic = ReadProp(config, ScriptGenerateRes.Parameters.OutPutPathLogic, DefaultOutputPath);
+            if (!outputDirLogic.EndsWith("/")) outputDirLogic += "/";
+            string logicPath = outputDirLogic + className + ".Logic.cs";
+
+            if (!FileAccess.FileExists(logicPath))
+            {
+                GD.PushWarning($"[ScriptGenerateInspector] 文件不存在: {logicPath}");
+                return;
+            }
+
+            ShowConfirmDialog($"确定删除 Logic 脚本？\n{logicPath}", () =>
+            {
+                DirAccess.RemoveAbsolute(logicPath);
+                EditorInterface.Singleton.GetResourceFilesystem().Scan();
+                GD.Print($"[ScriptGenerateInspector] 已删除: {logicPath}");
+            });
+        }
+
+        private static void ShowConfirmDialog(string message, Action onConfirm)
+        {
+            var dialog = new ConfirmationDialog();
+            dialog.Title = "确认";
+            dialog.DialogText = message;
+            dialog.Confirmed += () =>
+            {
+                onConfirm();
+                dialog.QueueFree();
+            };
+            dialog.Canceled += () => dialog.QueueFree();
+            EditorInterface.Singleton.GetBaseControl().AddChild(dialog);
+            dialog.PopupCentered();
         }
 
         private void OnGeneratePressed(GodotObject @object)
@@ -74,7 +163,7 @@ namespace GodotGameFramework.Editor
             if (!WriteText(gePath, geScript)) return;
 
             // 逻辑部分（Logic）：用户业务代码，仅在首次生成时创建，避免覆盖已有逻辑
-            string logicPath = outputDirLogic + className + ".cs";
+            string logicPath = outputDirLogic + className + ".Logic.cs";
             if (!FileAccess.FileExists(logicPath))
             {
                 string logicTemplate = ReadText(LOGIC_TEMPLATE);
@@ -115,32 +204,29 @@ namespace GodotGameFramework.Editor
             }
 
         }
-        private string ReadChildNodes(GodotObject @object, Godot.Resource config)
+        private string ReadChildNodes(Node node, Godot.Resource config)
         {
             string prefix = ReadProp(config, ScriptGenerateRes.Parameters.NodePrefix, "m_");
-            if (@object is Node node)
+            foreach (var child in node.GetChildren())
             {
-                foreach (var child in node.GetChildren())
+                if (child.GetChildCount() > 0)
                 {
-                    if (child.GetChildCount() > 0)
+                    ReadChildNodes(child, config);
+                }
+                if (child.Name.ToString().StartsWith(prefix))
+                {
+                    if (!m_Prs.ContainsKey(child.Name))
                     {
-                        ReadChildNodes(child, config);
+                        m_Prs.Add(child.Name, child.GetType().Name);
+                        m_MatchingChildren.Add(child);
                     }
-                    if (child.Name.ToString().StartsWith(prefix))
+                    else
                     {
-                        if (!m_Prs.ContainsKey(child.Name))
-                        {
-                            m_Prs.Add(child.Name, child.GetType().Name);
-                            m_MatchingChildren.Add(child);
-                        }
-                        else
-                        {
-                            GD.PushWarning($"[ScriptGenerateInspector] {child.Name}重复");
-                        }
+                        GD.PushWarning($"[ScriptGenerateInspector] {child.Name}重复");
                     }
                 }
             }
-            return string.Join("\n", m_Prs.Select(x => $"\t\t\t[Export]\n\t\t\tprivate {x.Value} {x.Key};"));
+            return string.Join("\n", m_Prs.Select(x => $"\t\t[Export]\n\t\tprivate {x.Value} {x.Key};"));
         }
 
         private static string ReadProp(Godot.Resource res, string prop, string fallback)
