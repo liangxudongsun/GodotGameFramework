@@ -5,6 +5,7 @@ using GodotGameFramework;
 using GodotGameFramework.Entity;
 using GodotGameFramework.UI;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
+using GameLogic;
 
 /// <summary>
 /// 游戏流程。

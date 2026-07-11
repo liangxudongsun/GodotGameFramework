@@ -4,5 +4,3 @@
 
 [resource]
 script = ExtResource("1_pysyp")
-OutPutPathGe = "res://TheGame/GameScripts/GameProto/UIGe/"
-OutPutPathLogic = "res://TheGame/GameScripts/UI/"

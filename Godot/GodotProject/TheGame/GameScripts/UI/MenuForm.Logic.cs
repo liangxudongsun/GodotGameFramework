@@ -1,9 +1,8 @@
+using GameConfig;
 using GameConfig.Constant;
-using GameConfig.Entity;
 using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
-using GodotGameFramework.Entity;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
@@ -12,7 +11,7 @@ namespace GameLogic
 	/// <summary>
 	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖，可安全编写业务逻辑）。
 	/// </summary>
-	public partial class MainForm : IStringKey
+	public partial class MenuForm : IStringKey
 	{
 		/// <summary>
 		/// 初始化界面。
@@ -23,38 +22,41 @@ namespace GameLogic
 		/// <param name="pauseCoveredUIForm">是否暂停被覆盖的界面。</param>
 		/// <param name="isNewInstance">是否是新实例。</param>
 		/// <param name="userData">用户自定义数据。</param>
-		public virtual async void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
+		public void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
 		{
-			#region 框架逻辑
 			m_SerialId = serialId;
 			m_UIFormAssetName = uiFormAssetName;
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetValue());
-			#endregion
-
-			Node2D scene = (Node2D)await GF.Scene.LoadSceneAsync(ResourcesCollectionConstant.Scenes_Map);
-			Node2D spawnPoint = scene.GetNode<Node2D>("SpawnPoint");
-			Line2D line2D = scene.GetNode<Line2D>("Line2D");
-			CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
-			cat.Position = spawnPoint.Position;
-			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Fight);
-
-			for (int i = 0; i < line2D.Points.Length; i++)
+			if (isNewInstance)
 			{
-				var point = line2D.Points[i];
-				var enemy = await GF.Entity.ShowEntityAsync<AngerEntity>(EntityId.Anger);
-				enemy.Position = point;
-				enemy.SetTarget(cat);
+				m_SettingButton.Pressed += OnSettingButtonPressed;
+				m_CloseButton.Pressed += OnCloseButtonPressed;
+				m_StartButton.Pressed += OnStartButtonPressed;
 			}
 		}
+		private void OnStartButtonPressed()
+		{
+			GF.UI.CloseUIForm(this);
+			GF.UI.OpenUIForm(UIFormId.MainForm);
+		}
+		private void OnCloseButtonPressed()
+		{
+			m_SettingPanel.Visible = false;
+		}
 
+
+		private void OnSettingButtonPressed()
+		{
+			m_SettingPanel.Visible = true;
+		}
 		/// <summary>
 		/// 界面回收。
 		///
 		/// </summary>
-		public virtual void OnRecycle()
+		public void OnRecycle()
 		{
 			m_SerialId = 0;
 			m_DepthInUIGroup = 0;
@@ -65,15 +67,16 @@ namespace GameLogic
 		/// <summary>
 		/// 界面打开。
 		/// </summary>
-		public virtual void OnOpen(object userData)
+		public void OnOpen(object userData)
 		{
 			Visible = true;
+			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Menu);
 		}
 
 		/// <summary>
 		/// 界面关闭。
 		/// </summary>
-		public virtual void OnClose(bool isShutdown, object userData)
+		public void OnClose(bool isShutdown, object userData)
 		{
 			Visible = false;
 		}
@@ -81,7 +84,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面暂停。
 		/// </summary>
-		public virtual void OnPause()
+		public void OnPause()
 		{
 
 		}
@@ -89,7 +92,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面暂停恢复。
 		/// </summary>
-		public virtual void OnResume()
+		public void OnResume()
 		{
 
 		}
@@ -97,7 +100,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面遮挡。
 		/// </summary>
-		public virtual void OnCover()
+		public void OnCover()
 		{
 
 		}
@@ -105,7 +108,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面遮挡恢复。
 		/// </summary>
-		public virtual void OnReveal()
+		public void OnReveal()
 		{
 
 		}
@@ -113,7 +116,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面重新获得焦点。
 		/// </summary>
-		public virtual void OnRefocus(object userData)
+		public void OnRefocus(object userData)
 		{
 
 		}
@@ -121,7 +124,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面轮询。
 		/// </summary>
-		public virtual void OnUpdate(float elapseSeconds, float realElapseSeconds)
+		public void OnUpdate(float elapseSeconds, float realElapseSeconds)
 		{
 
 		}
@@ -129,15 +132,16 @@ namespace GameLogic
 		/// <summary>
 		/// 界面深度改变。
 		/// </summary>
-		public virtual void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
+		public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
 		{
 			m_DepthInUIGroup = depthInUIGroup;
 		}
 
 		public void SetValue()
 		{
-			m_ScoreLabel.Text = GF.Localization.GetString("MainForm.Score");
-			m_TimerLabel.Text = GF.Localization.GetString("MainForm.Timer");
+			m_Title.Text = GF.Localization.GetString("BulletShoot");
+			m_Subtitle.Text = GF.Localization.GetString("Demo");
+			// m_StartButton.Text = GF.Localization.GetString("Start");
 		}
 	}
 }

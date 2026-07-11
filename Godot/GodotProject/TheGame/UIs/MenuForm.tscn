@@ -1,12 +1,11 @@
 [gd_scene format=3 uid="uid://igqtb6nv6bph"]
 
-[ext_resource type="Script" uid="uid://cr1os4onw273g" path="res://TheGame/GameScripts/UI/MenuForm.cs" id="1_62wwx"]
-[ext_resource type="Script" uid="uid://c1xds3as1e25b" path="res://Framework/GodotGameFrameworkCore/UI/UIStringLabelKey.cs" id="1_ew8e7"]
+[ext_resource type="Script" uid="uid://m1s35hw3uogn" path="res://TheGame/GameScripts/GameProto/UIGe/MenuForm.cs" id="1_62wwx"]
 [ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/bullt.tres" id="2_5smej"]
 [ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/Fonts/simhei.ttf" id="3_62wwx"]
 [ext_resource type="Texture2D" uid="uid://8ys10qfv7yvm" path="res://TheGame/Sprites/paper.png" id="4_5smej"]
 
-[node name="MenuForm" type="Control" unique_id=321045376 node_paths=PackedStringArray("m_TitleLabel", "m_SubtitleLabel", "m_StartButton", "m_SettingButton", "m_CloseButton", "m_SettingPanel")]
+[node name="MenuForm" type="Control" unique_id=321045376 node_paths=PackedStringArray("m_Title", "m_Subtitle", "m_Rules", "m_StartButton", "m_SettingButton", "m_CloseButton", "m_SettingPanel")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,12 +13,13 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_62wwx")
-m_TitleLabel = NodePath("VBox/Title")
-m_SubtitleLabel = NodePath("VBox/Subtitle")
-m_StartButton = NodePath("VBox/StartButton")
-m_SettingButton = NodePath("SetingButton")
-m_CloseButton = NodePath("SettingForm/Content/CloseButton")
-m_SettingPanel = NodePath("SettingForm")
+m_Title = NodePath("VBox/m_Title")
+m_Subtitle = NodePath("VBox/m_Subtitle")
+m_Rules = NodePath("VBox/m_Rules")
+m_StartButton = NodePath("VBox/m_StartButton")
+m_SettingButton = NodePath("m_SettingButton")
+m_CloseButton = NodePath("m_SettingPanel/Content/m_CloseButton")
+m_SettingPanel = NodePath("m_SettingPanel")
 
 [node name="BG" type="NinePatchRect" parent="." unique_id=1385127101]
 layout_mode = 1
@@ -48,32 +48,28 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="VBox" unique_id=1621266708]
+[node name="m_Title" type="Label" parent="VBox" unique_id=1621266708]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.296542, 0.5677335, 1)
 theme_override_font_sizes/font_size = 95
 text = "名字"
 horizontal_alignment = 1
-script = ExtResource("1_ew8e7")
-Key = "BulletShoot"
 
 [node name="Spacer1" type="Control" parent="VBox" unique_id=1874192526]
 custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Subtitle" type="Label" parent="VBox" unique_id=1573278784]
+[node name="m_Subtitle" type="Label" parent="VBox" unique_id=1573278784]
 layout_mode = 2
 theme_override_font_sizes/font_size = 53
 text = "戈多游戏框架Demo"
 horizontal_alignment = 1
-script = ExtResource("1_ew8e7")
-Key = "Demo"
 
 [node name="Spacer2" type="Control" parent="VBox" unique_id=841864546]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="Rules" type="Label" parent="VBox" unique_id=81643901]
+[node name="m_Rules" type="Label" parent="VBox" unique_id=81643901]
 layout_mode = 2
 theme_override_font_sizes/font_size = 43
 text = "WASD移动角色"
@@ -88,7 +84,7 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="StartButton" type="Button" parent="VBox" unique_id=456603222]
+[node name="m_StartButton" type="Button" parent="VBox" unique_id=456603222]
 custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -101,7 +97,7 @@ text = "开始"
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="SetingButton" type="Button" parent="." unique_id=72588680]
+[node name="m_SettingButton" type="Button" parent="." unique_id=72588680]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -115,7 +111,7 @@ theme_override_font_sizes/font_size = 25
 text = "设置"
 icon_alignment = 1
 
-[node name="SettingForm" type="Control" parent="." unique_id=646119156]
+[node name="m_SettingPanel" type="Control" parent="." unique_id=646119156]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -124,7 +120,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ColorRect" type="ColorRect" parent="SettingForm" unique_id=1808810160]
+[node name="ColorRect" type="ColorRect" parent="m_SettingPanel" unique_id=1808810160]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -133,7 +129,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.1897483, 0.1897483, 0.1897483, 0.41300002)
 
-[node name="Content" type="NinePatchRect" parent="SettingForm" unique_id=53405551]
+[node name="Content" type="NinePatchRect" parent="m_SettingPanel" unique_id=53405551]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -151,7 +147,7 @@ region_rect = Rect2(38.772766, 419.4357, 630.2156, 324.39664)
 axis_stretch_horizontal = 2
 axis_stretch_vertical = 2
 
-[node name="Label" type="Label" parent="SettingForm/Content" unique_id=2116063926]
+[node name="Label" type="Label" parent="m_SettingPanel/Content" unique_id=2116063926]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -165,7 +161,7 @@ theme_override_fonts/font = ExtResource("3_62wwx")
 theme_override_font_sizes/font_size = 73
 text = "设置"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="SettingForm/Content" unique_id=994211726]
+[node name="HBoxContainer" type="HBoxContainer" parent="m_SettingPanel/Content" unique_id=994211726]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -176,29 +172,29 @@ offset_bottom = 11.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SP2" type="Control" parent="SettingForm/Content/HBoxContainer" unique_id=405152791]
+[node name="SP2" type="Control" parent="m_SettingPanel/Content/HBoxContainer" unique_id=405152791]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.12
 
-[node name="Label" type="Label" parent="SettingForm/Content/HBoxContainer" unique_id=2019395817]
+[node name="Label" type="Label" parent="m_SettingPanel/Content/HBoxContainer" unique_id=2019395817]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9436567, 5.7756904e-07, 0.5662272, 1)
 text = "声音"
 
-[node name="SP1" type="Control" parent="SettingForm/Content/HBoxContainer" unique_id=666105134]
+[node name="SP1" type="Control" parent="m_SettingPanel/Content/HBoxContainer" unique_id=666105134]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.0
 
-[node name="HSlider" type="HSlider" parent="SettingForm/Content/HBoxContainer" unique_id=2009528114]
+[node name="HSlider" type="HSlider" parent="m_SettingPanel/Content/HBoxContainer" unique_id=2009528114]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
 size_flags_stretch_ratio = 2.03
 value = 12.0
 
-[node name="CloseButton" type="Button" parent="SettingForm/Content" unique_id=96220798]
+[node name="m_CloseButton" type="Button" parent="m_SettingPanel/Content" unique_id=96220798]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0

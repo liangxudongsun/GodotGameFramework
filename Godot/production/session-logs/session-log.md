@@ -2292,3 +2292,8 @@ README.md
 Godot/GodotProject/addons/ComponentInsoector/ScriptGenerateInspector.cs
 ---
 
+## Session End: 20260711_163352
+### Uncommitted Changes
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/GameOver.cs
+---
+

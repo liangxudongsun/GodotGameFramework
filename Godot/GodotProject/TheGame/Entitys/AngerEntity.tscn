@@ -9,7 +9,7 @@ size = Vector2(195, 52)
 [node name="Anger" type="CharacterBody2D" unique_id=34254536 node_paths=PackedStringArray("m_HSlider")]
 motion_mode = 1
 script = ExtResource("1_g4fl2")
-m_HSlider = NodePath("HSlider")
+m_HSlider = NodePath("m_HSlider")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=738050605]
 position = Vector2(0.5, 0)
@@ -21,7 +21,7 @@ texture = ExtResource("2_yiar1")
 region_enabled = true
 region_rect = Rect2(56, 272, 184, 72)
 
-[node name="HSlider" type="HSlider" parent="." unique_id=1519545269]
+[node name="m_HSlider" type="HSlider" parent="." unique_id=1519545269]
 modulate = Color(0.41568628, 1, 0.4862745, 1)
 offset_left = -161.0
 offset_top = -68.0

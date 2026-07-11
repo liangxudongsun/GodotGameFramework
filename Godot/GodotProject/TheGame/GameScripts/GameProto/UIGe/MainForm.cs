@@ -11,6 +11,7 @@ namespace GameLogic
 	/// </summary>
 	public partial class MainForm : Control, IUIForm
 	{
+		#region 框架属性
 		/// <summary>
 		/// 界面序列编号。
 		/// </summary>
@@ -78,11 +79,12 @@ namespace GameLogic
 				return m_UIStringKeys;
 			}
 		}
-		
-					[Export]
-			public Label m_ScoreLabel;
-			[Export]
-			public Label m_TimerLabel;
-		
+		#endregion
+
+		[Export]
+		public Label m_ScoreLabel;
+		[Export]
+		public Label m_TimerLabel;
+
 	}
 }

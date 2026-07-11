@@ -3,6 +3,7 @@ using GameConfig.Constant;
 using GameConfig.Entity;
 using GameFramework;
 using GameFramework.Entity;
+using GameLogic;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
@@ -77,6 +78,7 @@ public partial class CatEntity : ActorEntity
 			SpawnGanTan();
 		}
 	}
+
 
 	/// <summary>
 	/// 以玩家为中心做圆形区域检测，返回最近敌人的方向。

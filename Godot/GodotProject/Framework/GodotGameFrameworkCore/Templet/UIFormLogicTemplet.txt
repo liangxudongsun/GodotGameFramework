@@ -5,7 +5,7 @@ using System;
 namespace _NAMESPACE_
 {
 	/// <summary>
-	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖，可安全编写业务逻辑）。
+	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
 	public partial class _CLASSNAME_
 	{
@@ -20,12 +20,14 @@ namespace _NAMESPACE_
 		/// <param name="userData">用户自定义数据。</param>
 		public void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
 		{
+			#region 框架逻辑
 			m_SerialId = serialId;
 			m_UIFormAssetName = uiFormAssetName;
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetValue());
+			#endregion
 		}
 
 		/// <summary>
@@ -34,10 +36,12 @@ namespace _NAMESPACE_
 		/// </summary>
 		public void OnRecycle()
 		{
+			#region 框架逻辑
 			m_SerialId = 0;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = true;
 			Visible = false;
+			#endregion
 		}
 
 		/// <summary>
@@ -45,7 +49,9 @@ namespace _NAMESPACE_
 		/// </summary>
 		public void OnOpen(object userData)
 		{
+			#region 框架逻辑
 			Visible = true;
+			#endregion
 		}
 
 		/// <summary>
@@ -53,7 +59,9 @@ namespace _NAMESPACE_
 		/// </summary>
 		public void OnClose(bool isShutdown, object userData)
 		{
+			#region 框架逻辑
 			Visible = false;
+			#endregion
 		}
 
 		/// <summary>
@@ -109,7 +117,9 @@ namespace _NAMESPACE_
 		/// </summary>
 		public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
 		{
+			#region 框架逻辑
 			m_DepthInUIGroup = depthInUIGroup;
+			#endregion
 		}
 	}
 }

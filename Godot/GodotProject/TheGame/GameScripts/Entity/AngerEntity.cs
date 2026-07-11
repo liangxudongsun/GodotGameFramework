@@ -1,6 +1,7 @@
 using GameConfig.Entity;
 using GameFramework;
 using GameFramework.Entity;
+using GameLogic;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;

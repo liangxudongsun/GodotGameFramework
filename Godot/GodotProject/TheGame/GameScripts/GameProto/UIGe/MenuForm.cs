@@ -7,10 +7,11 @@ using System.Collections.Generic;
 namespace GameLogic
 {
 	/// <summary>
-	/// 界面
+	/// 界面,生成时会被覆盖，请勿手动修改
 	/// </summary>
-	public partial class GameOver : Control, IUIForm
+	public partial class MenuForm : Control, IUIForm
 	{
+		#region 框架属性
 		/// <summary>
 		/// 界面序列编号。
 		/// </summary>
@@ -78,14 +79,22 @@ namespace GameLogic
 				return m_UIStringKeys;
 			}
 		}
+		#endregion
 
 		[Export]
-		private ColorRect m_Overlay;
-		/// <summary>
-		/// 界面遮罩
-		/// </summary>
-		[Export]
 		private Label m_Title;
+		[Export]
+		private Label m_Subtitle;
+		[Export]
+		private Label m_Rules;
+		[Export]
+		private Button m_StartButton;
+		[Export]
+		private Button m_SettingButton;
+		[Export]
+		private Button m_CloseButton;
+		[Export]
+		private Control m_SettingPanel;
 
 	}
 }
