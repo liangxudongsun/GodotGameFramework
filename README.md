@@ -15,7 +15,7 @@
 
 ## 📖 简介
 
-**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置等子系统。
+**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 + .NET 8 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置等子系统。
 
 ### ✨ 核心特性
 
@@ -26,9 +26,9 @@
 - ♻️ **对象池** — 实体、UI、音频等资源自动池化管理复用
 - 🔊 **音频系统** — 声音组 + 优先级抢占 + 扩展方法 `PlayBGM()`/`PlaySFX()`
 - 📝 **条件日志** — `[Conditional("ENABLE_LOG")]` 编译时零开销移除，编辑器插件可切换
-- 🔧 **编辑器插件** — 组件监视、UIForm 脚本生成、AB 包可视化导出管理、日志切换、本地化导出、资源路径常量生成
+- 🔧 **编辑器插件** — 组件监视、UIForm/Entity 脚本生成器、C# Inspector 增强、AB 包可视化导出管理、AB 包标记与自动打包、日志切换、本地化导出、资源路径常量生成
 - 🧬 **单例模式** — 泛型 `SingletonNode<T>` 提供类型安全的 Godot 节点单例
-- 📦 **资源包系统** — 基于 AssetBundle 的 .pck 子包管理，支持可视化导出、增量更新、版本清单生成
+- 📦 **资源包系统** — 基于 AssetBundle 的 .pck 子包管理，支持可视化导出、标记资源目录、构建时自动打包、增量更新、版本清单生成
 
 ---
 
@@ -50,10 +50,11 @@
 
 ### 环境要求
 
-- **Godot**: 4.6.2（.NET 版本）
+- **Godot**: 4.6.2+（.NET 版本，Godot .NET SDK 4.7.0）
 - **.NET SDK**: 8.0+
-- **渲染器**: D3D12（默认）
-- **物理引擎**: Jolt Physics（默认）
+- **渲染器**: D3D12（Forward Plus，默认）
+- **物理引擎**: Jolt Physics（3D 默认）
+- **NuGet**: Newtonsoft.Json 13.0.4
 
 ### 快速上手
 
@@ -169,15 +170,16 @@ AbstractCharacterBody2DEntity
 
 ### 资源模块 (ResourceModule)
 
-- ✅ **精简 IResourceManager** — 从 97 个成员精简为 8 个，移除所有 Unity 管线遗留代码
-- ✅ **同步加载 + TaskPool 任务队列** — `Godot.ResourceLoader.Load` 同步加载，通过 `TaskPool<LoadAssetTask>` 管理优先级和并发
-- ✅ 两套独立 TaskPool：`m_AssetTaskPool`（场景/贴图等资源）、`m_BinaryTaskPool`（二进制文件）
+- ✅ **精简 IResourceManager** — 从 Unity 版本 97 个成员精简为 6 个核心方法，移除所有 Unity 管线遗留代码
+- ✅ **Godot 原生异步加载** — `ResourceLoader.LoadThreadedRequest` 后台线程加载，`Queue<LoadAssetTask>` 内部调度管理
+- ✅ **同步读写** — 二进制文件通过 `FileAccess` 同步读写，`LoadBinary` 在调用时立即返回结果
 - ✅ **子包加载系统** — 支持 `Package` 和 `Updatable` 两种模式
   - `Package` 模式：从 exe 同级 `subpackages/` 目录加载 .pck 子包
   - `Updatable` 模式：从 `user://subpackages/` 目录加载可更新的子包
 - ✅ **版本清单** — `GameFrameworkVersion.dat` 记录所有子包名称、大小、哈希，用于校验和热更新
 - ✅ **多模式设计** — `ResourceMode` 枚举：`Package` / `Updatable` / `UpdatableWhilePlaying`
-- ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`, `LoadAsync<T>()`, `LoadSceneAsync()`
+- ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`, `LoadAssetAsync<T>()`, `LoadSceneAsync()`
+- ✅ `HasAsset()` — 检查资源/二进制文件是否存在
 
 ### 事件模块 (EventComponent)
 
@@ -245,12 +247,13 @@ GodotProject/                 ← Godot 项目根
 │       ├── Entity/           ← EntityComponent, EntityExtension
 │       ├── UI/               ← UIComponent, IStringKey
 │       ├── Sound/            ← SoundComponent + PlayBGM/PlaySFX 扩展
-│       ├── Resource/         ← ResourceManager（TaskPool 同步加载）+ ResourceComponent 桥接
+│       ├── Resource/         ← ResourceManager（Godot.ResourceLoader 异步）+ ResourceComponent 桥接
 │       ├── Event/ Fsm/ Procedure/ Config/
 │       ├── DataTable/ DataNode/ ObjectPool/ Setting/
 │       ├── SingletonSystem/  ← SingletonNode<T> 泛型单例
 │       ├── Utility/          ← NodeExtension, PhysicsCheck2D
-│       └── Lib/              ← Newtonsoft.Json, LubanLib (ByteBuf, BeanBase)
+│       ├── Lib/              ← LubanLib (ByteBuf, BeanBase)
+│       └── Json/              ← Newtonsoft.Json helper（NuGet 13.0.4）
 │   └── GameFramework.tscn    ← 主场景
 ├── TheGame/                  ← 当前活跃游戏项目
 │   ├── Entitys/              ← 实体场景 (.tscn)
@@ -265,7 +268,10 @@ GodotProject/                 ← Godot 项目根
 │   ├── UIs/                  ← UI 场景 (.tscn)
 │   ├── Sprites/ Scenes/ Audios/
 └── addons/                   ← 编辑器插件
-    ├── ComponentInsoector/   ← 框架组件监视 + UIForm 脚本生成器
+    ├── ComponentInsoector/   ← 框架组件监视 + UIForm/Entity 脚本生成器
+    ├── ExportInspector/      ← AB 包可视化导出管理面板（C#）
+    ├── asset_bundle/         ← AssetBundle 资源标记 + 构建时自动打包（GDScript）
+    ├── ezpz_inspector/       ← C# Inspector 增强（Ezpz Inspector v1.2.1）
     ├── TopMenu/              ← 日志级别切换
     ├── LocalizationEditor/   ← Excel → TXT 转换
     └── Resources/            ← 资源路径常量生成
@@ -447,26 +453,30 @@ TheGame/DataTables/*.bytes                        ← 二进制数据（运行�
 
 | 插件 | 功能 |
 |------|------|
-| **ComponentInsoector** | 框架组件（Base / Procedure / Scene / Setting / Entity / UI / Sound / Localization）属性监视 + UIForm 脚本生成器（详见下方）——自动收集子节点、自动赋值 `[Export]` 字段 |
+| **ComponentInsoector** | 框架组件（Base / Procedure / Scene / Setting / Entity / UI / Sound / Localization）属性监视 + UIForm/Entity 双脚本生成器（详见下方）——自动收集子节点、自动赋值 `[Export]` 字段 |
 | **ExportInspector** | AB 包可视化导出管理面板——扫描 AssetBundle 标记文件、展开查看包内资源及导入状态、一键导出 .pck 子包 + 版本清单，支持完整模式（含源文件）和仅产物模式（仅 .ctex/.fontdata/.sample，体积减少 80%+） |
+| **asset_bundle** | AssetBundle 资源标记（GDScript）——在资源目录下创建 `AssetBundle.tres` 标记文件，配置是否启用/导出/打包外部依赖/仅导出导入产物；构建时自动通过 export_plugin 将标记目录打包为 .pck |
+| **ezpz_inspector** | C# Inspector 增强（Ezpz Inspector v1.2.1 by Dilaura）——通过 C# Attribute 自定义 Inspector 显示，提供 `[ShowIf]`、`[ReadOnly]`、`[Required]` 等注解 |
 | **TopMenu** | 切换日志级别（Debug / Info / Warning / Error / Fatal / 全部关闭） |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `res://TheGame/DataTables/Localizations/*.txt` |
 | **ResourcesCollection** | 扫描 `res://TheGame/` 非脚本资源，生成 `ResourcesCollectionConstant.cs`（文件路径常量） |
 
-> 💡 TopMenu / LocalizationEditor / ResourcesCollection 通过 **Project > Tools** 菜单调用；ComponentInsoector 直接作用于检视面板。
+> 💡 TopMenu / LocalizationEditor / ResourcesCollection 通过 **Project > Tools** 菜单调用；ComponentInsoector 和 ezpz_inspector 直接作用于检视面板；ExportInspector 在编辑器底部面板显示；asset_bundle 在构建时自动生效。
 
-### UIForm 脚本生成
+### UIForm / Entity 脚本生成
 
-选中任意 **Control** 节点后，检视面板会出现 **Generate Script** 按钮，一键脚手架一个 UIForm 拆分为**双 partial 文件**：
+选中任意 **Control** 节点或 **实体节点** 后，检视面板会出现 **Generate Script** 按钮，一键脚手架拆分为**双 partial 文件**：
 
-- `<类名>.cs`（`OutPutPathGe` 目录）— 框架样板（`[Export]` 子节点字段、`IUIForm` 属性、本地化收集器），**每次生成都覆盖**
-- `<类名>.cs`（`OutPutPathLogic` 目录）— 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` …），**仅首次创建，不会覆盖已有逻辑**
+- `<类名>.cs`（`OutPutPathGe` 目录）— 框架样板（`[Export]` 子节点字段、`IUIForm`/`IEntity` 属性、本地化收集器），**每次生成都覆盖**
+- `<类名>.cs`（`OutPutPathLogic` 目录）— 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` / `OnShow` / `OnHide` …），**仅首次创建，不会覆盖已有逻辑**
 
 > ⚠️ **Godot 要求文件名与类名一致**，否则 Inspector 无法正确显示 `[Export]` 字段。两个 partial 文件输出在不同目录。
 
 **模板占位符:** `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` / `_CHILDNODES_`
 
-模板位于 `Framework/GodotGameFrameworkCore/Templet/`（`UIFormTemplet.txt` = Ge，`UIFormLogicTemplet.txt` = Logic）。
+模板位于 `Framework/GodotGameFrameworkCore/Templet/`：
+- UIForm：`UIFormTemplet.txt`（Ge）+ `UIFormLogicTemplet.txt`（Logic）
+- Entity：`EntityTemplet.txt`（Ge）+ `EntityLogicTemplet.txt`（Logic）
 
 **配置文件** `TheGame/Resources/ScriptGenerateRes.tres`（`ScriptGenerateRes : Resource`）:
 
