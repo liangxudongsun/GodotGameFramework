@@ -28,7 +28,7 @@ namespace GodotGameFramework
 
 		public override void _PhysicsProcess(double delta)
 		{
-			OnPhysicsUpdate(delta);
+			OnFixedUpdate(delta);
 		}
 
 		public override void _ExitTree()
@@ -168,7 +168,7 @@ namespace GodotGameFramework
 		/// <summary>
 		/// 物理帧更新
 		/// </summary>
-		public virtual void OnPhysicsUpdate(double delta)
+		public virtual void OnFixedUpdate(double delta)
 		{
 		}
 

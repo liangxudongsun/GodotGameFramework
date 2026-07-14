@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+    <HotReloadEnabled>true</HotReloadEnabled>
     <RootNamespace>GodotProject</RootNamespace>
     <!-- 启用 unsafe 代码块，Utility.Converter.cs 中有指针操作需要此选项 -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

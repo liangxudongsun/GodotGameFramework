@@ -1,32 +1,85 @@
 using Godot;
+using GodotGameFramework;
 using System;
-
-public partial class SingletonNode<T> : Node where T : Node, new()
+namespace GodotGameFrameworkCore.SingletonSystem
 {
-    private static T m_Instance;
-
-    public static T Instance
+    public partial class SingletonNode<T> : Node, ISingleton where T : SingletonNode<T>, new()
     {
-        get
+        private static T m_Instance;
+
+        public static T Instance
         {
-            if (m_Instance == null)
+            get
             {
-                m_Instance = new T();
-            }
-            return m_Instance;
-        }
-    }
+                if (m_Instance == null)
+                {
+                    System.Type thisType = typeof(T);
+                    string instName = thisType.Name;
+                    Node node = SingletonSystem.GetNode(instName);
+                    if (node == null)
+                    {
+                        node = new T();
+                        node.Name = instName;
+                        m_Instance = (T)node;
+                        m_Instance.Active();
+                    }
+                    SingletonSystem.Retain(node, m_Instance);
+                }
 
-    public override void _Ready()
-    {
-        base._Ready();
-        if (m_Instance == null)
-        {
-            m_Instance = this as T;
+                return m_Instance;
+            }
         }
-        else if (m_Instance != this)
+
+        public virtual void Active()
         {
-            QueueFree();
+
         }
+
+        public virtual void Release()
+        {
+            OnRelease();
+            if (m_Instance != null)
+            {
+                SingletonSystem.Release(m_Instance, this);
+                m_Instance = null;
+            }
+        }
+        protected virtual void OnRelease()
+        {
+
+        }
+
+
+        public override void _Ready()
+        {
+            base._Ready();
+            if (CheckInstance())
+            {
+                OnLoad();
+            }
+        }
+        private bool CheckInstance()
+        {
+            if (this == Instance)
+            {
+                return true;
+            }
+
+            this.QueueFree(); //删除重复的实例
+            return false;
+        }
+        protected virtual void OnLoad()
+        {
+        }
+        public override void _ExitTree()
+        {
+            base._ExitTree();
+            if (this == Instance)
+            {
+                Release();
+            }
+        }
+
+
     }
 }

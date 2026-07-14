@@ -126,5 +126,13 @@ public partial class AngerEntity : ActorEntity
         m_HSlider.Value = m_ActorData.Hp;
     }
 
+    protected override void Die()
+    {
+        base.Die();
+        GF.Setting.SetInt("Score", GF.Setting.GetInt("Score", 0) + 100);
+        GF.Setting.Save();
+    }
+
+
 
 }

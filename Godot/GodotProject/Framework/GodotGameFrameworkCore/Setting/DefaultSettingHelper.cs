@@ -15,11 +15,7 @@ using System.Collections.Generic;
 namespace GodotGameFramework.Setting
 {
     /// <summary>
-    /// 默认游戏设置辅助器。
-    /// 存储方案：
-    /// - 文件路径：user://settings.cfg（Godot 的用户数据目录）
-    /// - 文件格式：Godot ConfigFile 格式（类似 INI）
-    /// - 所有配置项存储在名为 "Settings" 的 Section 下
+    /// 默认游戏设置辅助器。将数据以键值对的方式存储在配置文件中。
     /// </summary>
     public class DefaultSettingHelper : ISettingHelper
     {

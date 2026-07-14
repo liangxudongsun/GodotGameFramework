@@ -19,6 +19,10 @@ config/icon="res://icon.svg"
 
 buses/default_bus_layout="uid://yynf8xejw6q4"
 
+[autoload]
+
+UpdateDriver="*uid://d1724h61rw1bg"
+
 [display]
 
 window/stretch/mode="canvas_items"
@@ -30,7 +34,7 @@ project/assembly_name="GodotProject"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/ComponentInsoector/plugin.cfg", "res://addons/LocalizationEditor/plugin.cfg", "res://addons/Resources/plugin.cfg", "res://addons/TopMenu/plugin.cfg", "res://addons/ezpz_inspector/plugin.cfg")
+enabled=PackedStringArray("res://addons/ComponentInsoector/plugin.cfg", "res://addons/ExportInspector/plugin.cfg", "res://addons/LocalizationEditor/plugin.cfg", "res://addons/Resources/plugin.cfg", "res://addons/TopMenu/plugin.cfg", "res://addons/asset_bundle/plugin.cfg", "res://addons/ezpz_inspector/plugin.cfg")
 
 [file_customization]
 
