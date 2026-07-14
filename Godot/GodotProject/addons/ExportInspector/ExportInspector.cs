@@ -1,9 +1,14 @@
 #if TOOLS
+using GameConfig.Constant;
+using GameFramework;
 using Godot;
+using GameFramework.Resource;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace GodotGameFramework.Editor
 {
@@ -14,24 +19,6 @@ namespace GodotGameFramework.Editor
     [Tool]
     public partial class ExportInspector : EditorPlugin
     {
-        private const string EditorSettingExportFolder = "godot_asset_bundle/export_folder";
-
-        // ── UI ──────────────────────────────────────────
-        private Control _dockPanel;
-        private Tree _bundleTree;
-        private Button _btnRefresh;
-        private Button _btnExportFolder;
-        private Button _btnExportAll;
-        private Label _lblStatus;
-        private LineEdit _txtExportFolder;
-
-        private TreeItem _treeRoot;
-
-        // ── 数据 ────────────────────────────────────────
-        private string _exportFolder = "";
-        private readonly System.Collections.Generic.Dictionary<string, Godot.Resource> _bundles = new();
-
-        /// <summary>Bundle 缓存信息</summary>
         private sealed class BundleInfo
         {
             public string Path;           // res:// 资源路径
@@ -40,8 +27,22 @@ namespace GodotGameFramework.Editor
             public bool Enabled;
             public bool ExportEnabled;
             public bool PackExternalDeps;
+            public bool ExportOnlyImported;
             public int ResourceCount;
         }
+        private const string EditorSettingExportFolder = "godot_asset_bundle/export_folder";
+
+        private Control _dockPanel;
+        private Tree _bundleTree;
+        private Button _btnRefresh;
+        private Button _btnExportFolder;
+        private Button _btnExportAll;
+        private LineEdit _txtExportFolder;
+        private TreeItem _treeRoot;
+
+        // ── 数据 ────────────────────────────────────────
+        private string _exportFolder = "";
+        private readonly Dictionary<string, Godot.Resource> _bundles = new();
 
         // ═══════════════════════════════════════════════════════════
         //  生命周期
@@ -136,14 +137,15 @@ namespace GodotGameFramework.Editor
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-                Columns = 5,
+                Columns = 6,
                 AllowReselect = true,
             };
             _bundleTree.SetColumnTitle(0, "包名");
             _bundleTree.SetColumnTitle(1, "启用");
             _bundleTree.SetColumnTitle(2, "导出");
             _bundleTree.SetColumnTitle(3, "外部依赖");
-            _bundleTree.SetColumnTitle(4, "资源数");
+            _bundleTree.SetColumnTitle(4, "仅产物");
+            _bundleTree.SetColumnTitle(5, "资源数");
 
             // 列宽
             _bundleTree.SetColumnExpand(0, true);
@@ -151,11 +153,13 @@ namespace GodotGameFramework.Editor
             _bundleTree.SetColumnExpand(2, false);
             _bundleTree.SetColumnExpand(3, false);
             _bundleTree.SetColumnExpand(4, false);
+            _bundleTree.SetColumnExpand(5, false);
             _bundleTree.SetColumnCustomMinimumWidth(0, 120);
             _bundleTree.SetColumnCustomMinimumWidth(1, 44);
             _bundleTree.SetColumnCustomMinimumWidth(2, 44);
             _bundleTree.SetColumnCustomMinimumWidth(3, 72);
-            _bundleTree.SetColumnCustomMinimumWidth(4, 56);
+            _bundleTree.SetColumnCustomMinimumWidth(4, 48);
+            _bundleTree.SetColumnCustomMinimumWidth(5, 56);
 
             _bundleTree.ItemEdited += OnTreeItemEdited;
             _bundleTree.ButtonClicked += OnTreeButtonClicked;
@@ -164,13 +168,6 @@ namespace GodotGameFramework.Editor
             _treeRoot.SetText(0, "扫描中...");
 
             vbox.AddChild(_bundleTree);
-
-            // ── 状态栏 ──
-            _lblStatus = new Label
-            {
-                Text = "就绪",
-            };
-            vbox.AddChild(_lblStatus);
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -191,8 +188,7 @@ namespace GodotGameFramework.Editor
             if (_bundles.Count == 0)
             {
                 _treeRoot.SetText(0, "未发现 AssetBundle 资源");
-                SetCellSpan(_treeRoot, 0, 5);
-                SetStatus("未找到任何 AssetBundle 资源。在目标文件夹中创建 AssetBundle 资源文件即可。");
+                SetCellSpan(_treeRoot, 0, 6);
                 return;
             }
 
@@ -228,15 +224,20 @@ namespace GodotGameFramework.Editor
                 item.SetCellMode(3, TreeItem.TreeCellMode.Check);
                 item.SetChecked(3, info.PackExternalDeps);
 
-                // 列 4: 资源数
-                item.SetText(4, info.ResourceCount.ToString());
+                // 列 4: Export Only Imported (checkbox)
+                item.SetEditable(4, true);
+                item.SetCellMode(4, TreeItem.TreeCellMode.Check);
+                item.SetChecked(4, info.ExportOnlyImported);
+                item.SetTooltipText(4, "勾选=仅导出 Godot 导入产物(.ctex/.fontdata/.sample)，不包含源文件，体积更小");
+
+                // 列 5: 资源数
+                item.SetText(5, info.ResourceCount.ToString());
                 item.SetTooltipText(0, info.FolderPath);
 
                 if (info.Enabled) enabledCount++;
                 if (info.ExportEnabled) exportCount++;
             }
 
-            SetStatus($"扫描完成: {enabledCount} 启用 / {exportCount} 将导出");
         }
 
         /// <summary>递归搜索目录中所有 AssetBundle</summary>
@@ -308,6 +309,7 @@ namespace GodotGameFramework.Editor
                 Enabled = res.Get("enabled").AsBool(),
                 ExportEnabled = res.Get("export_enabled").AsBool(),
                 PackExternalDeps = res.Get("pack_external_dependencies").AsBool(),
+                ExportOnlyImported = res.Get("export_only_imported").AsBool(),
             };
 
             // 统计文件夹内资源数量
@@ -379,17 +381,20 @@ namespace GodotGameFramework.Editor
                 case 3: // Pack External Deps
                     res.Set("pack_external_dependencies", editedItem.IsChecked(3));
                     break;
+                case 4: // Export Only Imported
+                    res.Set("export_only_imported", editedItem.IsChecked(4));
+                    break;
             }
 
             // 保存修改到 .tres 文件
             var saveErr = ResourceSaver.Save(res, path);
             if (saveErr != Error.Ok)
             {
-                SetStatus($"保存失败: {path} (Error: {saveErr})");
+                GD.PrintErr($"保存失败: {path} (Error: {saveErr})");
             }
             else
             {
-                SetStatus($"已保存: {Path.GetFileNameWithoutExtension(path)}");
+                GD.Print($"已保存: {Path.GetFileNameWithoutExtension(path)}");
             }
 
             RefreshBundleList();
@@ -403,7 +408,7 @@ namespace GodotGameFramework.Editor
 
         private void OnRefreshPressed()
         {
-            SetStatus("正在扫描...");
+            GD.Print("正在扫描...");
             RefreshBundleList();
         }
 
@@ -422,7 +427,7 @@ namespace GodotGameFramework.Editor
                 _exportFolder = dir;
                 _txtExportFolder.Text = dir;
                 SaveExportFolderPreference();
-                SetStatus($"导出目录已设为: {dir}");
+                GD.Print($"导出目录已设为: {dir}");
             };
 
             EditorInterface.Singleton.GetBaseControl().AddChild(dialog);
@@ -445,7 +450,7 @@ namespace GodotGameFramework.Editor
 
             if (toExport.Count == 0)
             {
-                SetStatus("没有需要导出的 AB 包（请确保 Enabled 和 Export Enabled 都已勾选）。");
+                GD.Print("没有需要导出的 AB 包（请确保 Enabled 和 Export Enabled 都已勾选）。");
                 return;
             }
 
@@ -462,17 +467,20 @@ namespace GodotGameFramework.Editor
                 Directory.CreateDirectory(absDir);
             }
 
-            int successCount = 0;
-
-            foreach (var bundle in toExport)
+            int success = 0;
+            try
             {
-                if (ExportSingleBundle(bundle, absDir))
+                foreach (var bundle in toExport)
                 {
-                    successCount++;
+                    ExportSingleBundle(bundle, absDir);
+                    success++;
                 }
+                CreatePackVersionFile(absDir, success);
             }
-
-            SetStatus($"导出完成: {successCount}/{toExport.Count} 个包成功 → {absDir}");
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[ExportInspector] 导出异常: {ex}");
+            }
         }
 
         /// <summary>使用 PCKPacker 打包单个 Bundle</summary>
@@ -554,7 +562,7 @@ namespace GodotGameFramework.Editor
                     }
 
                     // 打包文件及其 .import
-                    PackFileWithImport(packer, fullPath);
+                    PackFileWithImport(packer, fullPath, bundle.ExportOnlyImported);
                 }
 
                 fileName = dir.GetNext();
@@ -563,25 +571,115 @@ namespace GodotGameFramework.Editor
             dir.ListDirEnd();
         }
 
-        /// <summary>打包文件及其 .import 依赖</summary>
-        private static void PackFileWithImport(PckPacker packer, string filePath)
+        /// <summary>打包文件及其 .import 依赖，包括 Godot 导入产物</summary>
+        private static void PackFileWithImport(PckPacker packer, string filePath, bool exportOnlyImported = false)
         {
             var globalPath = ProjectSettings.GlobalizePath(filePath);
             if (!File.Exists(globalPath)) return;
 
-            // 打包文件本身
-            var err = packer.AddFile(filePath, globalPath);
-            if (err != Error.Ok)
-            {
-                GD.PushWarning($"[ExportInspector] 无法添加文件到包: {filePath}");
-            }
-
             // 打包 .import 文件（如果存在）
             var importPath = filePath + ".import";
             var globalImportPath = ProjectSettings.GlobalizePath(importPath);
-            if (File.Exists(globalImportPath))
+            bool hasImport = File.Exists(globalImportPath);
+
+            if (hasImport)
             {
-                packer.AddFile(importPath, globalImportPath);
+                if (!exportOnlyImported)
+                {
+                    // 完整模式：打包源文件
+                    var err = packer.AddFile(filePath, globalPath);
+                    if (err != Error.Ok)
+                    {
+                        GD.PushWarning($"[ExportInspector] 无法添加文件到包: {filePath}");
+                    }
+                }
+
+                // 打包 .import 文件
+                var errImport = packer.AddFile(importPath, globalImportPath);
+                if (errImport != Error.Ok)
+                {
+                    GD.PushWarning($"[ExportInspector] 无法添加 .import 文件到包: {importPath}");
+                }
+
+                // 解析 .import，将 Godot 导入产物（.ctex / .fontdata / .sample 等）也打进子包
+                PackImportedResource(packer, globalImportPath);
+            }
+            else
+            {
+                // 无 .import 文件 → 直接打包源文件（如 .tscn、.tres、.glb）
+                var err = packer.AddFile(filePath, globalPath);
+                if (err != Error.Ok)
+                {
+                    GD.PushWarning($"[ExportInspector] 无法添加文件到包: {filePath}");
+                }
+            }
+        }
+
+        /// <summary>解析 .import 文件中 dest_files 列出的导入产物，打包进 .pck</summary>
+        private static void PackImportedResource(PckPacker packer, string importFilePath)
+        {
+            try
+            {
+                var lines = File.ReadAllLines(importFilePath);
+                string destFilesLine = null;
+                string pathLine = null;
+
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (trimmed.StartsWith("dest_files="))
+                    {
+                        destFilesLine = trimmed;
+                    }
+                    else if (trimmed.StartsWith("path=") && pathLine == null)
+                    {
+                        // 只取 [remap] 段的 path（第一个出现的 path=）
+                        pathLine = trimmed;
+                    }
+                }
+
+                // 优先用 dest_files（JSON 数组，可包含多个路径）
+                string[] destPaths = null;
+                if (destFilesLine != null)
+                {
+                    var json = destFilesLine.Substring("dest_files=".Length);
+                    destPaths = System.Text.Json.JsonSerializer.Deserialize<string[]>(json);
+                }
+
+                // 回退：用 path= 字段（单路径）
+                if ((destPaths == null || destPaths.Length == 0) && pathLine != null)
+                {
+                    var firstQuote = pathLine.IndexOf('"');
+                    var lastQuote = pathLine.LastIndexOf('"');
+                    if (firstQuote > 0 && lastQuote > firstQuote)
+                    {
+                        var singlePath = pathLine.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
+                        destPaths = new[] { singlePath };
+                    }
+                }
+
+                if (destPaths == null || destPaths.Length == 0) return;
+
+                foreach (var resPath in destPaths)
+                {
+                    var globalDestPath = ProjectSettings.GlobalizePath(resPath);
+                    if (File.Exists(globalDestPath))
+                    {
+                        var addErr = packer.AddFile(resPath, globalDestPath);
+                        if (addErr != Error.Ok)
+                        {
+                            GD.PushWarning($"[ExportInspector] 无法添加导入产物到包: {resPath}");
+                        }
+                    }
+                    else
+                    {
+                        GD.PushWarning($"[ExportInspector] 导入产物不存在，跳过: {resPath}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                GD.PushWarning($"[ExportInspector] 解析 .import 文件失败: {importFilePath}, {ex.Message}");
             }
         }
 
@@ -606,14 +704,54 @@ namespace GodotGameFramework.Editor
                 .SetSetting(EditorSettingExportFolder, _exportFolder);
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  工具方法
-        // ═══════════════════════════════════════════════════════════
 
-        private void SetStatus(string message)
+        private void CreatePackVersionFile(string exportDir, int num)
         {
-            _lblStatus.Text = $"[{DateTime.Now:HH:mm:ss}] {message}";
+            if (num == 0)
+            {
+                GD.Print("[ExportInspector] 没有成功导出的包，跳过版本文件生成。");
+                return;
+            }
+
+            var blist = _bundles.ToList();
+            var packs = new Pack[num];
+            int idx = 0;
+
+            for (int i = 0; i < blist.Count; i++)
+            {
+                var bundle = blist[i];
+                var info = BuildBundleInfo(bundle.Key, bundle.Value);
+                if (!info.Enabled || !info.ExportEnabled) continue;
+
+                var pckPath = Path.Combine(exportDir, info.Name + ".pck");
+                var fileInfo = new FileInfo(pckPath);
+
+                packs[idx] = new Pack
+                {
+                    Name = info.Name,
+                    Size = fileInfo.Exists ? (int)fileInfo.Length : 0,
+                    Hash = fileInfo.Exists ? ComputeFileHash(pckPath) : 0,
+                    Url = "http://localhost",  // TODO: 替换为实际 CDN 地址
+                };
+                idx++;
+            }
+
+            var versionList = new PackVersionList("1.0.0", packs);
+            string json = JsonConvert.SerializeObject(versionList, Formatting.Indented);
+            string filePath = Path.Combine(exportDir, ResourceManager.GameFrameworkVersionData);
+            File.WriteAllText(filePath, json);
+            GD.Print($"[ExportInspector] 版本文件已生成: {filePath}");
         }
+
+        /// <summary>基于文件内容计算的 MD5 哈希（取前 4 字节转 int）</summary>
+        private static int ComputeFileHash(string filePath)
+        {
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            using var stream = File.OpenRead(filePath);
+            var hashBytes = md5.ComputeHash(stream);
+            return BitConverter.ToInt32(hashBytes, 0);
+        }
+
 
         private static void SetCellSpan(TreeItem item, int column, int span)
         {

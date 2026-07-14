@@ -25,7 +25,19 @@ namespace GodotGameFramework
         {
             base.OnUpdate(delta);
             if (m_Shutdown) return;
-            CheckProcedure();
+            try
+            {
+                CheckProcedure();
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[GGF] Startup error: {ex.Message}");
+                if (!m_StartProcedure)
+                {
+                    m_StartProcedure = true;
+                }
+            }
+
             float elapseSeconds = (float)delta;
             float realElapseSeconds = (float)Engine.TimeScale > 0f
                 ? elapseSeconds / (float)Engine.TimeScale

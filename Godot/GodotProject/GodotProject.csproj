@@ -16,8 +16,6 @@
     <DefineConstants>ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG</DefineConstants>
   </PropertyGroup>
    <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>.\Framework\GodotGameFrameworkCore\Lib\Json\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+   </ItemGroup>
 </Project>

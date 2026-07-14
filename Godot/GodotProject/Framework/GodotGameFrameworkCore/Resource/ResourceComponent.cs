@@ -1,3 +1,4 @@
+using Calcatz.EzpzInspector;
 using GameFramework;
 using GameFramework.Resource;
 using Godot;
@@ -15,6 +16,8 @@ namespace GodotGameFramework.Resource
         private ResourceMode m_EffectiveResourceMode;
         [Export]
         private ResourceMode _resourceMode = ResourceMode.Package;
+        [Export, UpperDescription("资源服务器地址")]
+        private string m_HostUrl = "http://localhost";
         private LoadAssetCallbacks m_LoadAssetCallbacks;
 
         /// <summary>当前实际生效的资源模式（未实现模式会回退到 Package）。</summary>
@@ -34,6 +37,7 @@ namespace GodotGameFramework.Resource
             m_EventComponent = GameEntry.GetComponent<EventComponent>();
             m_EffectiveResourceMode = ResolveResourceMode(_resourceMode);
             m_ResourceManager.SetResourceMode(m_EffectiveResourceMode);
+            m_ResourceManager.SetReadWritePath(ProjectSettings.GlobalizePath("user://"));
 
             Log.Info("[ResourceComponent] Initialized. Mode: {0}", m_EffectiveResourceMode);
             ProcessMode = ProcessModeEnum.Always;

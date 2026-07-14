@@ -16,22 +16,19 @@ namespace GameFramework.Resource
     public partial struct LocalVersionList
     {
         private static readonly Resource[] EmptyResourceArray = new Resource[] { };
-        private static readonly FileSystem[] EmptyFileSystemArray = new FileSystem[] { };
 
         private readonly bool m_IsValid;
         private readonly Resource[] m_Resources;
-        private readonly FileSystem[] m_FileSystems;
 
         /// <summary>
         /// 初始化本地版本资源列表的新实例。
         /// </summary>
         /// <param name="resources">包含的资源集合。</param>
         /// <param name="fileSystems">包含的文件系统集合。</param>
-        public LocalVersionList(Resource[] resources, FileSystem[] fileSystems)
+        public LocalVersionList(Resource[] resources)
         {
             m_IsValid = true;
             m_Resources = resources ?? EmptyResourceArray;
-            m_FileSystems = fileSystems ?? EmptyFileSystemArray;
         }
 
         /// <summary>
@@ -59,18 +56,5 @@ namespace GameFramework.Resource
             return m_Resources;
         }
 
-        /// <summary>
-        /// 获取包含的文件系统集合。
-        /// </summary>
-        /// <returns>包含的文件系统集合。</returns>
-        public FileSystem[] GetFileSystems()
-        {
-            if (!m_IsValid)
-            {
-                throw new GameFrameworkException("Data is invalid.");
-            }
-
-            return m_FileSystems;
-        }
     }
 }

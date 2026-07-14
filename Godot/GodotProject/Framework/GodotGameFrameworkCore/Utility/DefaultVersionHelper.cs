@@ -12,22 +12,11 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// 默认版本号辅助器。
-    ///
-    /// 实现了核心框架的 Version.IVersionHelper 接口，
-    /// 提供游戏版本号信息。
-    ///
-    /// 在 Godot 中，游戏版本号可以通过以下方式获取：
-    /// - 从 project.godot 的 config/version 设置读取
-    /// - 或者在代码中硬编码
-    ///
     /// </summary>
     public class DefaultVersionHelper : GameFramework.Version.IVersionHelper
     {
         /// <summary>
         /// 获取游戏版本号。
-        ///
-        /// 从 Godot 项目设置中读取 config/version，
-        /// 如果没有设置则返回 "0.1.0"。
         /// </summary>
         public string GameVersion
         {

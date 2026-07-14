@@ -1,3 +1,4 @@
+#if TOOLS
 using GameFramework;
 using Godot;
 using GodotGameFramework.Scene;
@@ -77,3 +78,4 @@ namespace GodotGameFramework.Editor
 
     }
 }
+#endif

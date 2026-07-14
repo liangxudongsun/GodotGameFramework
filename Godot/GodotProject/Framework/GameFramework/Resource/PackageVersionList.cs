@@ -17,7 +17,6 @@ namespace GameFramework.Resource
     {
         private static readonly Asset[] EmptyAssetArray = new Asset[] { };
         private static readonly Resource[] EmptyResourceArray = new Resource[] { };
-        private static readonly FileSystem[] EmptyFileSystemArray = new FileSystem[] { };
         private static readonly ResourceGroup[] EmptyResourceGroupArray = new ResourceGroup[] { };
 
         private readonly bool m_IsValid;
@@ -25,7 +24,6 @@ namespace GameFramework.Resource
         private readonly int m_InternalResourceVersion;
         private readonly Asset[] m_Assets;
         private readonly Resource[] m_Resources;
-        private readonly FileSystem[] m_FileSystems;
         private readonly ResourceGroup[] m_ResourceGroups;
 
         /// <summary>
@@ -37,14 +35,13 @@ namespace GameFramework.Resource
         /// <param name="resources">包含的资源集合。</param>
         /// <param name="fileSystems">包含的文件系统集合。</param>
         /// <param name="resourceGroups">包含的资源组集合。</param>
-        public PackageVersionList(string applicableGameVersion, int internalResourceVersion, Asset[] assets, Resource[] resources, FileSystem[] fileSystems, ResourceGroup[] resourceGroups)
+        public PackageVersionList(string applicableGameVersion, int internalResourceVersion, Asset[] assets, Resource[] resources, ResourceGroup[] resourceGroups)
         {
             m_IsValid = true;
             m_ApplicableGameVersion = applicableGameVersion;
             m_InternalResourceVersion = internalResourceVersion;
             m_Assets = assets ?? EmptyAssetArray;
             m_Resources = resources ?? EmptyResourceArray;
-            m_FileSystems = fileSystems ?? EmptyFileSystemArray;
             m_ResourceGroups = resourceGroups ?? EmptyResourceGroupArray;
         }
 
@@ -117,20 +114,6 @@ namespace GameFramework.Resource
             }
 
             return m_Resources;
-        }
-
-        /// <summary>
-        /// 获取包含的文件系统集合。
-        /// </summary>
-        /// <returns>包含的文件系统集合。</returns>
-        public FileSystem[] GetFileSystems()
-        {
-            if (!m_IsValid)
-            {
-                throw new GameFrameworkException("Data is invalid.");
-            }
-
-            return m_FileSystems;
         }
 
         /// <summary>

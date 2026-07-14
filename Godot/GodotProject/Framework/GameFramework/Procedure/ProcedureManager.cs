@@ -124,6 +124,11 @@ namespace GameFramework.Procedure
                 throw new GameFrameworkException("You must initialize procedure first.");
             }
 
+            if (m_ProcedureFsm.IsRunning)
+            {
+                return;
+            }
+
             m_ProcedureFsm.Start<T>();
         }
 
@@ -136,6 +141,11 @@ namespace GameFramework.Procedure
             if (m_ProcedureFsm == null)
             {
                 throw new GameFrameworkException("You must initialize procedure first.");
+            }
+
+            if (m_ProcedureFsm.IsRunning)
+            {
+                return;
             }
 
             m_ProcedureFsm.Start(procedureType);

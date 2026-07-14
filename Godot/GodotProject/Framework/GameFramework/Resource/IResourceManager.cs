@@ -10,6 +10,11 @@ namespace GameFramework.Resource
         ResourceMode ResourceMode { get; }
 
         /// <summary>
+        /// 初始化资源管理器（加载子包和版本清单）。由 ResourceComponent 在 OnInit 时调用。
+        /// </summary>
+        void SetReadWritePath(string readWritePath);
+
+        /// <summary>
         /// 设置资源模式。由 ResourceComponent 在 OnInit 时调用。
         /// </summary>
         void SetResourceMode(ResourceMode resourceMode);

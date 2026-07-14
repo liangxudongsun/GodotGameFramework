@@ -1,3 +1,4 @@
+#if TOOLS
 using GameFramework;
 using GameFramework.Sound;
 using Godot;
@@ -159,3 +160,4 @@ namespace GodotGameFramework.Editor
         }
     }
 }
+#endif
