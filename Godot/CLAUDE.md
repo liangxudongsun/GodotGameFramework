@@ -38,7 +38,7 @@ GodotProject/
       Base/Node/2D/                 ← Abstract entity base classes (Node2D, CharacterBody2D, Rb2D, Sprite2D, Area2D)
       Base/Node/UI/                 ← ControlUIForm base class
       Entity/ UI/ Sound/ Scene/    ← Godot bridge components (each delegates to the corresponding Manager)
-      Resource/                     ← ResourceComponent, async load tasks (LoadAssetTask, LoadBinaryTask)
+      Resource/                     ← ResourceComponent, ResourceManager (with subpackage loading), PackVersionList, async load tasks
       DataTable/ DataNode/ Setting/ Localization/
       Event/ Fsm/ Procedure/ ObjectPool/
       Config/ Variable/             ← GameFolderConstant, VarInt32/VarString/VarBoolean/VarSingle
@@ -56,6 +56,8 @@ GodotProject/
       GameProto/GameConfig/         ← Luban-generated C# (EntityConfig, TbEntityConfig, EntityId, etc.)
   addons/                           ← Editor plugins
     ComponentInsoector/             ← Custom Godot Inspector for framework components
+    ExportInspector/                ← AssetBundle visual export management panel (C# EditorPlugin)
+    asset_bundle/                   ← AssetBundle resource marker + export plugin + pack utils (GDScript)
     LocalizationEditor/             ← Excel → .txt localization export
     Resources/                      ← Resources collection scanner
     TopMenu/                        ← Log level toggler (rewrites csproj DefineConstants)
@@ -259,6 +261,7 @@ Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` r
 | Plugin | Function |
 |--------|----------|
 | **ComponentInsoector** | Custom inspector plugins for framework components (Base, Procedure, Scene, Setting, Entity, UI, Sound, Localization) + UIForm script generator (`ScriptGenerateInspector`) with auto child-node collection and assignment |
+| **ExportInspector** | AssetBundle visual export management panel — scan `.tres` bundle markers, expand to view per-resource details (type, size, import status), one-click export `.pck` subpackages + `GameFrameworkVersion.dat` manifest. Supports **full mode** (source files + imported) and **imported-only mode** (only `.ctex`/`.fontdata`/`.sample`, 80%+ smaller) |
 | **TopMenu** | Toggle log level (rewrites csproj `DefineConstants`) |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `.txt` localization files |
 | **Resources** | Scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs` |
@@ -267,6 +270,7 @@ Enabled in `project.godot`:
 ```
 editor_plugins/enabled = [
   "res://addons/ComponentInsoector/plugin.cfg",
+  "res://addons/ExportInspector/plugin.cfg",
   "res://addons/LocalizationEditor/plugin.cfg",
   "res://addons/Resources/plugin.cfg",
   "res://addons/TopMenu/plugin.cfg"
@@ -284,20 +288,50 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 `Log.Debug/Info/Warning/Error/Fatal` are `[Conditional]` — zero runtime overhead when the symbol is undefined. Release builds can remove the entire `DefineConstants` line.
 
-## Resource System (P0 Minimal)
+## Resource System
 
 `IResourceManager` with 8 members (reduced from ~97 Unity-era members):
 
 | Mode | Status |
 |------|--------|
 | `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader) |
-| `Updatable` / `UpdatableWhilePlaying` | 📅 P2 (.pck hot-update) |
+| `Updatable` / `UpdatableWhilePlaying` | 📅 P2 (.pck hot-update via `user://` subpackage loading) |
+
+### Loading
 
 Two `TaskPool<T>` instances for async loading:
 - `m_AssetTaskPool` (LoadAssetTask) — Godot.ResourceLoader.Load + callback
 - `m_BinaryTaskPool` (LoadBinaryTask) — FileAccess + callback
 
 Convenience on `ResourceComponent`: `LoadBinary()`, `LoadText()`, `LoadAsync<T>()`, `LoadSceneAsync()`.
+
+### Subpackage System
+
+`ResourceManager` loads additional `.pck` files as subpackages at startup:
+
+- **Package mode** (`DeserializePackagePackVersion`): reads `subpackages/GameFrameworkVersion.dat` alongside the executable, loads each listed `.pck` via `ProjectSettings.LoadResourcePack()`.
+- **Updatable mode** (`DeserializeUpdatablePackVersion`): reads `user://GameFrameworkVersion.dat`, loads subpackages from `user://subpackages/` — enables runtime download/swap without touching the main installation.
+
+`PackVersionList` structure (`PackVersionList.cs`):
+```csharp
+public struct PackVersionList {
+    public string Version;     // user-defined, e.g. "1.0.0"
+    public Pack[] Packs;       // name, size, hash, url
+}
+```
+
+### ExportInspector (addon)
+
+C# `EditorPlugin` (`addons/ExportInspector/`) for visual AssetBundle management:
+- Scans project for `AssetBundle.gd` marker resources (`.tres` files)
+- Tree view with expandable bundles showing each file: type label, size, import status (✅/⚠️/—)
+- Toggle: enabled, export enabled, **export-only-imported** (skip source files, only pack `.ctex`/`.fontdata`/`.sample`)
+- One-click export to timestamped directory, generates `GameFrameworkVersion.dat` with configurable version string
+- Uses `PckPacker` for `.pck` generation, supports imported resource packing (reads `.import` `dest_files`)
+
+### Hot-Patch (Future)
+
+Planned: runtime `user://patch.pck` detection — `ProjectSettings.LoadResourcePack("user://patch.pck")` inserts the patch at the head of Godot's resource resolution chain. Any path found in the patch overrides the main `.pck`; unchanged paths fall through. Enables incremental updates without full re-export.
 
 ## Build & Development Commands
 

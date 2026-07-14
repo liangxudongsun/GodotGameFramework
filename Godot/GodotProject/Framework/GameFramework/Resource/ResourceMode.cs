@@ -9,13 +9,18 @@ namespace GameFramework.Resource
 {
     public enum ResourceMode : byte
     {
-        /// <summary>单机模式。所有资源打包在游戏内，直接加载。</summary>
-        Package = 0,
+        /// <summary>
+        /// 编辑器模式，不会加载资源目录
+        /// </summary>
+        Editor = 0,
+        /// <summary>
+        /// 单机模式。所有资源打包在游戏内，直接加载。
+        /// </summary>
+        Package = 1,
 
-        /// <summary>预下载的可更新模式。启动时检查远程版本，下载差异 .pck。</summary>
-        Updatable,
-
-        /// <summary>使用时下载的可更新模式。边玩边下。</summary>
-        UpdatableWhilePlaying
+        /// <summary>
+        /// 预下载的可更新模式。启动时检查远程版本，下载差异 .pck。
+        /// </summary>
+        Updatable = 2,
     }
 }

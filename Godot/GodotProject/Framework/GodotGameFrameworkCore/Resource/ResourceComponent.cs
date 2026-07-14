@@ -13,15 +13,12 @@ namespace GodotGameFramework.Resource
         private const int DefaultPriority = 0;
         private EventComponent m_EventComponent;
         private IResourceManager m_ResourceManager;
-        private ResourceMode m_EffectiveResourceMode;
         [Export]
-        private ResourceMode _resourceMode = ResourceMode.Package;
+        private ResourceMode _resourceMode = ResourceMode.Editor;
         [Export, UpperDescription("资源服务器地址")]
-        private string m_HostUrl = "http://localhost";
+        private string _ServerUrl = "http://localhost";
         private LoadAssetCallbacks m_LoadAssetCallbacks;
 
-        /// <summary>当前实际生效的资源模式（未实现模式会回退到 Package）。</summary>
-        public ResourceMode EffectiveResourceMode => m_EffectiveResourceMode;
         private ResourceMode ResourceMode
         {
             get => _resourceMode;
@@ -35,35 +32,19 @@ namespace GodotGameFramework.Resource
             m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback, LoadAssetDependencyAssetCallback);
             m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
             m_EventComponent = GameEntry.GetComponent<EventComponent>();
-            m_EffectiveResourceMode = ResolveResourceMode(_resourceMode);
-            m_ResourceManager.SetResourceMode(m_EffectiveResourceMode);
+            if (!OS.HasFeature("editor")) // 不在编辑器模式下若资源模式为Editor，则默认设置为 Package 模式
+            {
+                if (_resourceMode == ResourceMode.Editor)
+                {
+                    _resourceMode = ResourceMode.Package;
+                    Log.Info("[ResourceComponent] 检测到不在编辑器模式下，将资源模式从 Editor 改为 Package，如果需要修改为其他模式，请在编辑器模式下修改为非 Editor 模式");
+                }
+            }
+            m_ResourceManager.SetResourceMode(_resourceMode);
             m_ResourceManager.SetReadWritePath(ProjectSettings.GlobalizePath("user://"));
 
-            Log.Info("[ResourceComponent] Initialized. Mode: {0}", m_EffectiveResourceMode);
+            Log.Info("[ResourceComponent] Initialized. Mode: {0}", _resourceMode);
             ProcessMode = ProcessModeEnum.Always;
-        }
-
-        private ResourceMode ResolveResourceMode(ResourceMode requested)
-        {
-            switch (requested)
-            {
-                case ResourceMode.Package:
-                    return ResourceMode.Package;
-
-                case ResourceMode.Updatable:
-                    Log.Warning("[ResourceComponent] Updatable mode is not yet implemented. " +
-                        "Falling back to Package mode.");
-                    return ResourceMode.Package;
-
-                case ResourceMode.UpdatableWhilePlaying:
-                    Log.Warning("[ResourceComponent] UpdatableWhilePlaying mode is not yet implemented. " +
-                        "Falling back to Package mode.");
-                    return ResourceMode.Package;
-
-                default:
-                    Log.Warning("[ResourceComponent] Unknown ResourceMode '{0}'. Falling back to Package.", requested);
-                    return ResourceMode.Package;
-            }
         }
 
         /// <summary>

@@ -26,8 +26,9 @@
 - ♻️ **对象池** — 实体、UI、音频等资源自动池化管理复用
 - 🔊 **音频系统** — 声音组 + 优先级抢占 + 扩展方法 `PlayBGM()`/`PlaySFX()`
 - 📝 **条件日志** — `[Conditional("ENABLE_LOG")]` 编译时零开销移除，编辑器插件可切换
-- 🔧 **编辑器插件** — 组件监视、UIForm 脚本生成、日志切换、本地化导出、资源路径常量生成
+- 🔧 **编辑器插件** — 组件监视、UIForm 脚本生成、AB 包可视化导出管理、日志切换、本地化导出、资源路径常量生成
 - 🧬 **单例模式** — 泛型 `SingletonNode<T>` 提供类型安全的 Godot 节点单例
+- 📦 **资源包系统** — 基于 AssetBundle 的 .pck 子包管理，支持可视化导出、增量更新、版本清单生成
 
 ---
 
@@ -171,7 +172,11 @@ AbstractCharacterBody2DEntity
 - ✅ **精简 IResourceManager** — 从 97 个成员精简为 8 个，移除所有 Unity 管线遗留代码
 - ✅ **同步加载 + TaskPool 任务队列** — `Godot.ResourceLoader.Load` 同步加载，通过 `TaskPool<LoadAssetTask>` 管理优先级和并发
 - ✅ 两套独立 TaskPool：`m_AssetTaskPool`（场景/贴图等资源）、`m_BinaryTaskPool`（二进制文件）
-- ✅ 当前仅支持 `ResourceMode.Package`（单机模式），`Updatable`/`UpdatableWhilePlaying` 为 P2 规划
+- ✅ **子包加载系统** — 支持 `Package` 和 `Updatable` 两种模式
+  - `Package` 模式：从 exe 同级 `subpackages/` 目录加载 .pck 子包
+  - `Updatable` 模式：从 `user://subpackages/` 目录加载可更新的子包
+- ✅ **版本清单** — `GameFrameworkVersion.dat` 记录所有子包名称、大小、哈希，用于校验和热更新
+- ✅ **多模式设计** — `ResourceMode` 枚举：`Package` / `Updatable` / `UpdatableWhilePlaying`
 - ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`, `LoadAsync<T>()`, `LoadSceneAsync()`
 
 ### 事件模块 (EventComponent)
@@ -443,6 +448,7 @@ TheGame/DataTables/*.bytes                        ← 二进制数据（运行�
 | 插件 | 功能 |
 |------|------|
 | **ComponentInsoector** | 框架组件（Base / Procedure / Scene / Setting / Entity / UI / Sound / Localization）属性监视 + UIForm 脚本生成器（详见下方）——自动收集子节点、自动赋值 `[Export]` 字段 |
+| **ExportInspector** | AB 包可视化导出管理面板——扫描 AssetBundle 标记文件、展开查看包内资源及导入状态、一键导出 .pck 子包 + 版本清单，支持完整模式（含源文件）和仅产物模式（仅 .ctex/.fontdata/.sample，体积减少 80%+） |
 | **TopMenu** | 切换日志级别（Debug / Info / Warning / Error / Fatal / 全部关闭） |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `res://TheGame/DataTables/Localizations/*.txt` |
 | **ResourcesCollection** | 扫描 `res://TheGame/` 非脚本资源，生成 `ResourcesCollectionConstant.cs`（文件路径常量） |
@@ -558,6 +564,7 @@ GameFramework (GameEntry)
 ### 资源系统
 
 - [ ] **Updatable / UpdatableWhilePlaying 资源模式** — P2 规划，需通过 .pck 热更新机制实现
+- [ ] **补丁包加载** — 运行时检测 `user://patch.pck`，通过 `ProjectSettings.LoadResourcePack()` 加载补丁包，优先级高于主包。同路径文件自动覆盖，未变动的从主包回退，无需重导整个游戏
 
 ### 网络系统
 

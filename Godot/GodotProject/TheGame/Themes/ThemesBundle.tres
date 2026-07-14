@@ -4,4 +4,5 @@
 
 [resource]
 script = ExtResource("1_uea1d")
+export_only_imported = true
 metadata/_custom_type_script = "uid://c2xgtasiu2y47"

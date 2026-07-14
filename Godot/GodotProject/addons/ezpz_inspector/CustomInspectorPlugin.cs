@@ -106,8 +106,10 @@ namespace Calcatz.EzpzInspector {
 
         public override bool _CanHandle(GodotObject @object) {
             currentType = null;
-            var script = @object.GetScript().As<CSharpScript>();
-            if (script != null && !string.IsNullOrEmpty(script.ResourcePath)) {
+            var scriptVariant = @object.GetScript();
+            if (scriptVariant.VariantType != Variant.Type.Object) return false;
+            if (scriptVariant.AsGodotObject() is not CSharpScript script) return false;
+            if (!string.IsNullOrEmpty(script.ResourcePath)) {
                 if (!typeCache.TryGetValue(script.ResourcePath, out var type)) {
                     var temp = script.New().AsGodotObject();
                     type = temp.GetType();
