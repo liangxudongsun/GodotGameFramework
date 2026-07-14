@@ -21,7 +21,7 @@
 
 - 🧩 **模块化架构** — 13 个独立子系统，高内聚低耦合，可按需替换
 - 🔄 **双层架构** — 纯 C# 核心层（无 Godot 依赖）+ Godot 运行时组件层
-- 🎯 **直接继承模式** — Entity/UI 用户脚本直接继承 Godot 原生类型 + 框架接口
+- 🎯 **直接继承模式** — Entity/UI 脚本直接继承 Godot 原生类型 + 框架接口，无中间基类
 - 📊 **数据管线** — 集成 Luban，Excel 配置 → C# 代码 + 二进制数据
 - ♻️ **对象池** — 实体、UI、音频等资源自动池化管理复用
 - 🔊 **音频系统** — 声音组 + 优先级抢占 + 扩展方法 `PlayBGM()`/`PlaySFX()`
@@ -96,8 +96,8 @@
 │  ├── GameFrameworkComponent       自动注册到 GameEntry │
 │  ├── GameEntry                    根节点，驱动 Update  │
 │  ├── GF                           静态门面            │
-│  ├── Abstract*Entity / ControlUIForm  实体/UI 基类   │
 │  ├── EntityComponent / UIComponent / SoundComponent   │
+│  ├── DefaultEntityHelper / DefaultUIFormHelper 实例化辅助 │
 │  ├── SingletonNode<T>             泛型节点单例        │
 │  └── PhysicsCheck2D               物理检测工具类      │
 ├─────────────────────────────────────────────────────┤
@@ -114,17 +114,15 @@
 
 ### 直接继承模式
 
-场景根节点直接继承框架抽象基类，基类同时继承 Godot 原生类型和框架接口：
+脚本直接继承 Godot 原生类型 + 框架接口，无需中间基类。脚本生成器生成的 Ge partial 提供框架属性（`IEntity`/`IUIForm` 实现），Logic partial 由用户编写生命周期逻辑：
 
 ```
-AbstractSprite2DEntity : Sprite2D, IEntity
-AbstractCharacterBody2DEntity : CharacterBody2D, IEntity
-AbstractNode2DEntity : Node2D, IEntity
-AbstractRb2DEntity : RigidBody2D, IEntity
-ControlUIForm : Control, IUIForm
+ActorEntity : CharacterBody2D, IEntity, IActor     ← 用户直接继承 Godot 类型 + 框架接口
+MainForm (Ge) : Control, IUIForm                   ← 生成器产生的框架样板
+MainForm (Logic) : partial                         ← 用户编写的生命周期逻辑
 ```
 
-场景实例本身就是 `IEntity`/`IUIForm`，无需额外包装。
+实体/UI 的实例化通过 `DefaultEntityHelper` / `DefaultUIFormHelper` 完成，从 `PackedScene` 实例化节点后直接挂载到实体组/UI 组容器。
 
 ---
 
@@ -137,11 +135,12 @@ ControlUIForm : Control, IUIForm
 - ✅ `ShowEntityAsync<T>()` 异步加载，返回类型安全的 `T : Node, IEntity`
 - ✅ 实体组管理（容量、过期时间、优先级可配）
 - ✅ 父子实体挂载 + Godot 场景树 Node 关系同步
-- ✅ 四个抽象基类，用户脚本直接继承，子节点通过 `[Export]` 绑定或 `NodeExtension` 扩展方法获取
+- ✅ 脚本直接继承 Godot 类型 + `IEntity`，Ge partial 提供框架属性，Logic partial 编写生命周期
+- ✅ `DefaultEntityHelper` 从 PackedScene 实例化实体节点，挂载到实体组容器
 
 **当前 TheGame 项目实体层级：**
 ```
-AbstractCharacterBody2DEntity
+CharacterBody2D + IEntity + IActor
   └── ActorEntity               ← 阵营 (EntityTeam)、血量、PhysicsCheck2D 检测、Die()
        ├── CatEntity            ← 玩家猫：键盘移动、自动瞄准、发射 GanTan
        ├── AngerEntity          ← 敌人
@@ -154,7 +153,8 @@ AbstractCharacterBody2DEntity
 - ✅ 4 个默认 UI 层级：Background / Normal / Popup / Tips
 - ✅ 界面组管理，支持深度排序
 - ✅ `OpenUIForm(UIFormId)` Luban 配置驱动
-- ✅ `ControlUIForm : Control, IUIForm` 基类，自动收集 `IStringKey` 子节点并刷新本地化文本
+- ✅ Ge partial 提供 `Control, IUIForm` 框架样板，Logic partial 编写生命周期逻辑
+- ✅ 自动收集 `IStringKey` 子节点并刷新本地化文本
 - ✅ 内置 `Close()` 方法
 
 当前 TheGame UI：`MainForm`、`MenuForm`（Logic partial）、`GameOver`（Logic partial）、`PauseMenuForm`、`TestOverlayForm`、`ScorePopupItem`（UIItemBase 子类）。
@@ -253,9 +253,8 @@ GodotProject/                 ← Godot 项目根
 │   │   └── Utility/ WebRequest/ ← WebRequest 纯 C# 已实现，Utility（压缩、加密等）
 │   └── GodotGameFrameworkCore/  ← Godot 运行时组件
 │       ├── Base/             ← GameEntry, GF, GodotComponent, Log
-│       │   └── Node/         ← 抽象实体/UI 基类（Abstract*Entity, ControlUIForm）
-│       ├── Entity/           ← EntityComponent, EntityExtension
-│       ├── UI/               ← UIComponent, IStringKey
+│       ├── Entity/           ← EntityComponent, DefaultEntityHelper
+│       ├── UI/               ← UIComponent, DefaultUIFormHelper, IStringKey
 │       ├── Sound/            ← SoundComponent + PlayBGM/PlaySFX 扩展
 │       ├── Resource/         ← ResourceManager（Godot.ResourceLoader 异步）+ ResourceComponent 桥接
 │       ├── Event/ Fsm/ Procedure/ Config/
@@ -298,7 +297,7 @@ GodotProject/                 ← Godot 项目根
 ### 实体系统
 
 ```csharp
-// 1. 定义实体类（继承对应 Godot 类型的抽象基类）
+// 1. 定义实体类（直接继承 Godot 类型 + 框架接口）
 public partial class CatEntity : ActorEntity
 {
     [Export] private Sprite2D m_CatSprite;
@@ -307,8 +306,8 @@ public partial class CatEntity : ActorEntity
         IEntityGroup entityGroup, bool isNewInstance, object userData)
     {
         base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
+        // ActorEntity 直接继承 CharacterBody2D + IEntity + IActor
         m_Config = GF.DataTable.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
-        // 初始化物理检测、阵营等
     }
 
     public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
@@ -333,24 +332,31 @@ GF.Entity.HideEntitySafe(catId);
 ### UI 系统
 
 ```csharp
-public partial class MenuForm : ControlUIForm
+// Ge partial（自动生成，覆盖）—— 提供 IUIForm 属性 + [Export] 子节点字段
+public partial class MenuForm : Control, IUIForm
 {
-    public override void OnInit(int serialId, string uiFormAssetName,
+    [Export] public Button m_StartButton;
+    [Export] public Label m_TitleLabel;
+    // ... 框架属性（SerialId, UIFormAssetName, UIGroup 等）
+}
+
+// Logic partial（仅首次生成，不覆盖）—— 用户生命周期代码
+public partial class MenuForm : IStringKey
+{
+    public void OnInit(int serialId, string uiFormAssetName,
         IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
     {
-        base.OnInit(serialId, uiFormAssetName, uiGroup, pauseCoveredUIForm, isNewInstance, userData);
         if (isNewInstance) m_StartButton.Pressed += OnStartButtonPressed;
     }
 
-    public override void OnOpen(object userData)
+    public void OnOpen(object userData)
     {
-        base.OnOpen(userData);
         GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Menu);
     }
 
     private void OnStartButtonPressed()
     {
-        Close();
+        GF.UI.CloseUIForm(UIFormId.MenuForm);
         GF.UI.OpenUIForm(UIFormId.MainForm);
     }
 }
@@ -576,10 +582,13 @@ GameFramework (GameEntry)
 
 | 项目 | 描述 | 链接 |
 |------|------|------|
-| **Game Framework** | 本项目的核心框架来源，Unity 游戏框架 | [GitHub](https://gameframework.cn/) |
-| **Luban** | 游戏配置解决方案 | [GitHub](https://github.com/focus-creative-games/luban) |
+| **Game Framework** | 核心框架来源，Unity 游戏框架 by Jiang Yin | [GitHub](https://github.com/EllanJiang/GameFramework) |
+| **Luban** | 游戏配置解决方案（Excel → C# + 二进制） | [GitHub](https://github.com/focus-creative-games/luban) |
 | **Godot Engine** | 开源游戏引擎 | [GitHub](https://github.com/godotengine/godot) |
-| **CodeGraph** | 代码知识图谱工具 | [GitHub](https://github.com/colbymchenry/codegraph) |
+| **Jolt Physics** | Godot 使用的 3D 物理引擎 | [GitHub](https://github.com/jrouwe/JoltPhysics) |
+| **Newtonsoft.Json** | 高性能 JSON 框架（NuGet 13.0.4） | [GitHub](https://github.com/JamesNK/Newtonsoft.Json) |
+| **Ezpz Inspector** | Godot C# Inspector 增强插件 | [GitHub](https://github.com/Calcatz/ezpz-inspector) |
+| **CodeGraph** | 代码知识图谱 MCP 工具 | [GitHub](https://github.com/colbymchenry/codegraph) |
 
 ---
 
