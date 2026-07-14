@@ -145,7 +145,7 @@ AbstractCharacterBody2DEntity
   └── ActorEntity               ← 阵营 (EntityTeam)、血量、PhysicsCheck2D 检测、Die()
        ├── CatEntity            ← 玩家猫：键盘移动、自动瞄准、发射 GanTan
        ├── AngerEntity          ← 敌人
-       └── GanTanEntity         ← 弹射物（BulletData：方向/速度/归属）
+       └── GanTanEntity         ← 弹射物（BulletData：方向/速度/归属，Ge+Logic partial）
 ```
 
 ### UI 模块 (UIComponent)
@@ -157,7 +157,7 @@ AbstractCharacterBody2DEntity
 - ✅ `ControlUIForm : Control, IUIForm` 基类，自动收集 `IStringKey` 子节点并刷新本地化文本
 - ✅ 内置 `Close()` 方法
 
-当前 TheGame UI：`MenuForm`、`MainForm`、`GameOverForm`、`PauseMenuForm`、`TestOverlayForm`。
+当前 TheGame UI：`MainForm`、`MenuForm`（Logic partial）、`GameOver`（Logic partial）、`PauseMenuForm`、`TestOverlayForm`、`ScorePopupItem`（UIItemBase 子类）。
 
 ### 音频模块 (SoundComponent)
 
@@ -191,7 +191,7 @@ AbstractCharacterBody2DEntity
 
 - ✅ 基于 `IFsmManager` 的流程状态机
 - ✅ Inspector 配置可用的 Procedure 类型
-- ✅ 启动流程：`ProcedureLaunch`（组件验证、数据表加载、组初始化）→ `ProcedureGame`（游戏主循环）
+- ✅ 启动流程：`ProcedureLaunch`（组件验证、数据表加载、组初始化）→ `ProcedureGame`（游戏主循环）→ `ProcedureUpdate`（更新检查）
 - ✅ 通过 `ChangeState<T>(procedureOwner)` 切换流程
 
 ### 数据表模块 (DataTableComponent)
@@ -199,6 +199,15 @@ AbstractCharacterBody2DEntity
 - ✅ Luban 生成的二进制数据反序列化
 - ✅ `GF.DataTable` 返回类型安全的 `Tables` 实例
 - ✅ 懒加载支持
+
+### 场景模块 (SceneComponent)
+
+- ✅ 基于 `ISceneManager` 的场景加载/卸载管理
+- ✅ `LoadScene(sceneAssetName, priority, userData)` / `UnloadScene(sceneAssetName)`
+- ✅ 场景状态查询：`SceneIsLoaded()` / `SceneIsLoading()` / `SceneIsUnloading()`
+- ✅ `DefaultSceneHelper` 通过 `ResourceLoader.LoadThreadedRequest` 异步加载场景
+- ✅ 事件通知：`LoadSceneSuccess` / `LoadSceneFailure` / `UnloadSceneSuccess` / `UnloadSceneFailure`
+- 🚧 场景切换过渡动画、异步加载进度回调待实现
 
 ### NodeExtension 扩展
 
@@ -239,8 +248,9 @@ GodotProject/                 ← Godot 项目根
 │   │   ├── Fsm/ Procedure/ Config/ DataTable/
 │   │   ├── DataNode/ ObjectPool/ Setting/
 │   │   ├── Localization/ Scene/
-│   │   ├── Download/ Network/ Debugger/  ← 接口已定义，Godot 组件待实现
-│   │   └── Utility/ WebRequest/
+│   │   ├── Download/ Network/  ← 纯 C# 层已实现，Godot 桥接组件待实现
+│   │   ├── Debugger/            ← 纯 C# 层已实现，Godot 窗口待实现
+│   │   └── Utility/ WebRequest/ ← WebRequest 纯 C# 已实现，Utility（压缩、加密等）
 │   └── GodotGameFrameworkCore/  ← Godot 运行时组件
 │       ├── Base/             ← GameEntry, GF, GodotComponent, Log
 │       │   └── Node/         ← 抽象实体/UI 基类（Abstract*Entity, ControlUIForm）
@@ -258,15 +268,19 @@ GodotProject/                 ← Godot 项目根
 ├── TheGame/                  ← 当前活跃游戏项目
 │   ├── Entitys/              ← 实体场景 (.tscn)
 │   ├── GameScripts/
-│   │   ├── Entity/           ← 实体脚本（CatEntity, AngerEntity, GanTanEntity, ActorEntity）
-│   │   ├── UI/               ← UI 脚本（MenuForm, MainForm, GameOverForm 等）
+│   │   ├── Entity/           ← 实体脚本（ActorEntity, CatEntity, AngerEntity, GanTanEntity.Logic）
+│   │   ├── UI/               ← UI 脚本（MainForm, MenuForm.Logic, GameOver.Logic, PauseMenuForm, TestOverlayForm, ScorePopupItem）
 │   │   ├── Event/            ← 自定义事件参数（BlockClickedEventArgs 等）
-│   │   ├── Procedure/        ← 流程（ProcedureLaunch, ProcedureGame）
+│   │   ├── Procedure/        ← 流程（ProcedureLaunch, ProcedureGame, ProcedureUpdate）
 │   │   ├── ObjectPool/       ← 自定义池对象
-│   │   └── GameProto/GameConfig/ ← Luban 生成的 C# 数据类
+│   │   ├── Resources/        ← 资源组定义（EntityGroup, SoundGroup, UIGroup）+ 生成配置（ScriptGenerateRes）
+│   │   └── GameProto/
+│   │       ├── GameConfig/   ← Luban 生成的 C# 数据类
+│   │       ├── EntityGe/     ← 实体脚本 Ge（GanTanEntity 等，自动覆盖）
+│   │       └── UIGe/         ← UI 脚本 Ge（MenuForm, MainForm, GameOver 等，自动覆盖）
 │   ├── DataTables/           ← Luban 生成的二进制数据 (.bytes)
 │   ├── UIs/                  ← UI 场景 (.tscn)
-│   ├── Sprites/ Scenes/ Audios/
+│   ├── Sprites/ Scenes/ Audios/ Fonts/ Themes/
 └── addons/                   ← 编辑器插件
     ├── ComponentInsoector/   ← 框架组件监视 + UIForm/Entity 脚本生成器
     ├── ExportInspector/      ← AB 包可视化导出管理面板（C#）
@@ -439,7 +453,7 @@ Configs/GameConfig/Datas/*.xlsx
          │ gen_code_bin_to_project.bat
          ▼
 TheGame/GameScripts/GameProto/GameConfig/*.cs   ← C# 数据类（具类型访问）
-TheGame/DataTables/*.bytes                        ← 二进制数据（运行时加载）
+TheGame/DataTables/GameConfigs/*.bytes             ← 二进制数据（运行时加载）
 ```
 
 - **源文件**: `__tables__.xlsx`（表定义）、`__beans__.xlsx`（数据结构）、`__enums__.xlsx`（枚举）+ 业务 Excel（实体.xlsx、界面UI.xlsx、角色.xlsx 等）
@@ -456,7 +470,7 @@ TheGame/DataTables/*.bytes                        ← 二进制数据（运行�
 | **ComponentInsoector** | 框架组件（Base / Procedure / Scene / Setting / Entity / UI / Sound / Localization）属性监视 + UIForm/Entity 双脚本生成器（详见下方）——自动收集子节点、自动赋值 `[Export]` 字段 |
 | **ExportInspector** | AB 包可视化导出管理面板——扫描 AssetBundle 标记文件、展开查看包内资源及导入状态、一键导出 .pck 子包 + 版本清单，支持完整模式（含源文件）和仅产物模式（仅 .ctex/.fontdata/.sample，体积减少 80%+） |
 | **asset_bundle** | AssetBundle 资源标记（GDScript）——在资源目录下创建 `AssetBundle.tres` 标记文件，配置是否启用/导出/打包外部依赖/仅导出导入产物；构建时自动通过 export_plugin 将标记目录打包为 .pck |
-| **ezpz_inspector** | C# Inspector 增强（Ezpz Inspector v1.2.1 by Dilaura）——通过 C# Attribute 自定义 Inspector 显示，提供 `[ShowIf]`、`[ReadOnly]`、`[Required]` 等注解 |
+| **ezpz_inspector** | C# Inspector 增强（Ezpz Inspector v1.2.1 by Dilaura）——通过 C# Attribute 自定义 Inspector 显示，提供 `[ExportButton]`（方法按钮）、`[UpperDescription]`（字段说明）、`[ControlMargin]`、`[ControlSize]`、`[ControlModulateColor]` 等注解 |
 | **TopMenu** | 切换日志级别（Debug / Info / Warning / Error / Fatal / 全部关闭） |
 | **LocalizationEditor** | `Configs/Localization/*.xlsx` → `res://TheGame/DataTables/Localizations/*.txt` |
 | **ResourcesCollection** | 扫描 `res://TheGame/` 非脚本资源，生成 `ResourcesCollectionConstant.cs`（文件路径常量） |
@@ -578,16 +592,19 @@ GameFramework (GameEntry)
 
 ### 网络系统
 
-- [ ] **NetworkComponent** — 纯 C# 层 `INetworkManager` / `INetworkChannel` 已有接口定义，需在 Godot 层实现网络组件
+- [x] **纯 C# 层** — `NetworkManager`（含 TCP 通道、心跳、封包处理）、`DownloadManager`（含下载计数器）、`WebRequestManager` 已完整实现
+- [ ] **Godot 桥接组件** — `NetworkComponent`、`DownloadComponent`、`WebRequestComponent` 待实现
 
 ### 场景系统
 
+- [x] **基础场景加载/卸载** — `ISceneManager` + `SceneComponent` + `DefaultSceneHelper` 已完成
 - [ ] **场景切换过渡** — 过渡动画、异步加载进度回调
 - [ ] **场景卸载完善** — 资源释放确保和卸载回调
 
 ### 调试与工具
 
-- [ ] **DebuggerComponent** — 纯 C# 层 `IDebuggerManager` 已有实现，需在 Godot 层实现调试窗口
+- [x] **纯 C# 层** — `DebuggerManager` + `IDebuggerWindow` / `IDebuggerWindowGroup` 已完整实现
+- [ ] **Godot 调试窗口** — 需在 Godot 层实现可视化调试窗口 UI
 - [ ] **单元测试** — 建议引入测试框架覆盖核心模块
 
 ### 编辑器插件
