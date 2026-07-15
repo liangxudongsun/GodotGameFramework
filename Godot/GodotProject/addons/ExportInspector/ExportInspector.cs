@@ -157,7 +157,8 @@ namespace GodotGameFramework.Editor
                 PlaceholderText = "1.0.0",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
-            _txtVersion.TextChanged += OnVersionTextChanged;
+            _txtVersion.TextSubmitted += (text) => OnVersionConfirmed(text);
+            _txtVersion.FocusExited += () => OnVersionConfirmed(_txtVersion.Text);
             versionRow.AddChild(_txtVersion);
 
             vbox.AddChild(versionRow);
@@ -685,16 +686,16 @@ namespace GodotGameFramework.Editor
         {
         }
 
-        private void OnVersionTextChanged(string newText)
+        private void OnVersionConfirmed(string text)
         {
-            if (System.Text.RegularExpressions.Regex.IsMatch(newText, @"^\d+\.\d+\.\d+$"))
+            if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^\d+\.\d+\.\d+$"))
             {
-                _version = newText;
+                _version = text;
                 SaveVersionPreference();
             }
             else
             {
-                // 非法输入 → 回退到上一个合法版本号
+                // 非法版本号 → 回退到上一个合法值
                 _txtVersion.Text = _version;
             }
         }
@@ -993,7 +994,7 @@ namespace GodotGameFramework.Editor
                 GD.Print("[ExportInspector] 没有成功导出的包，跳过版本文件生成。");
                 return;
             }
-
+            var res = ResourceLoader.Load(string.Format(GameFolderConstant.Resources, "UpdateSettingRes"));
             var blist = _bundles.ToList();
             var packs = new Pack[num];
             int idx = 0;
@@ -1012,7 +1013,7 @@ namespace GodotGameFramework.Editor
                     Name = info.Name,
                     Size = fileInfo.Exists ? (int)fileInfo.Length : 0,
                     Hash = fileInfo.Exists ? ComputeFileHash(pckPath) : 0,
-                    Url = "http://localhost",
+                    Url = res.Get(UpdateSettingRes.Parameters.RemoteUrl) + "/" + info.Name + ".pck",
                 };
                 idx++;
             }

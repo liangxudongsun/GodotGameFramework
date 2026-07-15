@@ -6,6 +6,7 @@ using GodotGameFramework.Scene;
 using GodotGameFramework.Setting;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
+using GodotGameFramework.Web;
 
 namespace GodotGameFramework
 {
@@ -20,11 +21,12 @@ namespace GodotGameFramework
         private static EntityComponent m_Entity;
         private static UIComponent m_UI;
         private static SoundComponent m_Sound;
-        private static Tables m_DataTable;
+        private static DataTableComponent m_DataTable;
         private static LocalizationComponent m_Localization;
         private static SettingComponent m_Setting;
         private static BaseComponent m_Base;
         private static SceneComponent m_Scene;
+        private static WebRequestComponent m_WebRequest;
         public static EventComponent Event
         {
             get
@@ -124,13 +126,13 @@ namespace GodotGameFramework
                 return m_Sound;
             }
         }
-        public static Tables DataTable
+        public static DataTableComponent DataTable
         {
             get
             {
                 if (m_DataTable == null)
                 {
-                    m_DataTable = GameEntry.GetComponent<DataTableComponent>()?.GetTables();
+                    m_DataTable = GameEntry.GetComponent<DataTableComponent>();
                 }
                 return m_DataTable;
             }
@@ -177,6 +179,17 @@ namespace GodotGameFramework
                     m_Scene = GameEntry.GetComponent<SceneComponent>();
                 }
                 return m_Scene;
+            }
+        }
+        public static WebRequestComponent WebRequest
+        {
+            get
+            {
+                if (m_WebRequest == null)
+                {
+                    m_WebRequest = GameEntry.GetComponent<WebRequestComponent>();
+                }
+                return m_WebRequest;
             }
         }
     }

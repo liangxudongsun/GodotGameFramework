@@ -12,18 +12,22 @@ using GodotGameFramework;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>
-/// 启动流程。
+/// 启动流程。检测框架组件是否正常
 /// </summary>
 public class ProcedureLaunch : ProcedureBase
 {
-    private static readonly ConcurrentDictionary<string, bool> m_LoadFlagDic = new ConcurrentDictionary<string, bool>();
-    private static readonly string[] m_LoadFlagKeys = { "Localization", "UIGroup", "EntityGroup", "SoundGroup" };
+    private static readonly ConcurrentDictionary<string, bool> m_Components = new ConcurrentDictionary<string, bool>();
+    private static readonly string[] m_NeedComponents = { "Base", "Event", "Fsm", "Setting", "DataNode", "Resource", "Entity", "UI", "Sound", "Localization", "DataTable", "WebRequest" };
     /// <summary>
     /// 状态初始化。
     /// </summary>
     protected internal override void OnInit(ProcedureOwner procedureOwner)
     {
         base.OnInit(procedureOwner);
+        foreach (var component in m_NeedComponents)
+        {
+            m_Components.TryAdd(component, false);
+        }
     }
 
     /// <summary>
@@ -36,82 +40,29 @@ public class ProcedureLaunch : ProcedureBase
 
         Log.Info($"Log 系统正常");
         Log.Info($"[LaunchProcedure] 验证框架组件...");
-        Log.Info($"[BaseComponent]: {(GF.Base != null ? "OK" : "缺失")}");
-        Log.Info($"[EventComponent]: {(GF.Event != null ? "OK" : "缺失")}");
-        Log.Info($"[FsmComponent]: {(GF.Fsm != null ? "OK" : "缺失")}");
-        Log.Info($"[SettingComponent]: {(GF.Setting != null ? "OK" : "缺失")}");
-        Log.Info($"[DataNodeComponent]: {(GF.DataNode != null ? "OK" : "缺失")}");
-        Log.Info($"[ResourceComponent]: {(GF.Resource != null ? "OK" : "缺失")}");
-        Log.Info($"[EntityComponent]: {(GF.Entity != null ? "OK" : "缺失")}");
-        Log.Info($"[UIComponent]: {(GF.UI != null ? "OK" : "缺失")}");
-        Log.Info($"[SoundComponent]: {(GF.Sound != null ? "OK" : "缺失")}");
-        Log.Info($"[LocalizationComponent]: {(GF.Localization != null ? "OK" : "缺失")}");
-        Log.Info($"[DataTableComponent]: {(GF.DataTable != null ? "OK" : "缺失")}");
-
-
-        LoadEntityGroup();
-        LoadLocalization();
-        LoadUIGroup();
-        LoadSoundGroup();
-
-        if (IsLoadAll())
+        m_Components.TryUpdate(m_NeedComponents[0], GF.Base != null, false);
+        m_Components.TryUpdate(m_NeedComponents[1], GF.Event != null, false);
+        m_Components.TryUpdate(m_NeedComponents[2], GF.Fsm != null, false);
+        m_Components.TryUpdate(m_NeedComponents[3], GF.Setting != null, false);
+        m_Components.TryUpdate(m_NeedComponents[4], GF.DataNode != null, false);
+        m_Components.TryUpdate(m_NeedComponents[5], GF.Resource != null, false);
+        m_Components.TryUpdate(m_NeedComponents[6], GF.Entity != null, false);
+        m_Components.TryUpdate(m_NeedComponents[7], GF.UI != null, false);
+        m_Components.TryUpdate(m_NeedComponents[8], GF.Sound != null, false);
+        m_Components.TryUpdate(m_NeedComponents[9], GF.Localization != null, false);
+        m_Components.TryUpdate(m_NeedComponents[10], GF.DataTable != null, false);
+        m_Components.TryUpdate(m_NeedComponents[11], GF.WebRequest != null, false);
+        if (m_Components.All(x => x.Value))
         {
-            ChangeState<ProcedureGame>(procedureOwner);
+            Log.Info($"[LaunchProcedure] 框架组件验证通过");
+            ChangeState<ProcedureUpdate>(procedureOwner);
         }
-
-    }
-    private void LoadLocalization()
-    {
-        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[0], false);
-        GF.Localization.ReadData(Utility.Text.Format(GameFolderConstant.Localizations, GF.Localization.Language.ToString()));
-        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[0], true, false);
-    }
-    private void LoadUIGroup()
-    {
-        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[1], false);
-        for (int i = 0; i < GF.UI.UIGroupRes.Groups.Length; i++)
+        else
         {
-            if (!GF.UI.AddUIGroup(GF.UI.UIGroupRes.Groups[i].Name, GF.UI.UIGroupRes.Groups[i].Depth))
-            {
-                Log.Warning("Add UI group '{0}' failure.", GF.UI.UIGroupRes.Groups[i].Name);
-                return;
-            }
+            Log.Fatal($"[LaunchProcedure] 框架组件{m_Components.Where(x => !x.Value).Select(x => x.Key).Aggregate((a, b) => a + "," + b)}验证失败");
         }
-        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[1], true, false);
-    }
-    private void LoadEntityGroup()
-    {
-        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[2], false);
-        var groups = GF.Entity.EntityGroupRes.EntityGroups;
-        for (int i = 0; i < groups.Length; i++)
-        {
-            if (!GF.Entity.AddEntityGroup(groups[i].Name, groups[i].ReleaseInterval, groups[i].Capacity, groups[i].ExpireTime, groups[i].Priority))
-            {
-                Log.Warning("Add Entity group '{0}' failure.", groups[i].Name);
-                return;
-            }
-        }
-        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[2], true, false);
-    }
-    private void LoadSoundGroup()
-    {
-        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[3], false);
-        var groups = GF.Sound.SoundGroupRes.SoundGroups;
-        for (int i = 0; i < groups.Length; i++)
-        {
-            if (!GF.Sound.AddSoundGroup(groups[i].Name, groups[i].AgentCounts, groups[i].AvoidBeingReplacedBySamePriority))
-            {
-                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
-                return;
-            }
-        }
-        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[3], true, false);
     }
 
-    private bool IsLoadAll()
-    {
-        return m_LoadFlagDic.All(x => x.Value);
-    }
 
     /// <summary>
     /// 离开流程。

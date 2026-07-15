@@ -14,12 +14,18 @@ namespace GodotGameFramework.Resource
         private EventComponent m_EventComponent;
         private IResourceManager m_ResourceManager;
         [Export]
-        private ResourceMode _resourceMode = ResourceMode.Editor;
-        [Export, UpperDescription("资源服务器地址")]
-        private string _ServerUrl = "http://localhost";
+        private ResourceMode _resourceMode = ResourceMode.Package;
+        [Export]
+        private UpdateSettingRes _UpdateSettingRes;
+
+        /// <summary>
+        /// 获取更新配置（RemoteUrl 等）。
+        /// </summary>
+        public UpdateSettingRes UpdateSettingRes => _UpdateSettingRes;
+
         private LoadAssetCallbacks m_LoadAssetCallbacks;
 
-        private ResourceMode ResourceMode
+        public ResourceMode ResourceMode
         {
             get => _resourceMode;
             set => _resourceMode = value;
@@ -32,14 +38,6 @@ namespace GodotGameFramework.Resource
             m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback, LoadAssetDependencyAssetCallback);
             m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
             m_EventComponent = GameEntry.GetComponent<EventComponent>();
-            if (!OS.HasFeature("editor")) // 不在编辑器模式下若资源模式为Editor，则默认设置为 Package 模式
-            {
-                if (_resourceMode == ResourceMode.Editor)
-                {
-                    _resourceMode = ResourceMode.Package;
-                    Log.Info("[ResourceComponent] 检测到不在编辑器模式下，将资源模式从 Editor 改为 Package，如果需要修改为其他模式，请在编辑器模式下修改为非 Editor 模式");
-                }
-            }
             m_ResourceManager.SetResourceMode(_resourceMode);
             m_ResourceManager.SetReadWritePath(ProjectSettings.GlobalizePath("user://"));
 
@@ -168,6 +166,10 @@ namespace GodotGameFramework.Resource
         private void LoadAssetDependencyAssetCallback(string entityAssetName, string dependencyAssetName, int loadedCount, int totalCount, object userData)
         {
 
+        }
+        public PackVersionList GetPackVersionList()
+        {
+            return m_ResourceManager.PackVersionList;
         }
     }
 }

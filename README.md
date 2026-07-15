@@ -15,11 +15,11 @@
 
 ## 📖 简介
 
-**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 + .NET 8 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置等子系统。
+**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 + .NET 8 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置、Web 请求等子系统。
 
 ### ✨ 核心特性
 
-- 🧩 **模块化架构** — 13 个独立子系统，高内聚低耦合，可按需替换
+- 🧩 **模块化架构** — 14 个独立子系统，高内聚低耦合，可按需替换
 - 🔄 **双层架构** — 纯 C# 核心层（无 Godot 依赖）+ Godot 运行时组件层
 - 🎯 **直接继承模式** — Entity/UI 脚本直接继承 Godot 原生类型 + 框架接口，无中间基类
 - 📊 **数据管线** — 集成 Luban，Excel 配置 → C# 代码 + 二进制数据
@@ -173,13 +173,22 @@ CharacterBody2D + IEntity + IActor
 - ✅ **精简 IResourceManager** — 从 Unity 版本 97 个成员精简为 6 个核心方法，移除所有 Unity 管线遗留代码
 - ✅ **Godot 原生异步加载** — `ResourceLoader.LoadThreadedRequest` 后台线程加载，`Queue<LoadAssetTask>` 内部调度管理
 - ✅ **同步读写** — 二进制文件通过 `FileAccess` 同步读写，`LoadBinary` 在调用时立即返回结果
-- ✅ **子包加载系统** — 支持 `Package` 和 `Updatable` 两种模式
+- ✅ **子包加载系统** — 支持 `Package` 和 `Updatable` 两种模式，加载时机由流程控制
   - `Package` 模式：从 exe 同级 `subpackages/` 目录加载 .pck 子包
-  - `Updatable` 模式：从 `user://subpackages/` 目录加载可更新的子包
+  - `Updatable` 模式：先加载 exe 旁基础包，再用 `user://subpackages/` 的更新包覆盖
 - ✅ **版本清单** — `GameFrameworkVersion.dat` 记录所有子包名称、大小、哈希，用于校验和热更新
 - ✅ **多模式设计** — `ResourceMode` 枚举：`Package` / `Updatable` / `UpdatableWhilePlaying`
 - ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`, `LoadAssetAsync<T>()`, `LoadSceneAsync()`
 - ✅ `HasAsset()` — 检查资源/二进制文件是否存在
+- ✅ **EasySave** — JSON 序列化存储工具（`SaveInUserAsync<T>()` / `LoadInUserAsync<T>()`），用于版本文件持久化
+
+### Web 请求模块 (WebRequestComponent)
+
+- ✅ **异步 API** — `SendRequestAsync(url)` 返回 `Task<WebRequestCompleteEventArgs>`，支持 GET / POST
+- ✅ **事件驱动** — `SendRequest(url)` 通过 `EventComponent` 推送结果，适合多请求集中处理
+- ✅ **超时控制** — 默认 30s，可配置，超时自动取消底层请求
+- ✅ **响应解析** — `WebRequestCompleteEventArgs` 提供 `Body`(byte[])、`ResponseCode`、`Headers`、`Url`
+- ✅ **纯 C# 层** — `IWebRequestManager` + `WebRequestManager`（TaskPool 驱动）在 `GameFramework/WebRequest/` 中保留
 
 ### 事件模块 (EventComponent)
 
@@ -191,7 +200,7 @@ CharacterBody2D + IEntity + IActor
 
 - ✅ 基于 `IFsmManager` 的流程状态机
 - ✅ Inspector 配置可用的 Procedure 类型
-- ✅ 启动流程：`ProcedureLaunch`（组件验证、数据表加载、组初始化）→ `ProcedureGame`（游戏主循环）→ `ProcedureUpdate`（更新检查）
+- ✅ 启动流程链：`ProcedureLaunch`（组件验证）→ `ProcedureUpdate`（热更新检测与下载）→ `ProcedurePrelode`（子包加载、配置、实体组初始化）→ `ProcedureGame`（游戏主循环）
 - ✅ 通过 `ChangeState<T>(procedureOwner)` 切换流程
 
 ### 数据表模块 (DataTableComponent)
@@ -247,22 +256,26 @@ GodotProject/                 ← Godot 项目根
 │   │   ├── Entity/ UI/ Sound/ Resource/ Event/
 │   │   ├── Fsm/ Procedure/ Config/ DataTable/
 │   │   ├── DataNode/ ObjectPool/ Setting/
-│   │   ├── Localization/ Scene/
-│   │   ├── Download/ Network/  ← 纯 C# 层已实现，Godot 桥接组件待实现
+│   │   ├── Localization/ Scene/ Properties/
+│   │   ├── Download/ Network/  ← 纯 C# 层已实现，Godot 桥接待实现
 │   │   ├── Debugger/            ← 纯 C# 层已实现，Godot 窗口待实现
-│   │   └── Utility/ WebRequest/ ← WebRequest 纯 C# 已实现，Utility（压缩、加密等）
+│   │   └── Utility/ WebRequest/ ← Utility（压缩、加密等）, WebRequest 纯 C# 层
 │   └── GodotGameFrameworkCore/  ← Godot 运行时组件
 │       ├── Base/             ← GameEntry, GF, GodotComponent, Log
 │       ├── Entity/           ← EntityComponent, DefaultEntityHelper
 │       ├── UI/               ← UIComponent, DefaultUIFormHelper, IStringKey
 │       ├── Sound/            ← SoundComponent + PlayBGM/PlaySFX 扩展
-│       ├── Resource/         ← ResourceManager（Godot.ResourceLoader 异步）+ ResourceComponent 桥接
+│       ├── Resource/         ← ResourceManager + ResourceComponent + EasySave
+│       ├── WebRequest/       ← WebRequestComponent（异步 API + 事件）+ WebRequestAgent
+│       ├── Scene/ Localization/
 │       ├── Event/ Fsm/ Procedure/ Config/
 │       ├── DataTable/ DataNode/ ObjectPool/ Setting/
 │       ├── SingletonSystem/  ← SingletonNode<T> 泛型单例
+│       ├── Templet/          ← UIForm / Entity 脚本生成模板
+│       ├── Variable/         ← VarInt32, VarString, VarBoolean 等
 │       ├── Utility/          ← NodeExtension, PhysicsCheck2D
 │       ├── Lib/              ← LubanLib (ByteBuf, BeanBase)
-│       └── Json/              ← Newtonsoft.Json helper（NuGet 13.0.4）
+│       └── Json/             ← Newtonsoft.Json helper + EasySave
 │   └── GameFramework.tscn    ← 主场景
 ├── TheGame/                  ← 当前活跃游戏项目
 │   ├── Entitys/              ← 实体场景 (.tscn)
@@ -270,14 +283,17 @@ GodotProject/                 ← Godot 项目根
 │   │   ├── Entity/           ← 实体脚本（ActorEntity, CatEntity, AngerEntity, GanTanEntity.Logic）
 │   │   ├── UI/               ← UI 脚本（MainForm, MenuForm.Logic, GameOver.Logic, PauseMenuForm, TestOverlayForm, ScorePopupItem）
 │   │   ├── Event/            ← 自定义事件参数（BlockClickedEventArgs 等）
-│   │   ├── Procedure/        ← 流程（ProcedureLaunch, ProcedureGame, ProcedureUpdate）
+│   │   ├── Procedure/        ← 流程（ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame）
 │   │   ├── ObjectPool/       ← 自定义池对象
 │   │   ├── Resources/        ← 资源组定义（EntityGroup, SoundGroup, UIGroup）+ 生成配置（ScriptGenerateRes）
 │   │   └── GameProto/
 │   │       ├── GameConfig/   ← Luban 生成的 C# 数据类
 │   │       ├── EntityGe/     ← 实体脚本 Ge（GanTanEntity 等，自动覆盖）
 │   │       └── UIGe/         ← UI 脚本 Ge（MenuForm, MainForm, GameOver 等，自动覆盖）
-│   ├── DataTables/           ← Luban 生成的二进制数据 (.bytes)
+│   ├── DataTables/
+│   │   ├── GameConfigs/      ← Luban 生成的二进制配置 (.bytes)
+│   │   └── Localizations/    ← 本地化文本 (.txt)
+│   ├── Resources/            ← Godot 资源配置（UpdateSettingRes, ScriptGenerateRes 等 .tres）
 │   ├── UIs/                  ← UI 场景 (.tscn)
 │   ├── Sprites/ Scenes/ Audios/ Fonts/ Themes/
 └── addons/                   ← 编辑器插件
@@ -530,7 +546,7 @@ GameFramework (GameEntry)
 2. `GameFrameworkComponent.OnInit()` → `GameEntry.RegisterComponent(this)`
 3. `GameEntry._Process()` 驱动 `GameFrameworkEntry.Update()` 轮询所有模块
 4. `GameEntry.CheckProcedure()` 在 `ProcedureComponent` 注册后自动调用 `StartProcedure()`
-5. `ProcedureLaunch` 验证组件、加载组配置和本地化 → 切换到 `ProcedureGame`
+5. `ProcedureLaunch` 验证组件 → `ProcedureUpdate` 检测更新 → `ProcedurePrelode` 加载子包和配置 → `ProcedureGame`
 
 ---
 
@@ -602,7 +618,8 @@ GameFramework (GameEntry)
 ### 网络系统
 
 - [x] **纯 C# 层** — `NetworkManager`（含 TCP 通道、心跳、封包处理）、`DownloadManager`（含下载计数器）、`WebRequestManager` 已完整实现
-- [ ] **Godot 桥接组件** — `NetworkComponent`、`DownloadComponent`、`WebRequestComponent` 待实现
+- [x] **WebRequestComponent** — 基于 Godot `HttpRequest` 的异步 API + 事件驱动，支持 GET/POST、超时控制
+- [ ] **NetworkComponent / DownloadComponent** — Godot 桥接组件待实现
 
 ### 场景系统
 

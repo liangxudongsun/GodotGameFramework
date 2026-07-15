@@ -10,16 +10,12 @@ namespace GameFramework.Resource
     public enum ResourceMode : byte
     {
         /// <summary>
-        /// 编辑器模式，不会加载资源目录
-        /// </summary>
-        Editor = 0,
-        /// <summary>
-        /// 单机模式。所有资源打包在游戏内，直接加载。
+        /// 单机模式。所有资源打包在主包内
         /// </summary>
         Package = 1,
 
         /// <summary>
-        /// 预下载的可更新模式。启动时检查远程版本，下载差异 .pck。
+        /// 热更模式，自定义热更包
         /// </summary>
         Updatable = 2,
     }

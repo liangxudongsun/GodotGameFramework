@@ -17,6 +17,7 @@ namespace GameFramework.Resource
         private readonly Queue<LoadAssetTask> m_TaskPool;
         private string m_ReadWritePath;
         PackVersionList m_PackVersionList;
+        public PackVersionList PackVersionList => m_PackVersionList;
 
         public ResourceManager()
         {
@@ -26,10 +27,15 @@ namespace GameFramework.Resource
         public void SetReadWritePath(string readWritePath = null)
         {
             m_ReadWritePath = readWritePath ?? ProjectSettings.GlobalizePath("user://");
-            if (ResourceMode == ResourceMode.Updatable)
-                DeserializeUpdatablePackVersion();
-            else if (ResourceMode == ResourceMode.Package)
-                DeserializePackagePackVersion();
+            switch (ResourceMode)
+            {
+                case ResourceMode.Package:
+                    Log.Info("单机包只有默认只有主包,无需版本对比");
+                    break;
+                case ResourceMode.Updatable:
+                    DeserializeUpdatablePackVersion();
+                    break;
+            }
         }
 
 
@@ -141,13 +147,13 @@ namespace GameFramework.Resource
             m_TaskPool.Clear();
         }
 
-        private void DeserializeUpdatablePackVersion()
+        public void DeserializeUpdatablePackVersion()
         {
             // 尝试读取本地版本信息
             string filePath = System.IO.Path.Combine(m_ReadWritePath, GameFrameworkVersionData);
             if (!System.IO.File.Exists(filePath))
             {
-                Log.Info("[ResourceManager] 版本文件不存在，跳过子包加载: {0}", filePath);
+                Log.Info("[ResourceManager] 热更模式下，版本文件不存在 {0}", filePath);
                 return;
             }
 
@@ -159,95 +165,11 @@ namespace GameFramework.Resource
                 if (m_PackVersionList.Packs == null || m_PackVersionList.Packs.Length == 0)
                 {
                     Log.Warning("[ResourceManager] 版本文件无包记录。");
-                    return;
                 }
-
-                int loaded = 0;
-                foreach (var pack in m_PackVersionList.Packs)
-                {
-                    string packFileName = pack.Name + ".pck";
-                    string subDir = System.IO.Path.Combine(m_ReadWritePath, SubPack);
-                    string packPath = System.IO.Path.Combine(subDir, packFileName);
-
-                    if (System.IO.File.Exists(packPath))
-                    {
-                        bool ok = ProjectSettings.LoadResourcePack(packPath);
-                        if (ok)
-                        {
-                            loaded++;
-                            Log.Info("[ResourceManager] 子包加载成功: {0}", packPath);
-                        }
-                        else
-                        {
-                            Log.Warning("[ResourceManager] 子包加载失败: {0}", packPath);
-                        }
-                    }
-                    else
-                    {
-                        Log.Warning("[ResourceManager] 子包文件不存在: {0}", packPath);
-                    }
-                }
-
-                Log.Info("[ResourceManager] 子包加载完成: {0}/{1}", loaded, m_PackVersionList.Packs.Length);
             }
             catch (Exception ex)
             {
                 Log.Warning("[ResourceManager] 版本文件解析失败: {0}", ex.Message);
-            }
-        }
-        private void DeserializePackagePackVersion()
-        {
-            string projectRoot = ProjectSettings.GlobalizePath("res://");
-            string exeDir = OS.HasFeature("editor") ? $"{projectRoot}" + "../../Godot" : System.IO.Path.GetDirectoryName(OS.GetExecutablePath());
-            string manifestPath = System.IO.Path.Combine(exeDir, SubPack, GameFrameworkVersionData);
-            if (!System.IO.File.Exists(manifestPath))
-            {
-                Log.Info("[ResourceManager] 清单文件不存在，跳过子包加载: {0}", manifestPath);
-                return;
-            }
-
-            try
-            {
-                string content = System.IO.File.ReadAllText(manifestPath);
-                m_PackVersionList = System.Text.Json.JsonSerializer.Deserialize<PackVersionList>(content);
-
-                if (m_PackVersionList.Packs == null || m_PackVersionList.Packs.Length == 0)
-                {
-                    Log.Warning("[ResourceManager] 清单文件无包记录。");
-                    return;
-                }
-
-                int loaded = 0;
-
-                foreach (var pack in m_PackVersionList.Packs)
-                {
-                    string packFileName = pack.Name + ".pck";
-                    string packPath = System.IO.Path.Combine(exeDir, SubPack, packFileName);
-
-                    if (System.IO.File.Exists(packPath))
-                    {
-                        bool ok = ProjectSettings.LoadResourcePack(packPath);
-                        if (ok)
-                        {
-                            loaded++;
-                            Log.Info("[ResourceManager] 子包加载成功: {0}", packPath);
-                        }
-                        else
-                        {
-                            Log.Warning("[ResourceManager] 子包加载失败: {0}", packPath);
-                        }
-                    }
-                    else
-                    {
-                        Log.Warning("[ResourceManager] 子包文件不存在: {0}", packPath);
-                    }
-                }
-
-                Log.Info("[ResourceManager] 子包加载完成: {0}/{1}", loaded, m_PackVersionList.Packs.Length);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning("[ResourceManager] 清单文件解析失败: {0}", ex.Message);
             }
         }
     }

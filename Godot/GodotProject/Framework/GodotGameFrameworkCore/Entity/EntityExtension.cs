@@ -17,12 +17,12 @@ namespace GodotGameFramework.Entity
         #region 显示实体
         public static int ShowEntity(this EntityComponent entityComponent, EntityId entityId, object userData = null)
         {
-            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            if (GF.DataTable?.GetTables().TbEntityConfig?.DataList == null)
             {
                 Log.Error("EntityConfig data table is not available.");
                 return -1;
             }
-            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            EntityConfig cfg = GF.DataTable.GetTables().TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
             if (cfg == null)
             {
                 Log.Error($"Entity {entityId} not found in EntityConfig");
@@ -49,12 +49,12 @@ namespace GodotGameFramework.Entity
         /// <returns></returns>
         public static async Task<T> ShowEntityAsync<T>(this EntityComponent entityComponent, EntityId entityId, object userData = null) where T : Node, IEntity
         {
-            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            if (GF.DataTable?.GetTables().TbEntityConfig?.DataList == null)
             {
                 Log.Error("EntityConfig data table is not available.");
                 return null;
             }
-            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            EntityConfig cfg = GF.DataTable.GetTables().TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
             if (cfg == null)
             {
                 Log.Error($"Entity {entityId} not found in EntityConfig");
@@ -67,12 +67,12 @@ namespace GodotGameFramework.Entity
         }
         public static async Task<IEntity> ShowEntityAsync(this EntityComponent entityComponent, EntityId entityId, object userData = null)
         {
-            if (GF.DataTable?.TbEntityConfig?.DataList == null)
+            if (GF.DataTable?.GetTables().TbEntityConfig?.DataList == null)
             {
                 Log.Error("EntityConfig data table is not available.");
                 return null;
             }
-            EntityConfig cfg = GF.DataTable.TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
+            EntityConfig cfg = GF.DataTable.GetTables().TbEntityConfig.DataList.FirstOrDefault(x => x.EntityId == entityId);
             if (cfg == null)
             {
                 Log.Error($"Entity {entityId} not found in EntityConfig");

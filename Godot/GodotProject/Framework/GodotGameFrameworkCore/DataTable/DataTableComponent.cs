@@ -25,9 +25,9 @@ namespace GodotGameFramework
         /// </summary>
         private IDataTableManager m_DataTableManager = null;
 
-        public override void OnEnter()
+        public override void OnInit()
         {
-            base.OnEnter();
+            base.OnInit();
             m_DataTableManager = GameFrameworkEntry.GetModule<IDataTableManager>();
             if (m_DataTableManager == null)
             {
@@ -43,7 +43,7 @@ namespace GodotGameFramework
         /// </summary>
         public Tables GetTables()
         {
-            return m_DataTableManager.GetTables();
+            return m_DataTableManager?.GetTables();
         }
 
     }

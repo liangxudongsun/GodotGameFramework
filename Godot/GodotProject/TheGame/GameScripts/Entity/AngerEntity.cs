@@ -28,7 +28,7 @@ public partial class AngerEntity : ActorEntity
         base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
         if (isNewInstance)
         {
-            m_Config = GF.DataTable.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
+            m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
         }
         Team = EntityTeam.Enemy;
         m_HSlider.MaxValue = m_ActorData.MaxHp;

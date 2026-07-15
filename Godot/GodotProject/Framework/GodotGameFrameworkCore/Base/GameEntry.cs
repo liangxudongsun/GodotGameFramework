@@ -31,7 +31,7 @@ namespace GodotGameFramework
             }
             catch (Exception ex)
             {
-                GD.PrintErr($"[GGF] Startup error: {ex.Message}");
+                GD.PrintErr($"[GameEntry] Startup error: {ex.Message}");
                 if (!m_StartProcedure)
                 {
                     m_StartProcedure = true;
@@ -57,11 +57,6 @@ namespace GodotGameFramework
                 {
                     procedureComponent.StartProcedure();
                     m_StartProcedure = true;
-                    Log.Info("----------------验证完成，游戏流程开始----------------");
-                }
-                else
-                {
-                    Log.Info("----------------验证未完成，等待组件加载----------------");
                 }
             }
         }

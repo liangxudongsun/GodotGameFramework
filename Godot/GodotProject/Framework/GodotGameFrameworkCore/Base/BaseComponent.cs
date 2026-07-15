@@ -23,15 +23,12 @@ namespace GodotGameFramework
         {
             public static readonly string JsonHelper = "m_JsonHelper";
             public static readonly string TextHelper = "m_TextHelper";
-            public static readonly string VersionHelper = "m_VersionHelper";
             public static readonly string LogHelper = "m_LogHelper";
         }
         [Export]
         public Language EditorLanguage;
         [Export]
         private string m_TextHelper = "GodotGameFramework.DefaultTextHelper";
-        [Export]
-        private string m_VersionHelper = "GodotGameFramework.DefaultVersionHelper";
         [Export]
         private string m_LogHelper = "GodotGameFramework.DefaultLogHelper";
         [Export]
@@ -154,12 +151,7 @@ namespace GodotGameFramework
             base.OnInit();
             InitLogHelper();
             InitTextHelper();
-            InitVersionHelper();
             InitJsonHelper();
-            // 输出框架版本信息
-            Log.Info("Game Framework Version: {0}", GameFramework.Version.GameFrameworkVersion);
-            Log.Info("Game Version: {0} ({1})", GameFramework.Version.GameVersion,
-                GameFramework.Version.InternalGameVersion);
             Log.Info("Godot Engine Version: {0}", Engine.GetVersionInfo()["string"].AsString());
 
             // 设置帧率和游戏速度
@@ -216,29 +208,6 @@ namespace GodotGameFramework
             catch (Exception exception)
             {
                 Log.Error("Can not create text helper instance with exception '{0}'.", exception);
-            }
-        }
-
-        /// <summary>
-        /// 初始化版本信息 Helper。
-        ///
-        /// VersionHelper 提供游戏版本号信息。
-        /// 在 Godot 中，版本号可以从项目设置中读取。
-        /// </summary>
-        private void InitVersionHelper()
-        {
-            try
-            {
-                Type versionHelperType = Utility.Assembly.GetType(m_VersionHelper);
-                if (versionHelperType != null)
-                {
-                    GameFramework.Version.SetVersionHelper((GameFramework.Version.IVersionHelper)Activator.CreateInstance(versionHelperType));
-                    Log.Info("VersionHelper: {0}", versionHelperType.FullName);
-                }
-            }
-            catch (Exception exception)
-            {
-                Log.Fatal("Can not create version helper instance with exception '{0}'.", exception);
             }
         }
 

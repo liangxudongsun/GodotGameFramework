@@ -13,6 +13,7 @@ namespace GameFramework.Resource
         /// 初始化资源管理器（加载子包和版本清单）。由 ResourceComponent 在 OnInit 时调用。
         /// </summary>
         void SetReadWritePath(string readWritePath);
+        PackVersionList PackVersionList { get; }
 
         /// <summary>
         /// 设置资源模式。由 ResourceComponent 在 OnInit 时调用。
@@ -38,5 +39,9 @@ namespace GameFramework.Resource
         /// 获取二进制资源的长度
         /// </summary>
         int GetBinaryLength(string binaryAssetName);
+        /// <summary>
+        /// 反序列化更新包版本清单。
+        /// </summary>
+        void DeserializeUpdatablePackVersion();
     }
 }

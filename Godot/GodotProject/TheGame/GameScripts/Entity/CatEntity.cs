@@ -37,7 +37,7 @@ public partial class CatEntity : ActorEntity
 		base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
 		if (isNewInstance)
 		{
-			m_Config = GF.DataTable.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
+			m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 
 			m_AimShape = new CircleShape2D();
 			m_AimShape.Radius = m_Config.CheckRange;

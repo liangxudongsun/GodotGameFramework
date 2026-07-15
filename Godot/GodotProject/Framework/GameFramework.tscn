@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://cgmgsagnrr8o2" path="res://Framework/GodotGameFrameworkCore/Fsm/FsmComponent.cs" id="4_ynwf7"]
 [ext_resource type="Resource" uid="uid://deyi8ww2xxbrd" path="res://TheGame/Resources/SoundGroupRes.tres" id="5_6l6dh"]
 [ext_resource type="Script" uid="uid://chpprc2tan5wv" path="res://Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs" id="5_qii40"]
+[ext_resource type="Resource" uid="uid://bcd8sxd8oxjqv" path="res://TheGame/Resources/UpdateSettingRes.tres" id="5_y55im"]
 [ext_resource type="Script" uid="uid://cbq1w80o80jck" path="res://Framework/GodotGameFrameworkCore/Setting/SettingComponent.cs" id="6_set"]
 [ext_resource type="Script" uid="uid://b1rixcpdvl3ij" path="res://Framework/GodotGameFrameworkCore/DataTable/DataTableComponent.cs" id="8_dt"]
 [ext_resource type="Script" uid="uid://bohum5g5jh5j" path="res://Framework/GodotGameFrameworkCore/DataNode/DataNodeComponent.cs" id="9_dn"]
@@ -18,6 +19,7 @@
 [ext_resource type="Script" uid="uid://4blpnjncpj6y" path="res://Framework/GodotGameFrameworkCore/Sound/SoundComponent.cs" id="14_snd"]
 [ext_resource type="Script" uid="uid://utpdibg2iugi" path="res://Framework/GodotGameFrameworkCore/Localization/LocalizationComponent.cs" id="15_loc"]
 [ext_resource type="Script" uid="uid://d3gyuw0e6gaa5" path="res://Framework/GodotGameFrameworkCore/Scene/SceneComponent.cs" id="15_pcfq2"]
+[ext_resource type="Script" uid="uid://ce4he7fdyy4nt" path="res://Framework/GodotGameFrameworkCore/WebRequest/WebRequestComponent.cs" id="19_f83q0"]
 
 [node name="GameFramework" type="Node" unique_id=134030765]
 script = ExtResource("1_781av")
@@ -31,20 +33,22 @@ script = ExtResource("3_353g6")
 
 [node name="Resource" type="Node" parent="." unique_id=553100123]
 script = ExtResource("11_res")
+_resourceMode = 2
+_UpdateSettingRes = ExtResource("5_y55im")
+
+[node name="DataTable" type="Node" parent="." unique_id=447100413]
+script = ExtResource("8_dt")
 
 [node name="Procedure" type="Node" parent="." unique_id=1553213140]
 script = ExtResource("5_qii40")
 EnterProcedure = "ProcedureLaunch"
-Procedures = PackedStringArray("ProcedureGame", "ProcedureLaunch")
+Procedures = PackedStringArray("ProcedureGame", "ProcedureLaunch", "ProcedurePrelode", "ProcedureUpdate")
 
 [node name="Scene" type="Node" parent="." unique_id=883403288]
 script = ExtResource("15_pcfq2")
 
 [node name="Fsm" type="Node" parent="." unique_id=423859323]
 script = ExtResource("4_ynwf7")
-
-[node name="DataTable" type="Node" parent="." unique_id=447100413]
-script = ExtResource("8_dt")
 
 [node name="DataNode" type="Node" parent="." unique_id=921753914]
 script = ExtResource("9_dn")
@@ -69,3 +73,6 @@ SoundGroupRes = ExtResource("5_6l6dh")
 
 [node name="Localization" type="Node" parent="." unique_id=445100001]
 script = ExtResource("15_loc")
+
+[node name="WebRequest" type="Node" parent="." unique_id=890324492]
+script = ExtResource("19_f83q0")

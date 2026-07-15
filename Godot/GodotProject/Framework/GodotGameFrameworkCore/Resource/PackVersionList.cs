@@ -3,7 +3,7 @@ using System;
 namespace GameFramework.Resource
 {
     [Serializable]
-    public struct PackVersionList
+    public class PackVersionList
     {
         public string Version { get; set; }
         public Pack[] Packs { get; set; }

@@ -1,0 +1,105 @@
+//------------------------------------------------------------
+// 启动流程（检测更新）
+// 游戏的入口流程，完成框架初始化、加载配置和数据表、创建实体组
+//------------------------------------------------------------
+
+using System.Collections.Concurrent;
+using System.Linq;
+using GameConfig.Constant;
+using GameFramework;
+using GameFramework.Procedure;
+using GodotGameFramework;
+using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
+
+/// <summary>
+/// 启动流程。
+/// </summary>
+public class ProcedurePrelode : ProcedureBase
+{
+    private static readonly ConcurrentDictionary<string, bool> m_LoadFlagDic = new ConcurrentDictionary<string, bool>();
+    private static readonly string[] m_LoadFlagKeys = { "Localization", "UIGroup", "EntityGroup", "SoundGroup" };
+    /// <summary>
+    /// 状态初始化。
+    /// </summary>
+    protected internal override void OnInit(ProcedureOwner procedureOwner)
+    {
+        base.OnInit(procedureOwner);
+    }
+
+    /// <summary>
+    /// 进入流程。
+    /// 执行所有初始化工作后立即切换到菜单流程。
+    /// </summary>
+    protected internal override void OnEnter(ProcedureOwner procedureOwner)
+    {
+        base.OnEnter(procedureOwner);
+        LoadEntityGroup();
+        LoadLocalization();
+        LoadUIGroup();
+        LoadSoundGroup();
+
+        if (IsLoadAll())
+        {
+            ChangeState<ProcedureGame>(procedureOwner);
+        }
+    }
+    private void LoadLocalization()
+    {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[0], false);
+        GF.Localization.ReadData(Utility.Text.Format(GameFolderConstant.Localizations, GF.Localization.Language.ToString()));
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[0], true, false);
+    }
+    private void LoadUIGroup()
+    {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[1], false);
+        for (int i = 0; i < GF.UI.UIGroupRes.Groups.Length; i++)
+        {
+            if (!GF.UI.AddUIGroup(GF.UI.UIGroupRes.Groups[i].Name, GF.UI.UIGroupRes.Groups[i].Depth))
+            {
+                Log.Warning("Add UI group '{0}' failure.", GF.UI.UIGroupRes.Groups[i].Name);
+                return;
+            }
+        }
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[1], true, false);
+    }
+    private void LoadEntityGroup()
+    {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[2], false);
+        var groups = GF.Entity.EntityGroupRes.EntityGroups;
+        for (int i = 0; i < groups.Length; i++)
+        {
+            if (!GF.Entity.AddEntityGroup(groups[i].Name, groups[i].ReleaseInterval, groups[i].Capacity, groups[i].ExpireTime, groups[i].Priority))
+            {
+                Log.Warning("Add Entity group '{0}' failure.", groups[i].Name);
+                return;
+            }
+        }
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[2], true, false);
+    }
+    private void LoadSoundGroup()
+    {
+        m_LoadFlagDic.TryAdd(m_LoadFlagKeys[3], false);
+        var groups = GF.Sound.SoundGroupRes.SoundGroups;
+        for (int i = 0; i < groups.Length; i++)
+        {
+            if (!GF.Sound.AddSoundGroup(groups[i].Name, groups[i].AgentCounts, groups[i].AvoidBeingReplacedBySamePriority))
+            {
+                Log.Warning("Add UI group '{0}' failure.", groups[i].Name);
+                return;
+            }
+        }
+        m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[3], true, false);
+    }
+
+    private bool IsLoadAll()
+    {
+        return m_LoadFlagDic.All(x => x.Value);
+    }
+    /// <summary>
+    /// 离开流程。
+    /// </summary>
+    protected internal override void OnLeave(ProcedureOwner procedureOwner, bool isShutdown)
+    {
+        base.OnLeave(procedureOwner, isShutdown);
+    }
+}

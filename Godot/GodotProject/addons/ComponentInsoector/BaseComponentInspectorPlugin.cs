@@ -19,7 +19,7 @@ namespace GodotGameFramework.Editor
         }
         public override bool _ParseProperty(GodotObject @object, Variant.Type type, string name, PropertyHint hintType, string hintString, PropertyUsageFlags usage, bool wide)
         {
-            if (name == BaseComponent.Parameters.JsonHelper || name == BaseComponent.Parameters.TextHelper || name == BaseComponent.Parameters.VersionHelper || name == BaseComponent.Parameters.LogHelper)
+            if (name == BaseComponent.Parameters.JsonHelper || name == BaseComponent.Parameters.TextHelper || name == BaseComponent.Parameters.LogHelper)
                 return true;
             return false;
         }
@@ -28,7 +28,6 @@ namespace GodotGameFramework.Editor
             base._ParseBegin(@object);
             DrawJsonHelperDropDown(@object);
             DrawTextHelperDropDown(@object);
-            DrawVersionHelperDropDown(@object);
             DrawLogHelperDropDown(@object);
         }
 
@@ -74,48 +73,6 @@ namespace GodotGameFramework.Editor
                 @object.Set(BaseComponent.Parameters.LogHelper, selected);
             };
 
-            hbox.AddChild(dropdown);
-            AddCustomControl(hbox);
-        }
-
-
-        private void DrawVersionHelperDropDown(GodotObject @object)
-        {
-            Type[] versionHelpers = Utility.Assembly.GetAssignableFormTypes(typeof(GameFramework.Version.IVersionHelper));
-            // 左右排版：Label | OptionButton 放在同一行
-            HBoxContainer hbox = new HBoxContainer();
-            hbox.CustomMinimumSize = new Vector2(0, 28);
-            hbox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            Label enterLabel = new Label();
-            enterLabel.Text = "Version Helper";
-            enterLabel.VerticalAlignment = VerticalAlignment.Center;
-            enterLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            hbox.AddChild(enterLabel);
-            OptionButton dropdown = new OptionButton();
-            dropdown.CustomMinimumSize = new Vector2(0, 0);
-            dropdown.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            string currentEnter = "";
-            var enterVar = @object.Get(BaseComponent.Parameters.VersionHelper);
-            if (enterVar.VariantType == Variant.Type.String)
-                currentEnter = enterVar.AsString();
-            int selectedIdx = -1;
-            foreach (var procType in versionHelpers)
-            {
-                if (procType.IsAbstract)
-                    continue;
-                int idx = dropdown.ItemCount;
-                dropdown.AddItem(procType.FullName);
-                if (procType.FullName == currentEnter)
-                    selectedIdx = idx;
-
-            }
-            if (selectedIdx >= 0)
-                dropdown.Select(selectedIdx);
-            dropdown.ItemSelected += (long index) =>
-            {
-                string selected = dropdown.GetItemText((int)index);
-                @object.Set(BaseComponent.Parameters.VersionHelper, selected);
-            };
             hbox.AddChild(dropdown);
             AddCustomControl(hbox);
         }
