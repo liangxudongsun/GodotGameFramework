@@ -38,7 +38,7 @@ public class ProcedureLaunch : ProcedureBase
     {
         base.OnEnter(procedureOwner);
 
-        Log.Info($"Log 系统正常");
+        Log.FeiBi();
         Log.Info($"[LaunchProcedure] 验证框架组件...");
         m_Components.TryUpdate(m_NeedComponents[0], GF.Base != null, false);
         m_Components.TryUpdate(m_NeedComponents[1], GF.Event != null, false);

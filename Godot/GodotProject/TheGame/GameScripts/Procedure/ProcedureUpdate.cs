@@ -8,9 +8,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Procedure;
 using GameFramework.Resource;
+using GameLogic;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Json;
@@ -44,25 +46,28 @@ public class ProcedureUpdate : ProcedureBase
             Log.Info("[ProcedureUpdate] Package 模式，跳过更新检测。");
             return;
         }
+        GF.UI.AddUIGroup("MainPack"); // 主包默认UI层
+        var login = (await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_LogInForm, "MainPack")) as LogInForm;
         Log.Info("[ProcedureUpdate] 开始检测更新...");
-
+        login.SetLogState("检测更新...", 0);
         string remoteUrl = GF.Resource.UpdateSettingRes?.RemoteUrl;
         if (string.IsNullOrEmpty(remoteUrl))
         {
             Log.Warning("[ProcedureUpdate] 未配置 RemoteUrl，跳过更新检测。");
-            SkipToNext(procedureOwner);
+            login.SetLogState("更新失败", 100);
             return;
         }
 
         // ── 1. 请求服务器版本文件 ──
         string versionUrl = $"{remoteUrl.TrimEnd('/')}/{ResourceManager.GameFrameworkVersionData}";
         Log.Info("[ProcedureUpdate] 请求版本文件: {0}", versionUrl);
+        login.SetLogState("请求版本文件...", 10);
 
         var result = await GF.WebRequest.SendRequestAsync(versionUrl);
         if (!IsHttpSuccess(result))
         {
-            Log.Warning("[ProcedureUpdate] 获取服务器版本失败，使用本地版本。");
-            SkipToNext(procedureOwner);
+            Log.Warning("[ProcedureUpdate] 获取服务器版本失败。");
+            login.SetLogState("更新失败", 10);
             return;
         }
 
@@ -75,6 +80,7 @@ public class ProcedureUpdate : ProcedureBase
 
         Log.Info("[ProcedureUpdate] 服务器版本: {0}, 包含 {1} 个子包",
             serverVersion.Version, serverVersion.Packs?.Length ?? 0);
+        login.SetLogState("开始更新...", 20);
 
         // ── 2. 与本地版本比对 ──
         var localVersion = GF.Resource.GetPackVersionList();
@@ -99,7 +105,7 @@ public class ProcedureUpdate : ProcedureBase
             await EasySave.SaveInUserAsync(serverVersion, ResourceManager.GameFrameworkVersionData);
             Log.Info("[ProcedureUpdate] 版本文件已保存。");
         }
-
+        login.SetLogState("更新完成", 100);
         LoadDownloadedPacks(serverVersion);
 
         ChangeState<ProcedurePrelode>(procedureOwner);

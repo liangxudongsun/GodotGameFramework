@@ -6,6 +6,8 @@
 //------------------------------------------------------------
 
 using GameFramework;
+using Godot;
+using GodotGameFramework.Extensions;
 using System.Diagnostics;
 
 namespace GodotGameFramework
@@ -2723,6 +2725,41 @@ namespace GodotGameFramework
         public static void Fatal<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15, T16 arg16)
         {
             GameFrameworkLog.Fatal(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
+        }
+        /// <summary>
+        /// 菲比啾比
+        /// </summary>
+        public static void FeiBi()
+        {
+            GameFrameworkLog.Info("      _                ___68.__________  __________.87___      _   _");
+            GameFrameworkLog.Info("   _c@7,_#_  +!248W#__.c7!:4$61$5?,=c84.__#,,25_  cc#,#,#___?:=03__");
+            GameFrameworkLog.Info("    53$?Wc._   _@,__.b@$#:$=,W?,#,10@;?110:+@@4,7W-++@;;._9-_  _6__");
+            GameFrameworkLog.Info("    3@9.=W;_   _@__0._9_+;7,.#44-:a=$=2WW116#5#;11a00@??!16.$__.=_");
+            GameFrameworkLog.Info("   _8@b___+___.?@0c,_______,-_  ___=-=,__ _@_$@__,a;944W-4411W:9__");
+            GameFrameworkLog.Info("      ___!W1.____ ___                       __     _  __,W9___W__ _");
+            GameFrameworkLog.Info("   __+W,____   _                      ___                 ___8$2___");
+            GameFrameworkLog.Info(" _:$__________     _______.=;07WW#WWWW70;=_______          _____-W;");
+            GameFrameworkLog.Info("5+____,W3,,+W_____a$$3=,,,,,,,,,,,,,,,,,,,,,,,!7W4=___           __");
+            GameFrameworkLog.Info("__ _4:,,,5W8987-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,-!,,cW3__ _       _");
+            GameFrameworkLog.Info("____7,,,#88885,,,,,,,,,;-,,,,,,,,,,,,,,,,,,,,2W30!2;,,=85___      _");
+            GameFrameworkLog.Info("____9,,,0988W,,,,,,,,,+,,,,,,,,b,,,,,,,,,,;,,,,8!?5$W3,,,,,,-Wc__   _");
+            GameFrameworkLog.Info("_?WW;,,,,:W9,,,:-,,,,+,,,,,,,,c,,,,,,,,,,,+,,,,,,,WW0,,,,,,,,,,,W,_");
+            GameFrameworkLog.Info(" __W,,,,2+,,,,,:,,,-c+-,,,-c-;,,,,,,,,,,,,c,;cc+-,,,,,,,,,,,,,,,,!9");
+            GameFrameworkLog.Info(" _W,,,,9-,,,,,c,,,,,b,,,,,,,,c,,,,,,,,,,,,cc,,,,,,-b,,,,,,,,,,,,,,W");
+            GameFrameworkLog.Info("$:=28.4,,,,,,;,,,,,:2$WWWWWWW?bcbccc--=;b,.c,-c=;,,,c,,,,,,;,,,,,,8");
+            GameFrameworkLog.Info("_____?=,,,,,,c,+-,W6..bWW$W2.b8=.......7WWW$$WWWW6b-;,,,,,,--,,,,,8");
+            GameFrameworkLog.Info("    _3,,,,,,,cb,c,,c$558-____W:...........;476a...5W9,,,,,,:-,,,,,8");
+            GameFrameworkLog.Info("    __?,,,,,,,W-=-c645555555558-.......7654W____.W..c,,,,,,c,,,,,,W");
+            GameFrameworkLog.Info("    __W,,,,,,-3=====1cccc;ccccW........W2344468545#.c,,,,,:,,,,,,=7");
+            GameFrameworkLog.Info("    __;a,,,,,,-8==!=a=1?;::?1,...!?!...7bccc+cccc0c=-,,,,,;,,,,,,2.");
+            GameFrameworkLog.Info("    ___$,,,,,,,,,68;=====........?==!....1a====!1==c,c,,-+,,,,,,,#_");
+            GameFrameworkLog.Info("      _W,,,,,,,,,,,,,,b7W5b........,......-===:;=+b+b-,c,,,,,,,,,9_");
+            GameFrameworkLog.Info("      _#,,,,,,,,,,,,,,,,71!!!0#=#0578WWWWWWWWW79W,,,cb,,,,,,,,,,,7_");
+            GameFrameworkLog.Info("     __$,,,,,,,,,,,,,,9!!!!8!__9a!!67--W88888-79__60,,,,,,,,,,,,,5_");
+            GameFrameworkLog.Info("     _b:,,,,,,,,,,,,,W!!!07___7=c!!!;WWW888842W__ __W=,,,,,,,,,,,5_");
+            GameFrameworkLog.Info("    __W,,,,,,,,,,,,,,8?!!3b__.$a!!c!!W$$9W98;87+,1WWWW8,,,,,,,,,,$_");
+            GameFrameworkLog.Info("    __6,,,,,,,,,,,,,c3!!?7____Wa-!!!!29$W9999WWWWW$c___5-,,,,,,,,-!");
+            GameFrameworkLog.Info("    __6,,,,,,,,,,,,,,,,,看到这个代表日志系统运行正常,,,,,,,,,,,,,,-!");
         }
     }
 }

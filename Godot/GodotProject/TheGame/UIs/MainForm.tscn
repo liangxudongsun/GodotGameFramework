@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://cymxn7v3et51l"]
 
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_87v1m"]
 [ext_resource type="Script" uid="uid://67jif6lbg6cv" path="res://TheGame/GameScripts/GameProto/UIGe/MainForm.cs" id="1_sjr3c"]
 
 [node name="MainForm" type="Control" unique_id=1859845138 node_paths=PackedStringArray("m_ScoreLabel", "m_TimerLabel")]
@@ -10,6 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = ExtResource("1_87v1m")
 script = ExtResource("1_sjr3c")
 m_ScoreLabel = NodePath("TopBar/Margin/HBox/m_ScoreLabel")
 m_TimerLabel = NodePath("TopBar/Margin/HBox/m_TimerLabel")

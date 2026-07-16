@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://igqtb6nv6bph"]
 
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_5smej"]
 [ext_resource type="Script" uid="uid://m1s35hw3uogn" path="res://TheGame/GameScripts/GameProto/UIGe/MenuForm.cs" id="1_62wwx"]
-[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/bullt.tres" id="2_5smej"]
 [ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/Fonts/simhei.ttf" id="3_62wwx"]
 [ext_resource type="Texture2D" uid="uid://8ys10qfv7yvm" path="res://TheGame/Sprites/paper.png" id="4_5smej"]
 
@@ -12,6 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_5smej")
 script = ExtResource("1_62wwx")
 m_Title = NodePath("VBox/m_Title")
 m_Subtitle = NodePath("VBox/m_Subtitle")
@@ -88,8 +89,6 @@ layout_mode = 2
 custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
 size_flags_horizontal = 4
-theme = ExtResource("2_5smej")
-theme_override_fonts/font = ExtResource("3_62wwx")
 theme_override_font_sizes/font_size = 70
 text = "开始"
 
@@ -102,17 +101,16 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -188.0
-offset_top = 23.0
-offset_right = -31.0
-offset_bottom = 94.0
+offset_left = -191.0
+offset_top = 21.0
+offset_right = -34.0
+offset_bottom = 92.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 25
 text = "设置"
 icon_alignment = 1
 
 [node name="m_SettingPanel" type="Control" parent="." unique_id=646119156]
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
