@@ -3,6 +3,7 @@ using GameConfig.Entity;
 using GameFramework.Procedure;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.HotUpdate;
 using GodotGameFramework.UI;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 using GameLogic;
@@ -30,6 +31,10 @@ public class ProcedureGame : ProcedureBase
     protected internal override async void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
+
+        // 标记启动成功：游戏已进入可玩状态，后续崩溃不再归因于热更
+        HotUpdateSafetyGuard.MarkStartupSuccess();
+
         await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
     }
 

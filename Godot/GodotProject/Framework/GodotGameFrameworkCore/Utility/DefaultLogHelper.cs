@@ -46,18 +46,22 @@ namespace GodotGameFramework
                     break;
 
                 case GameFrameworkLogLevel.Warning:
+                    GD.Print($"[WARNING] {message}");
                     GD.PushWarning(message.ToString());
                     break;
 
                 case GameFrameworkLogLevel.Error:
+                    GD.Print($"[ERROR] {message}");
                     GD.PushError(message.ToString());
                     break;
 
                 case GameFrameworkLogLevel.Fatal:
+                    GD.Print($"[FATAL] {message}");
                     GD.PushError($"[FATAL] {message}");
                     break;
 
                 default:
+                    GD.Print($"[UNKNOWN LOG LEVEL] {message}");
                     GD.PushError($"[UNKNOWN LOG LEVEL] {message}");
                     break;
             }

@@ -1,8 +1,0 @@
-[gd_resource type="Resource" script_class="AssetBundle" format=3 uid="uid://cnrdv25x8cyfx"]
-
-[ext_resource type="Script" uid="uid://c2xgtasiu2y47" path="res://addons/asset_bundle/AssetBundle.gd" id="1_uea1d"]
-
-[resource]
-script = ExtResource("1_uea1d")
-export_only_imported = true
-metadata/_custom_type_script = "uid://c2xgtasiu2y47"

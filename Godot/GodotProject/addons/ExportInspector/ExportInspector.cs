@@ -1011,9 +1011,10 @@ namespace GodotGameFramework.Editor
                 packs[idx] = new Pack
                 {
                     Name = info.Name,
-                    Size = fileInfo.Exists ? (int)fileInfo.Length : 0,
-                    Hash = fileInfo.Exists ? ComputeFileHash(pckPath) : 0,
+                    Size = fileInfo.Exists ? fileInfo.Length : 0,
+                    Hash = fileInfo.Exists ? ComputeFileHash(pckPath) : string.Empty,
                     Url = res.Get(UpdateSettingRes.Parameters.RemoteUrl) + "/" + info.Name + ".pck",
+                    Type = PackType.Resource,
                 };
                 idx++;
             }
@@ -1026,12 +1027,12 @@ namespace GodotGameFramework.Editor
             GD.Print($"[ExportInspector] 版本文件已生成: {filePath}");
         }
 
-        private static int ComputeFileHash(string filePath)
+        private static string ComputeFileHash(string filePath)
         {
-            using var md5 = System.Security.Cryptography.MD5.Create();
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
             using var stream = File.OpenRead(filePath);
-            var hashBytes = md5.ComputeHash(stream);
-            return BitConverter.ToInt32(hashBytes, 0);
+            var hashBytes = sha256.ComputeHash(stream);
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
     }
 }
