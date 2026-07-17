@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 
-namespace GodotGameFramework.Web
+namespace GodotGameFramework.Download
 {
     /// <summary>
     /// 流式文件下载器。

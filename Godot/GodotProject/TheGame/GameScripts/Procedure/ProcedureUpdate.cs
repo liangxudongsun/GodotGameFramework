@@ -21,23 +21,25 @@ using GodotGameFramework.HotUpdate;
 using GodotGameFramework.Json;
 using GodotGameFramework.Web;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
+using GodotGameFramework.Download;
 
 /// <summary>
 /// 更新检测流程。
-/// 步骤：请求版本文件 → 比对本地 → 下载差量包 → SHA256 校验 → 保存版本 → 加载子包
+/// 步骤：校验本地客户端 -> 请求版本文件 → 比对本地 → 下载差量包 → SHA256 校验 → 保存版本 → 加载子包
 /// </summary>
 public class ProcedureUpdate : ProcedureBase
 {
     private const int MaxRetries = 3;
     private const float RetryBaseDelaySeconds = 1.5f;
+    LogInForm m_loginForm;
 
     /// <summary>
     /// 热更补丁存储目录。
     /// 自动选择：配置优先 → 游戏目录（可写时） → user:// 回退
     /// </summary>
-    private static string SubpackDir => GetOrCreateHotUpdateDir();
+    private string SubpackDir => GetOrCreateHotUpdateDir();
 
-    private static string GetOrCreateHotUpdateDir()
+    private string GetOrCreateHotUpdateDir()
     {
         // 1. 开发者显式配置的路径
         string customPath = GF.Resource?.UpdateSettingRes?.HotUpdatePath;
@@ -66,7 +68,7 @@ public class ProcedureUpdate : ProcedureBase
         return userSubpackDir;
     }
 
-    private static bool IsDirectoryWritable(string path)
+    private bool IsDirectoryWritable(string path)
     {
         try
         {
@@ -145,7 +147,7 @@ public class ProcedureUpdate : ProcedureBase
 
         // 打开登录界面显示进度
         GF.UI.AddUIGroup("MainPack");
-        var loginForm = await GF.UI.OpenUIFormAsync(
+        m_loginForm = await GF.UI.OpenUIFormAsync(
             ResourcesCollectionConstant.Resources_LogInForm, "MainPack") as LogInForm;
 
         try
@@ -153,12 +155,12 @@ public class ProcedureUpdate : ProcedureBase
             // ── 1. 请求服务器版本文件 ──
             string versionUrl = $"{remoteUrl.TrimEnd('/')}/{ResourceManager.GameFrameworkVersionData}";
             Log.Info("[ProcedureUpdate] 请求版本文件: {0}", versionUrl);
-            loginForm?.SetLogState("检测更新...", 0);
+            m_loginForm?.SetLogState("检测更新...", 0);
 
             PackVersionList serverVersion = await FetchVersionWithRetryAsync(versionUrl);
             if (serverVersion == null || !serverVersion.IsValid())
             {
-                loginForm?.SetLogState("版本检测失败", 100);
+                m_loginForm?.SetLogState("版本检测失败", 100);
                 await Task.Delay(1500);
                 SkipToNext(procedureOwner);
                 return;
@@ -174,7 +176,7 @@ public class ProcedureUpdate : ProcedureBase
             {
                 Log.Warning("[ProcedureUpdate] App 版本过低 ({0} < {1})，需要去商店更新。",
                     appVersion, serverVersion.MinAppVersion);
-                loginForm?.SetLogState("请更新App版本", 100);
+                m_loginForm?.SetLogState("请更新App版本", 100);
                 await Task.Delay(3000);
                 // TODO: 弹窗引导用户去商店更新，然后退出
                 SkipToNext(procedureOwner);
@@ -183,14 +185,14 @@ public class ProcedureUpdate : ProcedureBase
 
             // ── 3. 加载本地版本并校验完整性 ──
             var localVersion = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
-            loginForm?.SetLogState("校验本地数据...", 5);
+            m_loginForm?.SetLogState("校验本地数据...", 5);
 
             // 自检：逐包校验本地文件是否完整（存在 + 大小 + SHA256）
             int damagedCount = VerifyLocalPackIntegrity(localVersion);
             if (damagedCount > 0)
             {
                 Log.Warning("[ProcedureUpdate] 本地客户端不完整！{0} 个包已损坏或丢失，将重新下载。", damagedCount);
-                loginForm?.SetLogState($"检测到 {damagedCount} 个文件损坏,即将修复", 8);
+                m_loginForm?.SetLogState($"检测到 {damagedCount} 个文件损坏,即将修复", 8);
             }
 
             // ── 4. 与服务器版本比对 ──
@@ -213,7 +215,7 @@ public class ProcedureUpdate : ProcedureBase
                 {
                     Log.Warning("[ProcedureUpdate] 磁盘空间不足: 需要 {0}, 可用 {1}",
                         FormatBytes(totalSize * 2), FormatBytes(freeSpace));
-                    loginForm?.SetLogState("磁盘空间不足", 100);
+                    m_loginForm?.SetLogState("磁盘空间不足", 100);
                     await Task.Delay(2000);
                     SkipToNext(procedureOwner);
                     return;
@@ -221,12 +223,12 @@ public class ProcedureUpdate : ProcedureBase
 
                 Log.Info("[ProcedureUpdate] 共 {0} 个包需要更新，总计 {1}，开始下载...",
                     toDownload.Count, FormatBytes(totalSize));
-                int downloaded = await DownloadPacksWithProgressAsync(toDownload, loginForm);
+                int downloaded = await DownloadPacksWithProgressAsync(toDownload);
                 Log.Info("[ProcedureUpdate] 下载完成: {0}/{1}", downloaded, toDownload.Count);
 
                 if (downloaded == 0)
                 {
-                    loginForm?.SetLogState("下载失败，请检查网络", 100);
+                    m_loginForm?.SetLogState("下载失败，请检查网络", 100);
                     await Task.Delay(2000);
                     SkipToNext(procedureOwner);
                     return;
@@ -240,7 +242,7 @@ public class ProcedureUpdate : ProcedureBase
             // ── 4. 先加载子包（验证可用） ──
             //     顺序很重要：先加载验证 → 再保存版本。
             //     如果加载时崩溃，版本文件仍是旧版，下次启动不会陷入死循环。
-            loginForm?.SetLogState("加载资源...", 95);
+            m_loginForm?.SetLogState("加载资源...", 95);
 
             // 写入启动锁：加载期间如果崩溃，下次启动会检测到
             HotUpdateSafetyGuard.MarkStartupBegin();
@@ -262,12 +264,12 @@ public class ProcedureUpdate : ProcedureBase
                 Log.Info("[ProcedureUpdate] 版本文件已保存。");
             }
 
-            loginForm?.SetLogState("更新完成", 100);
+            m_loginForm?.SetLogState("更新完成", 100);
             await Task.Delay(500);
         }
         finally
         {
-            GF.UI.CloseUIForm(loginForm);
+            GF.UI.CloseUIForm(m_loginForm);
         }
 
         ChangeState<ProcedurePrelode>(procedureOwner);
@@ -282,7 +284,7 @@ public class ProcedureUpdate : ProcedureBase
     /// 损坏或丢失的包从 localVersion 中移除，后续会自动与服务器对齐重新下载。
     /// </summary>
     /// <returns>损坏/丢失的包数量</returns>
-    private static int VerifyLocalPackIntegrity(PackVersionList localVersion)
+    private int VerifyLocalPackIntegrity(PackVersionList localVersion)
     {
         Log.Info("[ProcedureUpdate] 开始校验本地文件完整性...");
         if (localVersion?.Packs == null || localVersion.Packs.Length == 0)
@@ -357,7 +359,7 @@ public class ProcedureUpdate : ProcedureBase
     /// <summary>
     /// 比对本机与服务器版本，返回需要下载的包列表（含下载 URL）。
     /// </summary>
-    private static List<(Pack Pack, string Url)> FindPacksToUpdate(
+    private List<(Pack Pack, string Url)> FindPacksToUpdate(
         PackVersionList server, PackVersionList local)
     {
         var toDownload = new List<(Pack, string)>();
@@ -408,8 +410,8 @@ public class ProcedureUpdate : ProcedureBase
     /// <summary>
     /// 批量下载，带进度报告和 SHA256 校验。
     /// </summary>
-    private static async Task<int> DownloadPacksWithProgressAsync(
-        List<(Pack Pack, string Url)> packs, LogInForm loginForm)
+    private async Task<int> DownloadPacksWithProgressAsync(
+        List<(Pack Pack, string Url)> packs)
     {
         int downloaded = 0;
         long totalBytes = 0;
@@ -435,11 +437,11 @@ public class ProcedureUpdate : ProcedureBase
                 : 10 + (int)(80.0 * (i + 1) / packs.Count);
             int progressRange = Math.Max(1, progressEnd - progressStart);
 
-            loginForm?.SetLogState($"下载中 [{i + 1}/{packs.Count}] {pack.Name}", progressStart);
+            m_loginForm?.SetLogState($"下载中 [{i + 1}/{packs.Count}] {pack.Name}", progressStart);
 
             bool ok = await DownloadSinglePackWithRetryAsync(
                 pack, url, savePath,
-                downloadedBytes, totalBytes, progressStart, progressRange, loginForm);
+                downloadedBytes, totalBytes, progressStart, progressRange);
 
             if (ok)
             {
@@ -461,10 +463,10 @@ public class ProcedureUpdate : ProcedureBase
     /// 下载单个包（含重试 + 断点续传 + 流式写入 + SHA256 校验）。
     /// 内存只占 64KB 缓冲区，支持断点续传。
     /// </summary>
-    private static async Task<bool> DownloadSinglePackWithRetryAsync(
+    private async Task<bool> DownloadSinglePackWithRetryAsync(
         Pack pack, string url, string savePath,
         long baseDownloadedBytes, long totalBytes,
-        int progressStart, int progressRange, LogInForm loginForm)
+        int progressStart, int progressRange)
     {
         for (int attempt = 0; attempt < MaxRetries; attempt++)
         {
@@ -490,7 +492,7 @@ public class ProcedureUpdate : ProcedureBase
                         {
                             long globalProgress = baseDownloadedBytes + downloaded;
                             int pct = 10 + (int)(80.0 * globalProgress / totalBytes);
-                            loginForm?.SetLogState(
+                            m_loginForm?.SetLogState(
                                 $"下载中 {pack.Name} ({FormatBytes(downloaded)}/{FormatBytes(total)})",
                                 Math.Min(pct, 90));
                         }
@@ -517,7 +519,7 @@ public class ProcedureUpdate : ProcedureBase
         return false;
     }
 
-    private static string FormatBytes(long bytes)
+    private string FormatBytes(long bytes)
     {
         if (bytes < 1024) return $"{bytes}B";
         if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1}KB";
@@ -527,7 +529,7 @@ public class ProcedureUpdate : ProcedureBase
 
     // ── 版本文件请求 ──
 
-    private static async Task<PackVersionList> FetchVersionWithRetryAsync(string versionUrl)
+    private async Task<PackVersionList> FetchVersionWithRetryAsync(string versionUrl)
     {
         for (int attempt = 0; attempt < MaxRetries; attempt++)
         {
@@ -542,6 +544,7 @@ public class ProcedureUpdate : ProcedureBase
                 var result = await GF.WebRequest.SendRequestAsync(versionUrl);
                 if (!IsHttpSuccess(result))
                 {
+                    m_loginForm.SetLogState($"版本文件请求失败(再次尝试:{attempt + 1}/{MaxRetries})", 0);
                     Log.Warning("[ProcedureUpdate] 版本文件请求失败 (attempt {0}/{1}, HTTP {2})",
                         attempt + 1, MaxRetries, result?.ResponseCode);
                     continue;
@@ -571,7 +574,7 @@ public class ProcedureUpdate : ProcedureBase
     /// 先加载 Config 类型（Luban/本地化），再加载 Resource 类型（场景/贴图）。
     /// 加载前大小校验，对大文件做 SHA256 重校验。
     /// </summary>
-    private static void LoadDownloadedPacks(PackVersionList version)
+    private void LoadDownloadedPacks(PackVersionList version)
     {
         if (version?.Packs == null || version.Packs.Length == 0)
             return;
@@ -657,7 +660,7 @@ public class ProcedureUpdate : ProcedureBase
     }
 
     /// <summary>清理磁盘上不在版本清单中的废弃 .pck 文件。</summary>
-    private static void CleanStalePacks(PackVersionList version)
+    private void CleanStalePacks(PackVersionList version)
     {
         if (!Directory.Exists(SubpackDir)) return;
 
@@ -683,7 +686,7 @@ public class ProcedureUpdate : ProcedureBase
     }
 
     /// <summary>回退版本文件到备份。</summary>
-    private static void RollbackVersionFile()
+    private void RollbackVersionFile()
     {
         try
         {
@@ -706,7 +709,7 @@ public class ProcedureUpdate : ProcedureBase
 
     // ── 工具方法 ──
 
-    private static bool IsHttpSuccess(WebRequestCompleteEventArgs result)
+    private bool IsHttpSuccess(WebRequestCompleteEventArgs result)
     {
         if (result == null) return false;
         if (result.Result == -1 && result.ResponseCode == 0) return false; // timeout
@@ -715,7 +718,7 @@ public class ProcedureUpdate : ProcedureBase
         return true;
     }
 
-    private static string ComputeSHA256(string filePath)
+    private string ComputeSHA256(string filePath)
     {
         using var sha256 = SHA256.Create();
         using var stream = File.OpenRead(filePath);
@@ -723,19 +726,19 @@ public class ProcedureUpdate : ProcedureBase
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
-    private static string GetRemoteUrlBase()
+    private string GetRemoteUrlBase()
     {
         string url = GF.Resource.UpdateSettingRes?.RemoteUrl;
         return url?.TrimEnd('/') ?? string.Empty;
     }
 
-    private static void EnsureDirectory(string path)
+    private void EnsureDirectory(string path)
     {
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);
     }
 
-    private static void TryDeleteFile(string path)
+    private void TryDeleteFile(string path)
     {
         try
         {
@@ -766,13 +769,13 @@ public class ProcedureUpdate : ProcedureBase
     // ── 版本工具 ──
 
     /// <summary>获取当前 App 版本号（来自 project.godot 的 config/version）。</summary>
-    private static string GetAppVersion()
+    private string GetAppVersion()
     {
         return ProjectSettings.GetSetting("application/config/version").AsString() ?? "1.0.0";
     }
 
     /// <summary>获取指定目录所在磁盘的剩余空间，失败返回 -1。</summary>
-    private static long GetFreeDiskSpace(string dir)
+    private long GetFreeDiskSpace(string dir)
     {
         try
         {
@@ -791,7 +794,7 @@ public class ProcedureUpdate : ProcedureBase
     /// 比较语义化版本号。a > b 返回 1，a == b 返回 0，a < b 返回 -1。
     /// 简单实现：按 "." 分割后逐段比较数字。
     /// </summary>
-    private static int CompareVersions(string a, string b)
+    private int CompareVersions(string a, string b)
     {
         if (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) return 0;
         if (string.IsNullOrEmpty(a)) return -1;

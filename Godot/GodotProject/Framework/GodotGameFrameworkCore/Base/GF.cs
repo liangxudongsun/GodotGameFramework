@@ -1,4 +1,5 @@
 using GameConfig;
+using GodotGameFramework.Download;
 using GodotGameFramework.Entity;
 using GodotGameFramework.Localization;
 using GodotGameFramework.Resource;
@@ -27,6 +28,7 @@ namespace GodotGameFramework
         private static BaseComponent m_Base;
         private static SceneComponent m_Scene;
         private static WebRequestComponent m_WebRequest;
+        private static DownloadComponent m_Download;
         public static EventComponent Event
         {
             get
@@ -190,6 +192,17 @@ namespace GodotGameFramework
                     m_WebRequest = GameEntry.GetComponent<WebRequestComponent>();
                 }
                 return m_WebRequest;
+            }
+        }
+        public static DownloadComponent Download
+        {
+            get
+            {
+                if (m_Download == null)
+                {
+                    m_Download = GameEntry.GetComponent<DownloadComponent>();
+                }
+                return m_Download;
             }
         }
     }

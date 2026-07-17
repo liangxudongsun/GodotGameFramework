@@ -8,9 +8,11 @@ using System.Text.RegularExpressions;
 public partial class GameFrameworkTopMenu : EditorPlugin
 {
     public const string MenuName = "GameFramework";
+    public const string OpenFolderName = "OpenFolder";
     private const string DefineConstantsPattern = @"<DefineConstants>.*?</DefineConstants>";
 
-    private PopupMenu m_Popup;
+    private PopupMenu m_LogPopup;
+    private PopupMenu m_OpenFolderPopup;
 
     private static readonly (string Label, string Define)[] LogLevels = new[]
     {
@@ -22,66 +24,89 @@ public partial class GameFrameworkTopMenu : EditorPlugin
         ("Enable Error And Above Logs",   "ENABLE_LOG;ENABLE_ERROR_AND_ABOVE_LOG"),
         ("Enable Fatal And Above Logs",   "ENABLE_LOG;ENABLE_FATAL_AND_ABOVE_LOG"),
     };
+    private static readonly (string Label, string Define)[] Folder = new[]
+    {
+        ("Data Path", ProjectSettings.GlobalizePath("res://")),
+        ("User Data Path", ProjectSettings.GlobalizePath("user://"))
+    };
 
     public override void _EnterTree()
     {
-        m_Popup = new PopupMenu();
-        m_Popup.Name = "GameFrameworkPopup";
+        m_LogPopup = new PopupMenu();
+        m_LogPopup.Name = "GameFrameworkLogPopup";
+
+        m_OpenFolderPopup = new PopupMenu();
+        m_OpenFolderPopup.Name = "GameFrameworkOpenFolderPopup";
+
 
         for (int i = 0; i < LogLevels.Length; i++)
         {
-            m_Popup.AddItem(LogLevels[i].Label, i);
+            m_LogPopup.AddItem(LogLevels[i].Label, i);
         }
-        m_Popup.AddSeparator();
-        m_Popup.AddItem("About Game Framework...", LogLevels.Length);
 
-        m_Popup.IdPressed += OnPopupIdPressed;
+        for (int i = 0; i < Folder.Length; i++)
+        {
+            m_OpenFolderPopup.AddItem(Folder[i].Label, i);
+        }
 
-        AddToolSubmenuItem(MenuName, m_Popup);
-
+        m_LogPopup.IdPressed += OnLogPopupIdPressed;
+        m_OpenFolderPopup.IdPressed += OnOpenFolderPopupIdPressed;
+        AddToolSubmenuItem(MenuName, m_LogPopup);
+        AddToolSubmenuItem(OpenFolderName, m_OpenFolderPopup);
         GD.Print("[GameFramework] Plugin loaded.");
     }
 
+
+
+
     public override void _ExitTree()
     {
-        // 先释放 PopupMenu，再移除工具栏菜单项
-        // 顺序很重要：避免在 RemoveToolMenuItem 后信号连接已被清理导致 disconnect 报错
-        if (m_Popup != null)
+        if (m_LogPopup != null)
         {
-            m_Popup.IdPressed -= OnPopupIdPressed;
-            if (m_Popup.GetParent() != null)
+            m_LogPopup.IdPressed -= OnLogPopupIdPressed;
+            if (m_LogPopup.GetParent() != null)
             {
-                m_Popup.GetParent().RemoveChild(m_Popup);
+                m_LogPopup.GetParent().RemoveChild(m_LogPopup);
             }
-            m_Popup.QueueFree();
-            m_Popup = null;
+            m_LogPopup.QueueFree();
+            m_LogPopup = null;
+        }
+        if (m_OpenFolderPopup != null)
+        {
+            m_OpenFolderPopup.IdPressed -= OnOpenFolderPopupIdPressed;
+            if (m_OpenFolderPopup.GetParent() != null)
+            {
+                m_OpenFolderPopup.GetParent().RemoveChild(m_OpenFolderPopup);
+            }
+            m_OpenFolderPopup.QueueFree();
+            m_OpenFolderPopup = null;
         }
 
         RemoveToolMenuItem(MenuName);
-
+        RemoveToolMenuItem(OpenFolderName);
         GD.Print("[GameFramework] Plugin unloaded.");
     }
 
     private void OnMenuPressed()
     {
-        if (m_Popup == null)
+        if (m_LogPopup == null)
         {
             return;
         }
 
         // 如果 Popup 还没挂到场景树，挂到编辑器根控件下
-        if (m_Popup.GetParent() == null)
+        if (m_LogPopup.GetParent() == null)
         {
-            EditorInterface.Singleton.GetBaseControl().AddChild(m_Popup);
+            EditorInterface.Singleton.GetBaseControl().AddChild(m_LogPopup);
         }
 
         Control baseControl = EditorInterface.Singleton.GetBaseControl();
-        m_Popup.Position = (Vector2I)baseControl.GetLocalMousePosition();
-        m_Popup.ResetSize();
-        m_Popup.Popup();
+        m_LogPopup.Position = (Vector2I)baseControl.GetLocalMousePosition();
+        m_LogPopup.ResetSize();
+        m_LogPopup.Popup();
     }
 
-    private void OnPopupIdPressed(long id)
+    private void OnLogPopupIdPressed(long id)
     {
         int index = (int)id;
 
@@ -105,6 +130,28 @@ public partial class GameFrameworkTopMenu : EditorPlugin
         {
             GD.PrintErr($"[GameFramework] Failed to update .csproj: {ex.Message}");
         }
+    }
+    private void OnOpenFolderPopupIdPressed(long id)
+    {
+        int index = (int)id;
+        if (index < 0 || index >= Folder.Length)
+        {
+            return;
+        }
+        try
+        {
+            string path = Folder[index].Define.Replace("/", "\\");
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"[GameFramework] Failed to open folder: {ex.Message}");
+        }
+        GD.Print($"[GameFramework] Open folder: {Folder[index].Label}");
     }
 
     private static void ApplyDefineConstants(string define)

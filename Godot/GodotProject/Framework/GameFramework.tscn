@@ -20,6 +20,7 @@
 [ext_resource type="Script" uid="uid://utpdibg2iugi" path="res://Framework/GodotGameFrameworkCore/Localization/LocalizationComponent.cs" id="15_loc"]
 [ext_resource type="Script" uid="uid://d3gyuw0e6gaa5" path="res://Framework/GodotGameFrameworkCore/Scene/SceneComponent.cs" id="15_pcfq2"]
 [ext_resource type="Script" uid="uid://ce4he7fdyy4nt" path="res://Framework/GodotGameFrameworkCore/WebRequest/WebRequestComponent.cs" id="19_f83q0"]
+[ext_resource type="Script" uid="uid://bw2twjfu37m" path="res://Framework/GodotGameFrameworkCore/Download/DownloadComponent.cs" id="21_kdxmi"]
 
 [node name="GameFramework" type="Node" unique_id=134030765]
 script = ExtResource("1_781av")
@@ -76,3 +77,6 @@ script = ExtResource("15_loc")
 
 [node name="WebRequest" type="Node" parent="." unique_id=890324492]
 script = ExtResource("19_f83q0")
+
+[node name="Download" type="Node" parent="." unique_id=1177700023]
+script = ExtResource("21_kdxmi")

@@ -2759,7 +2759,6 @@ namespace GodotGameFramework
             GameFrameworkLog.Info("     _b:,,,,,,,,,,,,,W!!!07___7=c!!!;WWW888842W__ __W=,,,,,,,,,,,5_");
             GameFrameworkLog.Info("    __W,,,,,,,,,,,,,,8?!!3b__.$a!!c!!W$$9W98;87+,1WWWW8,,,,,,,,,,$_");
             GameFrameworkLog.Info("    __6,,,,,,,,,,,,,c3!!?7____Wa-!!!!29$W9999WWWWW$c___5-,,,,,,,,-!");
-            GameFrameworkLog.Info("    __6,,,,,,,,,,,,,,,,,看到这个代表日志系统运行正常,,,,,,,,,,,,,,-!");
         }
     }
 }
