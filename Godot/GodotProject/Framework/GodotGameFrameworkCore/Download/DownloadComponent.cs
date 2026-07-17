@@ -15,6 +15,10 @@ namespace GodotGameFramework.Download
     /// </summary>
     public partial class DownloadComponent : GameFrameworkComponent
     {
+        public static class Parameters
+        {
+            public static readonly string DownloadAgentHelper = "m_DownloadAgentHelperTypeName";
+        }
         /// <summary>
         /// 下载任务。
         /// </summary>
