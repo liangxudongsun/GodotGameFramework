@@ -7,6 +7,7 @@
 
 using System;
 using System.IO;
+using Godot;
 
 namespace GameFramework
 {
@@ -45,7 +46,7 @@ namespace GameFramework
                     return null;
                 }
 #if !TOOLS
-                return IsSubPath(regularPath, UnityEngine.Application.persistentDataPath) ? regularPath : (regularPath.Contains("://") ? regularPath : ("file:///" + regularPath).Replace("file:////", "file:///"));
+                return IsSubPath(regularPath, ProjectSettings.GlobalizePath(path)) ? regularPath : (regularPath.Contains("://") ? regularPath : ("file:///" + regularPath).Replace("file:////", "file:///"));
 #else
                 return regularPath.Contains("://") ? regularPath : ("file:///" + regularPath).Replace("file:////", "file:///");
 #endif
