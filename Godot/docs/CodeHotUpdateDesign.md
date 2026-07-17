@@ -1,5 +1,11 @@
 # C# 程序集热更方案 (Windows + Android)
 
+> **实施状态（2026-07 核实）**：ALC 程序集热更（Bootstrap / HotUpdateManager / 壳+逻辑分离）**尚未实施**，本文档仍为方案设计。
+> 配套基础设施已先行落地，实施时可直接复用：
+> - 统一下载通道 `GF.Download`（`GodotGameFrameworkCore/Download/`，断点续传 + 大小/SHA256 校验，详见 `DownloadSystem.md`）
+> - 资源热更管线 `ProcedureUpdate`（多包并发下载、版本比对、失败回退）
+> - 崩溃安全守护 `HotUpdateSafetyGuard`（`GodotGameFrameworkCore/HotUpdate/`，命名空间 `GodotGameFramework.HotUpdate` 已建立）
+
 ## 前提
 
 | 维度 | 决策 |
@@ -562,6 +568,8 @@ public class PackVersionList
 }
 ```
 
+> **现状（2026-07）**：`PackVersionList`（`Framework/GodotGameFrameworkCore/Resource/PackVersionList.cs`）已实现 `Version / Packs / MinAppVersion / ForceUpdate`（后两者已在 `ProcedureUpdate` 中接入）；`DllHash / DllSize / DllUrl / MinBootstrapVersion` 等程序集相关字段仍为规划中。
+
 ### 6.3 ProcedureUpdate 增强
 
 在现有 `ProcedureUpdate` 中增加 DLL 下载逻辑：
@@ -573,9 +581,11 @@ ProcedureUpdate.OnEnter:
   3. 对比本地 DLL 版本（从 user://hotupdate/version.json 读取）
   4. 有更新 → 下载 GodotProject.dll → user://hotupdate/
   5. 保存 version.json → user://hotupdate/
-  6. 下载 .pck 子包（已有逻辑，不变）
+  6. 下载 .pck 子包（已实现：经 GF.Download 并发下载）
   7. 下载完成 → 弹窗"更新已就绪，重启生效" → 用户点确定 → 重启
 ```
+
+> **现状（2026-07）**：`ProcedureUpdate` 的 .pck 资源热更部分已落地——版本清单经 `GF.WebRequest` 请求（3 次指数退避重试），子包经 `GF.Download.DownloadFileAsync` 多包并发下载（`Task.WhenAll`，进度按字节加权聚合，每包 3 次指数退避重试，断点续传 + 大小/SHA256 校验自动生效，详见 `DownloadSystem.md`）。DLL 下载逻辑（步骤 2~5、7）尚未实现，可直接复用同一下载通道。
 
 ---
 
@@ -608,6 +618,8 @@ App 启动
   └── Entity/UI 创建时 → HotUpdateManager.CreateEntityLogic/CreateUIFormLogic
 ```
 
+> **现状（2026-07）**：崩溃检测/安全模式已由 `HotUpdateSafetyGuard` 落地并接入资源热更侧——`ProcedureUpdate` 开头检测 `WasLastSessionCrashed()`（命中则 `EnterSafeMode()` 回退版本文件并跳过全部热更补丁），加载子包前 `MarkStartupBegin()` 写启动锁，`ProcedureGame.OnEnter` 调用 `MarkStartupSuccess()`。上图中"DLL 加载失败 → 回退"分支实施时应复用该机制。
+
 ---
 
 ## 8. 回滚机制
@@ -624,6 +636,8 @@ user://hotupdate/
 - 新 DLL 加载失败 → 自动回退到 `.backup/` 中的上一版本
 - 备份也失败 → 删除全部补丁，使用内置程序集
 - 用户可在设置中手动"清除热更补丁，恢复出厂版本"
+
+> **现状（2026-07）**：资源热更侧的回滚已实现——保存新版本清单前先备份 `GameFrameworkVersion.dat.bak`；任一子包加载失败自动回退版本文件（`ProcedureUpdate.RollbackVersionFile`）；上次启动崩溃时 `HotUpdateSafetyGuard.EnterSafeMode` 回退到 `.bak`（无备份则清除版本文件用内置版本）。DLL 侧 `.backup/` 机制待随 ALC 方案实施。
 
 ---
 
@@ -674,7 +688,7 @@ EOF
 | **热更 DLL 引用了新版 Framework API** | `MinBootstrapVersion` 检查 + 不热更 Framework 核心代码 |
 | **Godot API 版本不兼容** | 热更 DLL 必须用与 App 相同的 Godot SDK 版本编译 |
 | **Android 文件路径差异** | 使用 `ProjectSettings.GlobalizePath("user://")` 统一路径 |
-| **DLL 下载不完整/损坏** | SHA256 校验 + 先下载到临时文件，校验通过后原子重命名 |
+| **DLL 下载不完整/损坏** | 统一下载通道 `GF.Download.DownloadFileAsync` 已具备（2026-07）：大小 + SHA256 校验、`.download` 临时文件 + 完成后原子重命名、断点续传、失败返回 false——直接复用即可，详见 `DownloadSystem.md` |
 
 ---
 
@@ -682,7 +696,7 @@ EOF
 
 ### Phase 1: 基础 ALC 加载（2-3 天）
 
-- [x] 创建 `GodotProject.Bootstrap.csproj`
+- [ ] 创建 `GodotProject.Bootstrap.csproj`（2026-07 核实：仓库中不存在该工程，此前勾选无效）
 - [ ] 实现 `HotUpdateLoadContext`
 - [ ] 实现 `HotUpdateManager.TryLoadHotUpdate()`
 - [ ] 实现 `HotUpdateEntry`（在热更 DLL 中）
@@ -690,6 +704,8 @@ EOF
 - [ ] **验证：手动放一个热更 DLL 到 `user://hotupdate/`，确认 Procedure 走热更版本**
 
 ### Phase 2: Procedure 热更打通（1 天）
+
+> 前置能力已就绪（2026-07）：`GF.Download.DownloadFileAsync` 提供大小/SHA256 校验 + 断点续传；`ProcedureUpdate` 已实现 .pck 的并发下载/重试/校验/回退，DLL 下载可按同一模式接入（详见 `DownloadSystem.md`）。
 
 - [ ] ProcedureUpdate 增加 DLL 下载逻辑
 - [ ] 版本比对（DllHash）
@@ -706,10 +722,10 @@ EOF
 
 ### Phase 4: 健壮性（1-2 天）
 
-- [ ] 回滚机制（备份/恢复）
-- [ ] 强制更新弹窗
-- [ ] 下载进度 UI
-- [ ] 完整性校验（SHA256）
+- [ ] 回滚机制（备份/恢复）——资源热更侧已实现（2026-07：版本 `.bak` + 加载失败自动回退 + `HotUpdateSafetyGuard` 崩溃安全模式）；DLL 侧待实施
+- [ ] 强制更新弹窗（`ForceUpdate` 字段已在 `ProcedureUpdate` 读取，强制拦截逻辑待完善）
+- [ ] 下载进度 UI——资源热更侧已实现（2026-07：`LogInForm` 字节加权进度）；DLL 侧待实施
+- [ ] 完整性校验（SHA256）——下载通道已内置（2026-07：`GF.Download.DownloadFileAsync`）
 - [ ] 错误日志收集
 
 ---

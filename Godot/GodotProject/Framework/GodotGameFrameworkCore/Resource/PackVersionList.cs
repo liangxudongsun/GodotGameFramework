@@ -3,7 +3,7 @@ using System;
 namespace GameFramework.Resource
 {
     /// <summary>
-    /// 子包类型。
+    /// 子包类型。Config最先加载，Resource和Script按顺序加载。
     /// </summary>
     public enum PackType : byte
     {

@@ -1,8 +1,11 @@
 using GameFramework;
 using GameFramework.Download;
 using Godot;
+using GodotGameFramework.Json;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GodotGameFramework.Download
 {
@@ -12,6 +15,17 @@ namespace GodotGameFramework.Download
     /// </summary>
     public partial class DownloadComponent : GameFrameworkComponent
     {
+        /// <summary>
+        /// 下载任务。
+        /// </summary>
+        private sealed class DownloadFileOperation
+        {
+            public TaskCompletionSource<bool> Tcs;
+            public long ExpectedSize;
+            public string ExpectedHash;
+            public Action<long, long> OnProgress;
+            public CancellationTokenRegistration Ctr;
+        }
         private const int DefaultPriority = 0;
         private const int OneMegaBytes = 1024 * 1024;
 
@@ -93,6 +107,9 @@ namespace GodotGameFramework.Download
         /// </summary>
         public float CurrentSpeed => m_DownloadManager.CurrentSpeed;
 
+
+        private readonly Dictionary<int, DownloadFileOperation> m_FileOperations = new();
+
         public override void OnInit()
         {
             base.OnInit();
@@ -117,7 +134,8 @@ namespace GodotGameFramework.Download
             {
                 if (Create(m_DownloadAgentHelperTypeName) is DownloadAgentHelperBase helper)
                 {
-                    helper.Name = m_DownloadAgentHelperTypeName + i;
+                    // Godot 节点名不允许 '.' 等字符，不能直接用完整类型名
+                    helper.Name = helper.GetType().Name + i;
                     m_InstanceRoot.AddChild(helper);
                     m_DownloadManager.AddDownloadAgentHelper(helper);
                 }
@@ -131,6 +149,14 @@ namespace GodotGameFramework.Download
 
         public override void OnExitTree()
         {
+            // 未完成的 awaiter 全部按失败完结（RemoveAllDownloads 不触发事件）
+            foreach (var op in m_FileOperations.Values)
+            {
+                op.Ctr.Dispose();
+                op.Tcs.TrySetResult(false);
+            }
+            m_FileOperations.Clear();
+
             if (m_DownloadManager != null)
             {
                 m_DownloadManager.RemoveAllDownloads();
@@ -143,6 +169,8 @@ namespace GodotGameFramework.Download
             base.OnExitTree();
         }
 
+
+
         /// <summary>
         /// 增加下载任务。
         /// </summary>
@@ -151,7 +179,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri);
         }
 
         /// <summary>
@@ -163,7 +191,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, tag);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag);
         }
 
         /// <summary>
@@ -175,7 +203,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, int priority)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, priority);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, priority);
         }
 
         /// <summary>
@@ -187,7 +215,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, object userData)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, userData);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, userData);
         }
 
         /// <summary>
@@ -200,7 +228,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag, int priority)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, tag, priority);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag, priority);
         }
 
         /// <summary>
@@ -213,7 +241,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag, object userData)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, tag, userData);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag, userData);
         }
 
         /// <summary>
@@ -226,7 +254,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, int priority, object userData)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, priority, userData);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, priority, userData);
         }
 
         /// <summary>
@@ -240,7 +268,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag, int priority, object userData)
         {
-            return m_DownloadManager.AddDownload(downloadPath, downloadUri, tag, priority, userData);
+            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag, priority, userData);
         }
 
         /// <summary>
@@ -301,22 +329,140 @@ namespace GodotGameFramework.Download
             return m_DownloadManager.GetAllDownloadInfos();
         }
 
+        /// <summary>
+        /// 下载文件到磁盘并等待结果
+        /// </summary>
+        /// <param name="downloadUri"></param>
+        /// <param name="downloadPath"></param>
+        /// <param name="onProgress"></param>
+        /// <returns></returns>
+        public Task<bool> DownloadFileAsync(string downloadUri, string downloadPath, Action<long, long> onProgress = null)
+        {
+            return DownloadFileAsync(downloadUri, downloadPath, 0L, null, onProgress);
+        }
+        /// <summary>
+        /// 下载文件到磁盘并等待结果（含大小 / SHA256 校验）。
+        /// 任何失败 / 取消都返回 false
+        /// 断点续传由 .download 机制自动生效：失败保留断点文件，重试自动续传。
+        /// </summary>
+        /// <param name="downloadUri">下载地址。</param>
+        /// <param name="downloadPath">下载后存放路径（支持 user:// 等 Godot 虚拟路径）。</param>
+        /// <param name="expectedSize">期望文件大小（大于 0 时校验，通常来自版本清单）。</param>
+        /// <param name="expectedHash">期望 SHA256 hex（非空时校验）。</param>
+        /// <param name="onProgress">进度回调 (已下载字节, 总字节)，主线程调用。</param>
+        /// <param name="cancellationToken">取消令牌，取消后移除下载任务并返回 false。</param>
+        /// <returns>true = 下载成功且校验通过。</returns>
+        public Task<bool> DownloadFileAsync(string downloadUri, string downloadPath, long expectedSize = 0L, string expectedHash = null, Action<long, long> onProgress = null, CancellationToken cancellationToken = default)
+        {
+            var op = new DownloadFileOperation
+            {
+                Tcs = new TaskCompletionSource<bool>(),
+                ExpectedSize = expectedSize,
+                ExpectedHash = expectedHash,
+                OnProgress = onProgress,
+            };
+
+            int serialId = AddDownload(downloadPath, downloadUri);
+            m_FileOperations.Add(serialId, op);
+
+            if (cancellationToken.CanBeCanceled)
+            {
+                op.Ctr = cancellationToken.Register(() =>
+                {
+                    // 回调可能来自任意线程：先完结 TCS，RemoveDownload 派发回主线程。
+                    // TaskPool 移除任务不会触发 Failure 事件，必须在这里自己完结。
+                    if (op.Tcs.TrySetResult(false))
+                    {
+                        Callable.From(() =>
+                        {
+                            m_FileOperations.Remove(serialId);
+                            m_DownloadManager?.RemoveDownload(serialId);
+                        }).CallDeferred();
+                    }
+                });
+            }
+
+            return op.Tcs.Task;
+        }
+        /// <summary>
+        /// 完成时验证下载任务
+        /// </summary>
+        /// <param name="op"></param>
+        /// <param name="downloadPath"></param>
+        /// <param name="currentLength"></param>
+        /// <returns></returns>
+        private async Task VerifyAndCompleteAsync(DownloadFileOperation op, string downloadPath, long currentLength)
+        {
+            try
+            {
+                if (op.ExpectedSize > 0L && currentLength != op.ExpectedSize)
+                {
+                    Log.Warning("[DownloadComponent] 文件大小不匹配: '{0}' 期望 {1}, 实际 {2}",
+                        downloadPath, op.ExpectedSize, currentLength);
+                    EasySave.TryDelete(downloadPath);
+                    op.Tcs.TrySetResult(false);
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(op.ExpectedHash))
+                {
+                    // 大文件哈希放线程池，避免卡主线程
+                    string actualHash = await Task.Run(() => EasySave.ComputeSHA256(downloadPath));
+                    if (!string.Equals(actualHash, op.ExpectedHash, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log.Warning("[DownloadComponent] SHA256 校验失败: '{0}'", downloadPath);
+                        EasySave.TryDelete(downloadPath);
+                        op.Tcs.TrySetResult(false);
+                        return;
+                    }
+                }
+
+                op.Tcs.TrySetResult(true);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[DownloadComponent] 下载校验异常: '{0}' — {1}", downloadPath, ex.Message);
+                EasySave.TryDelete(downloadPath);
+                op.Tcs.TrySetResult(false);
+            }
+        }
+
+
+
+
 
         private void OnDownloadFailure(object sender, GameFramework.Download.DownloadFailureEventArgs e)
         {
             m_EventComponent.Fire(this, DownloadFailureEventArgs.Create(e.SerialId, e.DownloadPath, e.DownloadUri, e.ErrorMessage, e.UserData));
+            if (m_FileOperations.TryGetValue(e.SerialId, out var op))
+            {
+                m_FileOperations.Remove(e.SerialId);
+                op.Ctr.Dispose();
+                op.Tcs.TrySetResult(false);
+            }
         }
 
 
         private void OnDownloadSuccess(object sender, GameFramework.Download.DownloadSuccessEventArgs e)
         {
             m_EventComponent.Fire(this, DownloadSuccessEventArgs.Create(e.SerialId, e.DownloadPath, e.DownloadUri, e.CurrentLength, e.UserData));
+            if (m_FileOperations.TryGetValue(e.SerialId, out var op))
+            {
+                m_FileOperations.Remove(e.SerialId);
+                op.Ctr.Dispose();
+                // 事件 args 是池化对象，异步校验前把所需字段作为参数传出（不可持有 e）
+                _ = VerifyAndCompleteAsync(op, e.DownloadPath, e.CurrentLength);
+            }
         }
 
 
         private void OnDownloadUpdate(object sender, GameFramework.Download.DownloadUpdateEventArgs e)
         {
             m_EventComponent.Fire(this, DownloadUpdateEventArgs.Create(e.SerialId, e.DownloadPath, e.DownloadUri, e.CurrentLength, e.UserData));
+            if (m_FileOperations.TryGetValue(e.SerialId, out var op))
+            {
+                op.OnProgress?.Invoke(e.CurrentLength, op.ExpectedSize > 0L ? op.ExpectedSize : e.CurrentLength);
+            }
         }
 
 

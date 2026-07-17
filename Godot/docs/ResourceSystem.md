@@ -1,0 +1,291 @@
+# 资源系统 (Resource Module)
+
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Resource/`、`Framework/GodotGameFrameworkCore/Resource/`、`addons/ExportInspector/`、`addons/asset_bundle/`、`addons/Resources/`
+> 本文档描述 GGF 的资源加载与子包管理：架构、加载机制、API 用法、AB 包导出工作流与注意事项。
+> 热更下载流程见 `DownloadSystem.md`，热更链路审计见 `ResourceHotUpdateAudit.md`。
+
+---
+
+## 1. 概述
+
+资源系统是 [Game Framework](https://gameframework.cn/) Resource 模块的 Godot 移植。原版 Unity 侧约 97 个接口成员被大幅裁剪——Godot 的 `ResourceLoader` / `.pck` 机制天然覆盖了 AssetBundle 依赖管理，因此当前 `IResourceManager` 只保留 9 个成员。遵循框架**双层架构**：
+
+| 层 | 位置 | 职责 | Godot 依赖 |
+|----|------|------|:--:|
+| 纯 C# 层 | `GameFramework/Resource/` | `IResourceManager` 接口、`ResourceMode`、`HasAssetResult`、加载回调委托（`LoadAssetCallbacks` / `LoadBinaryCallbacks`） | ❌ |
+| Godot 桥接层 | `GodotGameFrameworkCore/Resource/` | `ResourceManager` 实现（ResourceLoader 线程加载 + 版本清单）、`ResourceComponent`、`PackVersionList`、加载任务 | ✅ |
+
+> ⚠️ 说明：`GameFramework/Resource/` 下仍保留大量 Unity 原版遗留文件（`PackageVersionList.*`、`UpdatableVersionList.*`、各类 Serializer、`ResourceUpdate*EventArgs` 等），**当前均未接入运行时**。实际生效的清单类型是 Godot 层的 `PackVersionList`（JSON 序列化）。
+
+### ResourceMode 现状
+
+| 模式 | 枚举值 | 实现程度 |
+|------|:--:|------|
+| `ResourceMode.Package` | 1 | ✅ 单机模式。全部资源在主包内，`Godot.ResourceLoader` 直接加载；启动时**不做**任何版本比对与子包加载（`SetReadWritePath` 仅打印日志），`ProcedureUpdate` 直接跳过更新检测 |
+| `ResourceMode.Updatable` | 2 | ✅ 热更模式。启动时 `DeserializeUpdatablePackVersion()` 读取 `user://GameFrameworkVersion.dat` 得到本地清单；子包 `.pck` 的下载/校验/`LoadResourcePack` 由 `ProcedureUpdate` 驱动（见 §3.3 与 `DownloadSystem.md` §5） |
+
+### 能力清单
+
+- ✅ 同步加载：`LoadAsset<T>` / `LoadBinary`（byte[]）/ `LoadText`（string）
+- ✅ 异步加载：`LoadAssetAsync`（`Task<Godot.Resource>`，基于 `ResourceLoader.LoadThreadedRequest` 后台线程加载）
+- ✅ 存在性检查：`Exists` / `HasAsset`（区分 Godot 资源与 `.bytes` 二进制）
+- ✅ 子包版本清单（`PackVersionList`，JSON）+ 热更子包加载（`ProjectSettings.LoadResourcePack`）
+- ✅ 编辑器侧 AB 包工作流：`AssetBundle.tres` 标记 → ExportInspector 一键导出 `.pck` + 版本清单
+- ✅ 资源路径常量生成（`ResourcesCollectionConstant.cs`）
+- ❌ 场景专用异步接口（`LoadSceneAsync`）——场景就是 `PackedScene` 资源，直接用 `LoadAssetAsync` 加载
+
+---
+
+## 2. 架构与数据流
+
+```
+调用方（EntityComponent / UIComponent / 业务代码）
+    │  GF.Resource.LoadAssetAsync(path) / LoadAsset<T>(path)
+    ▼
+ResourceComponent (Godot 桥接层，场景节点 "Resource")
+    │  委托 IResourceManager.LoadAsset(path, priority, callbacks, userData)
+    │  TaskCompletionSource 字典（path → TCS）把回调转成 await
+    ▼
+ResourceManager : GameFrameworkModule (实现放在 Godot 层，因直接调 Godot API)
+    ├── ResourceLoader.LoadThreadedRequest(path)   ← 立即发起后台线程加载
+    ├── Queue<LoadAssetTask>                       ← FIFO 队列记录任务
+    └── Update() 每帧轮询队首：
+            LoadThreadedGetStatus(path)
+              ├─ Loaded     → LoadThreadedGet → SuccessCallback → 出队回收
+              ├─ InProgress → UpdateCallback（累计 Duration）
+              └─ Failed     → FailureCallback → 出队回收
+```
+
+子包加载（Updatable 模式，启动期一次性）：
+
+```
+ProcedureLaunch → ProcedureUpdate
+    │  远端清单下载/比对/差量下载（见 DownloadSystem.md §5）
+    ▼
+LoadDownloadedPacks(version)
+    │  Config 包优先排序 → 逐包 大小校验 + SHA256 重校验(>1MB)
+    ▼
+ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资源解析链头部
+    │  失败包 → RollbackVersionFile()（回退 user:// 清单为 .bak）
+    ▼
+之后所有 ResourceLoader.Load / LoadThreadedRequest 自动命中子包内容
+```
+
+### 文件清单
+
+| 文件 | 职责 |
+|------|------|
+| `GameFramework/Resource/IResourceManager.cs` | 管理器接口（9 成员） |
+| `GameFramework/Resource/ResourceMode.cs` | Package / Updatable 枚举 |
+| `GameFramework/Resource/HasAssetResult.cs` | 资源存在性结果 |
+| `GameFramework/Resource/LoadAssetCallbacks.cs` 等 | 加载回调委托组（Success/Failure/Update/Dependency） |
+| `GameFramework/Resource/LoadBinaryCallbacks.cs` 等 | 二进制加载回调委托组 |
+| `GameFramework/Resource/`（其余 60+ 文件） | ⚠️ Unity 原版遗留（版本清单序列化器、资源校验事件等），未接入 |
+| `GodotGameFrameworkCore/Resource/ResourceManager.cs` | 实现：线程加载队列、二进制读取、清单反序列化 |
+| `GodotGameFrameworkCore/Resource/ResourceComponent.cs` | 组件封装：同步/异步 API、`UpdateSettingRes` 配置入口 |
+| `GodotGameFrameworkCore/Resource/PackVersionList.cs` | 版本清单 `PackVersionList` / `Pack` / `PackType` |
+| `GodotGameFrameworkCore/Resource/LoadAssetTask.cs` | 资源加载任务（`ReferencePool` 池化） |
+| `GodotGameFrameworkCore/Resource/LoadBinaryTask.cs` / `LoadBinaryAgent.cs` | ⚠️ 预留的异步二进制加载任务/代理（`ITaskAgent` 后台线程读文件），**当前未被任何调用方使用** |
+| `GodotGameFrameworkCore/Resource/ResourceExtension.cs` | 空扩展类（历史便捷方法已移除） |
+
+---
+
+## 3. 核心机制
+
+### 3.1 异步加载队列（LoadThreadedRequest + FIFO 轮询）
+
+`ResourceManager.LoadAsset` 的做法：
+
+1. 校验路径非空且 `ResourceLoader.Exists`（失败立即同步回调 `LoadResourceStatus.NotExist`）
+2. **立即**调用 `ResourceLoader.LoadThreadedRequest(assetName)` —— Godot 内部并行加载
+3. `LoadAssetTask.Create(...)`（从 `ReferencePool` 取）入 `Queue<LoadAssetTask>`
+4. 每帧 `Update()` 只轮询**队首**任务的 `LoadThreadedGetStatus`，完成后回调并出队
+
+要点：
+
+- **加载是并行的，完成回调是串行 FIFO 的**——所有请求在第 2 步就已提交给 Godot 线程池，但结果按入队顺序逐个交付。队首任务未完成时，后续已完成的任务也要等待。
+- `priority` 参数被任务记录但**不参与调度**（FIFO 队列没有排序），当前为预留字段。
+- 任务对象经 `ReferencePool` 回收，无每帧分配。
+- `ResourceComponent.LoadAssetAsync` 用 `Dictionary<string, TaskCompletionSource<Godot.Resource>>` 按**资源路径**匹配回调 → 因此**同一路径不允许并发 await 两次**，第二次会得到 `InvalidOperationException("is already being loaded")`。
+
+### 3.2 二进制加载
+
+- `IResourceManager.LoadBinary`：**同步**实现——`FileAccess.Open` 整读 `GetBuffer` 后立即回调（回调签名保留异步形态，便于将来切换实现）。
+- `ResourceComponent.LoadBinary/LoadText`：更直接的同步便捷方法，文件不存在或异常返回 `null`（不抛异常）。
+- `GetBinaryLength`：返回文件字节数，不存在返回 `-1`。
+- `LoadBinaryTask` + `LoadBinaryAgent`（`Task.Run` 后台 `File.ReadAllBytes`）是为大二进制准备的异步链路，**尚未接线**——`ResourceManager` 中没有对应的 TaskPool。
+
+### 3.3 子包加载流程
+
+**Updatable 模式**（当前唯一的子包链路）：
+
+| 阶段 | 执行者 | 内容 |
+|------|--------|------|
+| 启动 | `ResourceComponent.OnInit` | `SetResourceMode(Inspector 配置)` → `SetReadWritePath(user://)` → `DeserializeUpdatablePackVersion()` 读 `user://GameFrameworkVersion.dat`（`Utility.Json` 反序列化，缺失/损坏仅警告不中断） |
+| 热更 | `ProcedureUpdate` | 远端清单比对 → `GF.Download` 差量下载到 `SubpackDir` → `EasySave.SaveInUserAsync` 保存新清单（旧清单备份为 `.bak`） |
+| 加载 | `ProcedureUpdate.LoadDownloadedPacks` | 按 `PackType.Config` 优先排序（配置先于场景就绪）→ 逐包大小校验 + 大文件(>1MB) SHA256 重校验 → `ProjectSettings.LoadResourcePack(packPath)` → `CleanStalePacks` 清理不在清单中的废弃 `.pck` → 有失败包则 `RollbackVersionFile()` |
+
+`SubpackDir` 选择优先级（`ProcedureUpdate.GetOrCreateHotUpdateDir`）：
+
+1. `UpdateSettingRes.HotUpdatePath`（显式配置）
+2. 游戏安装目录 `subpackages/`（写测试通过时；编辑器下为 `res://../../Godot/subpackages`）
+3. `user://subpackages/`（兜底，一定可写）
+
+> 注意：**版本清单固定存于 `user://`**（`EasySave.SaveInUser` / `ResourceManager` 只从 `m_ReadWritePath = user://` 读取），而 `.pck` 本体可能在游戏安装目录——两者路径策略不同，属有意设计。
+
+**Package 模式**：不加载任何子包。`ResourceManager` 中的 `SubPack = "subpackages"` 常量为预留；随主包分发的资源直接走 `res://`。编辑器侧 `addons/asset_bundle/export_plugin.gd` 会在**工程导出时**把标记为 AssetBundle 的目录从主包剥离，单独产出 `<导出目录>/subpackages/*.pck`——这些包需由热更流程（或未来的 Package 侧加载逻辑）载入。
+
+### 3.4 版本清单（PackVersionList）
+
+```csharp
+public enum PackType : byte { Resource = 0, Config = 1, Script = 2 }  // Config 最先加载
+
+public class PackVersionList {
+    string Version;         // 如 "2.3.0"
+    Pack[] Packs;
+    string MinAppVersion;   // 低于此版本必须去商店更新
+    bool   ForceUpdate;
+    bool IsValid();         // Version 非空且 Packs 非空
+}
+public struct Pack {
+    string Name;      // 包名（不含扩展名）
+    long   Size;      // 字节数（校验与进度用）
+    string Hash;      // SHA256 hex（64 字符）
+    string Url;       // 下载地址
+    PackType Type;
+}
+```
+
+清单文件名统一为 `ResourceManager.GameFrameworkVersionData`（`"GameFrameworkVersion.dat"`），内容为 JSON。
+
+---
+
+## 4. ResourceComponent
+
+场景节点：`Framework/GameFramework.tscn` 中的 `Resource` 节点，经 `GF.Resource` 访问（懒缓存）。`ProcessMode = Always`（暂停时仍可加载）。
+
+### 4.1 Inspector 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `_resourceMode` | `ResourceMode` | `Package` | 资源模式，`OnInit` 时写入 `ResourceManager` |
+| `_UpdateSettingRes` | `UpdateSettingRes` | — | 热更配置资源（`RemoteUrl` 远端地址、`HotUpdatePath` 补丁目录），供 `ProcedureUpdate` / ExportInspector 读取 |
+
+### 4.2 API 总览
+
+```csharp
+// 属性
+GF.Resource.ResourceMode                  // 当前资源模式（可读写，运行时改无意义）
+GF.Resource.UpdateSettingRes              // 热更配置（RemoteUrl / HotUpdatePath）
+GF.Resource.GetPackVersionList()          // 本地版本清单（Package 模式或清单缺失时为 null）
+
+// 同步加载
+byte[] data  = GF.Resource.LoadBinary("user://save/slot0.bytes");  // null = 不存在
+string text  = GF.Resource.LoadText("res://TheGame/Configs/a.txt");
+PackedScene ps = GF.Resource.LoadAsset<PackedScene>("res://TheGame/Entitys/CatEntity.tscn");
+bool exists  = GF.Resource.Exists(path);  // ResourceLoader.Exists || FileAccess.FileExists
+
+// 异步加载（后台线程，await 回主线程续体）
+Godot.Resource res = await GF.Resource.LoadAssetAsync(path);
+Godot.Resource res = await GF.Resource.LoadAssetAsync(path, priority, userData);
+```
+
+### 4.3 使用示例
+
+```csharp
+// 异步加载实体场景（EntityComponent 内部即为此模式）
+var scene = (PackedScene)await GF.Resource.LoadAssetAsync(
+    ResourcesCollectionConstant.Entitys_CatEntity);   // 生成的路径常量，避免手写字符串
+var node = scene.Instantiate<CatEntity>();
+
+// 异常路径：资源不存在 / 重复加载中 → Task 以异常完结
+try { await GF.Resource.LoadAssetAsync("res://not_exist.tscn"); }
+catch (Exception e) { Log.Warning(e.Message); }
+
+// 二进制（Luban 数据表加载即走此通道）
+byte[] bytes = GF.Resource.LoadBinary("res://TheGame/GameProto/GameConfig/tbentityconfig.bytes");
+```
+
+---
+
+## 5. 导出工作流（编辑器侧）
+
+三个插件覆盖「标记 → 打包 → 引用」全链路：
+
+### 5.1 AssetBundle 标记（`addons/asset_bundle/`，GDScript）
+
+在目录下新建 `AssetBundle` 类型的 `.tres`，**该目录即成为一个资源包**：
+
+| 属性 | 默认 | 说明 |
+|------|:--:|------|
+| `enabled` | true | 是否启用该包 |
+| `export_enabled` | true | 是否导出该包 |
+| `pack_external_dependencies` | true | 是否打包目录外依赖 |
+| `export_only_imported` | false | true = 仅打包 Godot 导入产物（`.ctex`/`.fontdata`/`.sample`），不含源文件（`.png`/`.ttf`/`.wav`），体积可减 80%+ |
+
+`export_plugin.gd`（`EditorExportPlugin`）在**工程导出**时生效：`_export_file` 将属于 bundle 目录的文件 `skip()` 出主包，`_export_end` 用 `PCKPacker` 把它们打进 `<导出目录>/subpackages/<包名>.pck`（场景压缩序列化为 `.scn`、生成 remap、按需携带外部依赖，见 `AssetBundlePackUtils.gd`）。
+
+### 5.2 ExportInspector 面板（`addons/ExportInspector/`，C#）
+
+编辑器右上 Dock「AssetBundle 导出管理」，**不依赖工程导出**，随时手动出包（热更工作流的主要工具）：
+
+1. 扫描全项目 `.tres`/`.res`，脚本全局名含 `AssetBundle` 的即为包标记
+2. Tree 展示：包名 / 类型 / 大小 / 导入状态（✅ 已导入 · ⚠️ 缓存缺失 · —）+ 三个可勾选列（启用 / 导出 / 仅产物），勾选直接 `ResourceSaver.Save` 回写 `.tres`
+3. 「导出全部」→ 在导出目录下建**时间戳子目录**（`yyyy-MM-dd_HH-mm-ss`），逐包 `PckPacker` 打包：
+   - 全量模式：源文件 + `.import` + 导入产物（解析 `.import` 的 `dest_files`）
+   - 仅产物模式（`export_only_imported`）：跳过源文件，仅 `.import` + 导入产物
+4. 生成 `GameFrameworkVersion.dat`：逐包填 `Name/Size/SHA256/Url`（`Url` = `UpdateSettingRes.RemoteUrl + "/{Name}.pck"`），`Version` 取面板输入（校验 `\d+.\d+.\d+` 格式）
+5. 导出目录与版本号持久化在 EditorSettings（`godot_asset_bundle/*`）
+
+产出目录整体上传服务器即完成一次热更发布（客户端流程见 `DownloadSystem.md` §5）。
+
+### 5.3 路径常量生成（`addons/Resources/`）
+
+编辑器菜单 `Project → Tools → CollectionRes`：
+
+- `DirAccess` 递归扫描 `res://TheGame/`，排除 `.cs`、`GameScripts/`、`.import`、`.uid`
+- **同名文件（不同路径）直接报错中止**——因常量名按 `{所在文件夹}_{文件名}` 生成，必须全局唯一
+- 输出 `TheGame/GameScripts/GameProto/ResourcesCollectionConstant.cs`（`GameConfig.Constant` 命名空间），如：
+  ```csharp
+  public const string Entitys_CatEntity = "res://TheGame/Entitys/CatEntity.tscn";
+  ```
+
+Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串，实现「路径改名编译期报错」。
+
+---
+
+## 6. 注意事项 / FAQ
+
+**Q: `LoadAssetAsync` 同一路径能并发调用吗？**
+不能。第二次调用在任务字典 `TryAdd` 失败，Task 以 `InvalidOperationException` 完结。需要共享结果请自行缓存首个 Task。
+
+**Q: `priority` 参数为什么不生效？**
+当前实现是 `Queue<LoadAssetTask>` FIFO，`priority` 只是被记录。真实并行度由 Godot 内部线程加载决定，只有**回调交付顺序**受队列约束。
+
+**Q: 队首资源加载很慢会阻塞后面的回调吗？**
+会。完成回调严格 FIFO，队首 `InProgress` 时后续已完成任务不交付。把大资源放到最后请求，或分帧请求可缓解。
+
+**Q: Package 模式下能读到 `GetPackVersionList()` 吗？**
+不能，返回 `null`。Package 模式不读任何清单。判空后再使用。
+
+**Q: 热更子包加载失败怎么办？**
+`ProcedureUpdate.LoadDownloadedPacks` 逐包容错：损坏包删除并计失败，任一失败即回退 `user://` 版本清单（`.bak` 恢复），下次启动重新下载。游戏继续以旧资源运行。
+
+**Q: `.pck` 里要不要带源文件？**
+纯运行时分发勾选「仅产物」即可（Godot 运行时只读 `.import` + 导入缓存）；需要在其他工程/编辑器中二次导入时才用全量模式。
+
+**Q: `ResourceExtension` 注释里的 `GF.Resource.LoadAsync<T>()` 在哪？**
+不存在。该类已清空，注释为历史遗留；请使用 `LoadAssetAsync` + 强转，或同步 `LoadAsset<T>`。
+
+**Q: 二进制大文件读取卡帧？**
+`LoadBinary` 是主线程同步整读。大文件建议暂时自行 `Task.Run` 包装，或等待 `LoadBinaryAgent` 异步链路接线（见 §7）。
+
+---
+
+## 7. 已知边界与后续计划
+
+- [ ] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制，替换主线程同步整读）
+- [ ] `LoadAssetTask` 队列改为按 `priority` 排序或多任务并行轮询（消除队首阻塞）
+- [ ] Package 模式的本地子包加载（读取安装目录 `subpackages/GameFrameworkVersion.dat`，`SubPack` 常量已预留）
+- [ ] `GameFramework/Resource/` Unity 遗留文件清理（版本清单序列化器等 60+ 未使用文件）
+- [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`）

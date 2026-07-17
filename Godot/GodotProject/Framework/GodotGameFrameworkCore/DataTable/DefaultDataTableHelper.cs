@@ -7,6 +7,7 @@
 
 using GameFramework;
 using GameFramework.DataTable;
+using GodotGameFramework.Extensions;
 using System;
 using System.IO;
 using System.Text;

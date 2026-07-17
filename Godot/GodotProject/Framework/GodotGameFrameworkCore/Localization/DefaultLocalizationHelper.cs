@@ -7,6 +7,7 @@
 
 using GameFramework.Localization;
 using Godot;
+using GodotGameFramework.Extensions;
 using System;
 using System.IO;
 using System.Text;

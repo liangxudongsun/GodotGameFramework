@@ -8,6 +8,7 @@
 using GameFramework;
 using GameFramework.Localization;
 using Godot;
+using GodotGameFramework.Extensions;
 using GodotGameFramework.Resource;
 using System;
 

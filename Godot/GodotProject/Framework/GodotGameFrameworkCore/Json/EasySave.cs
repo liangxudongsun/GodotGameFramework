@@ -174,4 +174,28 @@ public static class EasySave
             return false;
         }
     }
+    /// <summary>
+    /// 计算文件的 SHA256 哈希值
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <returns></returns>
+    public static string ComputeSHA256(string filePath)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        using var stream = System.IO.File.OpenRead(filePath);
+        return Convert.ToHexString(sha256.ComputeHash(stream)).ToLowerInvariant();
+    }
+    /// <summary>
+    /// 将 Godot 虚拟路径（user:// 或 res://）转换为绝对路径。
+    /// DownloadManager 内部使用 System.IO 写文件，无法识别 Godot 虚拟路径。
+    /// </summary>
+    public static string GlobalizeDownloadPath(string downloadPath)
+    {
+        if (downloadPath != null && (downloadPath.StartsWith("user://") || downloadPath.StartsWith("res://")))
+        {
+            return ProjectSettings.GlobalizePath(downloadPath);
+        }
+
+        return downloadPath;
+    }
 }

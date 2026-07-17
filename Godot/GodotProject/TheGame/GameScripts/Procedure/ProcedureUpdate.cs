@@ -22,6 +22,7 @@ using GodotGameFramework.Json;
 using GodotGameFramework.Web;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 using GodotGameFramework.Download;
+using GodotGameFramework.Extensions;
 
 /// <summary>
 /// 更新检测流程。
@@ -214,7 +215,7 @@ public class ProcedureUpdate : ProcedureBase
                 if (freeSpace > 0 && freeSpace < totalSize * 2) // 需要 2x（文件 + .tmp）
                 {
                     Log.Warning("[ProcedureUpdate] 磁盘空间不足: 需要 {0}, 可用 {1}",
-                        FormatBytes(totalSize * 2), FormatBytes(freeSpace));
+                        StringExtension.FormatBytes(totalSize * 2), StringExtension.FormatBytes(freeSpace));
                     m_loginForm?.SetLogState("磁盘空间不足", 100);
                     await Task.Delay(2000);
                     SkipToNext(procedureOwner);
@@ -222,7 +223,7 @@ public class ProcedureUpdate : ProcedureBase
                 }
 
                 Log.Info("[ProcedureUpdate] 共 {0} 个包需要更新，总计 {1}，开始下载...",
-                    toDownload.Count, FormatBytes(totalSize));
+                    toDownload.Count, StringExtension.FormatBytes(totalSize));
                 int downloaded = await DownloadPacksWithProgressAsync(toDownload);
                 Log.Info("[ProcedureUpdate] 下载完成: {0}/{1}", downloaded, toDownload.Count);
 
@@ -319,7 +320,7 @@ public class ProcedureUpdate : ProcedureBase
                 {
                     try
                     {
-                        string actualHash = ComputeSHA256(packPath);
+                        string actualHash = EasySave.ComputeSHA256(packPath);
                         if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
                         {
                             damageReason = "SHA256 校验失败（文件已损坏或被修改）";
@@ -335,7 +336,7 @@ public class ProcedureUpdate : ProcedureBase
             if (damageReason != null)
             {
                 Log.Warning("[ProcedureUpdate] 本地文件损坏: {0} — {1}", pack.Name, damageReason);
-                TryDeleteFile(packPath);
+                EasySave.TryDelete(packPath);
                 damaged++;
             }
             else
@@ -387,7 +388,7 @@ public class ProcedureUpdate : ProcedureBase
 
             string url = !string.IsNullOrEmpty(sp.Url)
                 ? sp.Url
-                : $"{GetRemoteUrlBase()}/{sp.Name}.pck";
+                : $"{Utility.Path.GetRemotePath(GF.Resource.UpdateSettingRes?.RemoteUrl)}/{sp.Name}.pck";
 
             if (!localDict.TryGetValue(sp.Name, out var lp))
             {
@@ -408,50 +409,78 @@ public class ProcedureUpdate : ProcedureBase
     // ── 下载逻辑 ──
 
     /// <summary>
-    /// 批量下载，带进度报告和 SHA256 校验。
+    /// 批量并发下载（并发数由 DownloadComponent 的 agent 数调度），带聚合进度报告和 SHA256 校验。
     /// </summary>
     private async Task<int> DownloadPacksWithProgressAsync(
         List<(Pack Pack, string Url)> packs)
     {
-        int downloaded = 0;
         long totalBytes = 0;
-        long downloadedBytes = 0;
 
         foreach (var (pack, _) in packs)
             totalBytes += pack.Size;
 
         EnsureDirectory(SubpackDir);
 
+        // 每包一个进度槽位；下载事件回调都在主线程，无需加锁
+        long[] perPackBytes = new long[packs.Count];
+        int completedCount = 0;
+
+        void ReportAggregateProgress()
+        {
+            long sum = 0;
+            for (int i = 0; i < perPackBytes.Length; i++)
+                sum += perPackBytes[i];
+
+            // 进度按字节加权
+            int pct = totalBytes > 0
+                ? 10 + (int)(80.0 * sum / totalBytes)
+                : 10 + (int)(80.0 * completedCount / packs.Count);
+            m_loginForm?.SetLogState(
+                $"下载中 {completedCount}/{packs.Count} ({StringExtension.FormatBytes(sum)}/{StringExtension.FormatBytes(totalBytes)})",
+                Math.Min(pct, 90));
+        }
+
+        async Task<bool> RunPackAsync(int slot, Pack pack, string url, string savePath)
+        {
+            bool ok = await DownloadSinglePackWithRetryAsync(pack, url, savePath, bytes =>
+            {
+                perPackBytes[slot] = bytes;
+                ReportAggregateProgress();
+            });
+
+            perPackBytes[slot] = ok ? pack.Size : 0;
+            completedCount++;
+            ReportAggregateProgress();
+            return ok;
+        }
+
+        m_loginForm?.SetLogState($"下载中 0/{packs.Count}", 10);
+
+        var tasks = new List<Task<bool>>(packs.Count);
         for (int i = 0; i < packs.Count; i++)
         {
             var (pack, url) = packs[i];
             string savePath = Path.Combine(SubpackDir, pack.Name + ".pck");
 
-            // 进度按字节加权，避免 500MB 和 1KB 各占 50% 的假进度
-            long completedBeforeThis = downloadedBytes;
-            int progressStart = totalBytes > 0
-                ? 10 + (int)(80.0 * completedBeforeThis / totalBytes)
-                : 10 + (int)(80.0 * i / packs.Count);
-            int progressEnd = totalBytes > 0
-                ? 10 + (int)(80.0 * (completedBeforeThis + pack.Size) / totalBytes)
-                : 10 + (int)(80.0 * (i + 1) / packs.Count);
-            int progressRange = Math.Max(1, progressEnd - progressStart);
+            // 清理旧 StreamingDownloader 实现遗留的 .tmp 临时文件
+            EasySave.TryDelete(savePath + ".tmp");
 
-            m_loginForm?.SetLogState($"下载中 [{i + 1}/{packs.Count}] {pack.Name}", progressStart);
+            tasks.Add(RunPackAsync(i, pack, url, savePath));
+        }
 
-            bool ok = await DownloadSinglePackWithRetryAsync(
-                pack, url, savePath,
-                downloadedBytes, totalBytes, progressStart, progressRange);
+        bool[] results = await Task.WhenAll(tasks);
 
-            if (ok)
+        int downloaded = 0;
+        for (int i = 0; i < results.Length; i++)
+        {
+            if (results[i])
             {
                 downloaded++;
-                downloadedBytes += pack.Size;
-                Log.Info("[ProcedureUpdate] 下载+校验成功: {0}", pack.Name);
+                Log.Info("[ProcedureUpdate] 下载+校验成功: {0}", packs[i].Pack.Name);
             }
             else
             {
-                Log.Error("[ProcedureUpdate] 下载失败（已重试 {0} 次）: {1}", MaxRetries, pack.Name);
+                Log.Error("[ProcedureUpdate] 下载失败（已重试 {0} 次）: {1}", MaxRetries, packs[i].Pack.Name);
                 // 不跳过后续包——一个失败不影响其他包
             }
         }
@@ -460,13 +489,11 @@ public class ProcedureUpdate : ProcedureBase
     }
 
     /// <summary>
-    /// 下载单个包（含重试 + 断点续传 + 流式写入 + SHA256 校验）。
-    /// 内存只占 64KB 缓冲区，支持断点续传。
+    /// 下载单个包（含重试 + 断点续传 + SHA256 校验），经由 GF.Download 统一下载通道。
+    /// 失败时保留 .download 断点文件，下次重试自动续传。
     /// </summary>
     private async Task<bool> DownloadSinglePackWithRetryAsync(
-        Pack pack, string url, string savePath,
-        long baseDownloadedBytes, long totalBytes,
-        int progressStart, int progressRange)
+        Pack pack, string url, string savePath, Action<long> onPackBytes)
     {
         for (int attempt = 0; attempt < MaxRetries; attempt++)
         {
@@ -480,23 +507,12 @@ public class ProcedureUpdate : ProcedureBase
 
             try
             {
-                bool ok = await StreamingDownloader.DownloadFileAsync(
-                    url: url,
-                    savePath: savePath,
+                bool ok = await GF.Download.DownloadFileAsync(
+                    downloadUri: url,
+                    downloadPath: savePath,
                     expectedSize: pack.Size,
                     expectedHash: pack.Hash,
-                    allowResume: true,
-                    onProgress: (downloaded, total) =>
-                    {
-                        if (totalBytes > 0)
-                        {
-                            long globalProgress = baseDownloadedBytes + downloaded;
-                            int pct = 10 + (int)(80.0 * globalProgress / totalBytes);
-                            m_loginForm?.SetLogState(
-                                $"下载中 {pack.Name} ({FormatBytes(downloaded)}/{FormatBytes(total)})",
-                                Math.Min(pct, 90));
-                        }
-                    });
+                    onProgress: (downloaded, _) => onPackBytes(downloaded));
 
                 if (ok)
                 {
@@ -510,22 +526,13 @@ public class ProcedureUpdate : ProcedureBase
             catch (Exception ex)
             {
                 Log.Error("[ProcedureUpdate] 下载异常: {0} — {1}", pack.Name, ex.Message);
-                // 等一等让文件句柄释放，避免下次重试时文件被锁
-                await Task.Delay(200);
-                TryDeleteFile(savePath + ".tmp");
             }
         }
 
         return false;
     }
 
-    private string FormatBytes(long bytes)
-    {
-        if (bytes < 1024) return $"{bytes}B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1}KB";
-        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024):F1}MB";
-        return $"{bytes / (1024.0 * 1024 * 1024):F2}GB";
-    }
+
 
     // ── 版本文件请求 ──
 
@@ -605,7 +612,7 @@ public class ProcedureUpdate : ProcedureBase
             {
                 Log.Warning("[ProcedureUpdate] 子包大小不匹配({0})，可能已损坏，跳过: {1}",
                     pack.Name, fileInfo.Length);
-                TryDeleteFile(packPath);
+                EasySave.TryDelete(packPath);
                 failed++;
                 continue;
             }
@@ -615,11 +622,11 @@ public class ProcedureUpdate : ProcedureBase
             {
                 try
                 {
-                    string actualHash = ComputeSHA256(packPath);
+                    string actualHash = EasySave.ComputeSHA256(packPath);
                     if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
                     {
                         Log.Warning("[ProcedureUpdate] SHA256 重校验失败，文件可能损坏: {0}", pack.Name);
-                        TryDeleteFile(packPath);
+                        EasySave.TryDelete(packPath);
                         failed++;
                         continue;
                     }
@@ -675,7 +682,7 @@ public class ProcedureUpdate : ProcedureBase
                 if (!validNames.Contains(fileName))
                 {
                     Log.Info("[ProcedureUpdate] 清理废弃子包: {0}", fileName);
-                    TryDeleteFile(file);
+                    EasySave.TryDelete(file);
                 }
             }
         }
@@ -696,7 +703,7 @@ public class ProcedureUpdate : ProcedureBase
 
             if (File.Exists(backupPath))
             {
-                TryDeleteFile(versionPath);
+                EasySave.TryDelete(versionPath);
                 File.Move(backupPath, versionPath);
                 Log.Info("[ProcedureUpdate] 已自动回退到上一版本。");
             }
@@ -718,37 +725,10 @@ public class ProcedureUpdate : ProcedureBase
         return true;
     }
 
-    private string ComputeSHA256(string filePath)
-    {
-        using var sha256 = SHA256.Create();
-        using var stream = File.OpenRead(filePath);
-        byte[] hashBytes = sha256.ComputeHash(stream);
-        return Convert.ToHexString(hashBytes).ToLowerInvariant();
-    }
-
-    private string GetRemoteUrlBase()
-    {
-        string url = GF.Resource.UpdateSettingRes?.RemoteUrl;
-        return url?.TrimEnd('/') ?? string.Empty;
-    }
-
     private void EnsureDirectory(string path)
     {
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);
-    }
-
-    private void TryDeleteFile(string path)
-    {
-        try
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning("[ProcedureUpdate] 删除文件失败: {0} — {1}", path, ex.Message);
-        }
     }
 
     private void SkipToNext(ProcedureOwner procedureOwner)

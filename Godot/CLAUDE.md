@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, Setting.
+**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download.
+
+> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download + hot-update design & audit). See `docs/README.md` for the index. Prefer those docs over this file for system details.
 
 - **Godot .NET SDK**: `Godot.NET.Sdk/4.7.0` (NuGet)
 - **Build**: `cd GodotProject && dotnet build`
@@ -35,25 +37,27 @@ GodotProject/
       Properties/ Utility/          ← Assembly info, text/compression utilities
     GodotGameFrameworkCore/         ← Godot runtime components
       Base/                         ← GF.cs facade, GameEntry, GameFrameworkComponent, GodotComponent
-      Base/Node/2D/                 ← Abstract entity base classes (Node2D, CharacterBody2D, Rb2D, Sprite2D, Area2D)
-      Base/Node/UI/                 ← ControlUIForm base class
       Entity/ UI/ Sound/ Scene/    ← Godot bridge components (each delegates to the corresponding Manager)
-      Resource/                     ← ResourceComponent, ResourceManager (with subpackage loading), PackVersionList, async load tasks
+      Resource/                     ← ResourceComponent, ResourceManager, PackVersionList, load tasks
+      Download/ WebRequest/         ← DownloadComponent (queue+resume+verify), WebRequestComponent (Godot HttpRequest)
+      HotUpdate/                    ← HotUpdateSafetyGuard (crash-safe hot update)
       DataTable/ DataNode/ Setting/ Localization/
       Event/ Fsm/ Procedure/ ObjectPool/
       Config/ Variable/             ← GameFolderConstant, VarInt32/VarString/VarBoolean/VarSingle
-      Json/                         ← Newtonsoft.Json helper (local .dll reference)
+      Json/                         ← Newtonsoft.Json helper (local .dll reference) + EasySave
       Lib/LubanLib/                 ← Luban runtime (ByteBuf, BeanBase, StringUtil)
       SingletonSystem/              ← SingletonNode<T> pattern
-      Utility/                      ← PhysicsCheck2D, NodeExtension, Log helper, Version helper
+      Templet/                      ← Script generation templates (UIForm/Entity, Ge/Logic)
+      Utility/                      ← PhysicsCheck2D, NodeExtension, DefaultLogHelper
   TheGame/                          ← Active game project
     GameScripts/
-      Entity/                       ← ActorEntity, CatEntity, AngerEntity, GanTanEntity
-      UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm
-      Procedure/                    ← ProcedureLaunch, ProcedureGame
+      Entity/                       ← ActorEntity, CatEntity, AngerEntity, GanTanEntity (Logic halves)
+      UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm, LogInForm
+      Procedure/                    ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
       Event/                        ← BlockClickedEventArgs, ScoreChangedEventArgs, TestPhaseChangedEventArgs
       Resources/                    ← EntityGroup, SoundGroup, UIGroup definitions
       GameProto/GameConfig/         ← Luban-generated C# (EntityConfig, TbEntityConfig, EntityId, etc.)
+      GameProto/EntityGe/           ← Generated entity Ge halves
   addons/                           ← Editor plugins
     ComponentInsoector/             ← Custom Godot Inspector for framework components
     ExportInspector/                ← AssetBundle visual export management panel (C# EditorPlugin)
@@ -82,10 +86,10 @@ Main scene: `Framework/GameFramework.tscn` (uid `bggentry001`), set as `run/main
 
 ```
 GameFramework (GameEntry : GodotComponent)
-├── Base / Event / Resource / ResourceService
-├── Procedure / Scene / Fsm
-├── DataTable / DataNode / ObjectPool
-├── Setting / Entity / UI / Sound / Localization
+├── Base / Event / Resource / DataTable
+├── Procedure / Scene / Fsm / DataNode
+├── ObjectPool / Setting / Entity / UI
+├── Sound / Localization / WebRequest / Download
 ```
 
 Each component type can only register one instance. Component list mirrors the `GF.cs` static facade.
@@ -100,8 +104,8 @@ Each component type can only register one instance. Component list mirrors the `
 ### Component Lifecycle (GodotComponent)
 
 ```
-OnInit()       → OnEnter()   → OnUpdate(delta)   → OnExit()   → OnShutdown()
- (constructor)   (ready)       (every frame)        (removed)    (destroyed)
+OnInit()       → OnEnter()  → OnUpdate(delta) / OnFixedUpdate(delta) → OnExitTree()  → OnPreDestroy()
+ (_EnterTree)    (_Ready)     (_Process / _PhysicsProcess)             (_ExitTree)     (Predelete)
 ```
 
 `GameFrameworkComponent : GodotComponent` overrides `OnInit()` to self-register with `GameEntry`.
@@ -111,9 +115,10 @@ OnInit()       → OnEnter()   → OnUpdate(delta)   → OnExit()   → OnShutdo
 `GodotGameFrameworkCore/Base/GF.cs` provides lazy-cached static access to all components:
 
 ```csharp
-GF.Event / GF.Fsm / GF.Procedure
-GF.Resource / GF.Entity / GF.UI / GF.Sound
-GF.DataTable / GF.Localization / GF.Setting / GF.Base / GF.Scene
+GF.Base / GF.Event / GF.Fsm / GF.Procedure
+GF.Resource / GF.Entity / GF.UI / GF.Sound / GF.Scene
+GF.DataTable / GF.DataNode / GF.ObjectPool
+GF.Localization / GF.Setting / GF.WebRequest / GF.Download
 ```
 
 Each property calls `GameEntry.GetComponent<T>()` and caches the result.
@@ -122,19 +127,12 @@ Each property calls `GameEntry.GetComponent<T>()` and caches the result.
 
 ### Entity System
 
-Abstract base classes directly inherit Godot types + implement `IEntity`:
-- `AbstractNode2DEntity : Node2D, IEntity`
-- `AbstractCharacterBody2DEntity : CharacterBody2D, IEntity`
-- `AbstractSprite2DEntity : Sprite2D, IEntity`
-- `AbstractRb2DEntity : RigidBody2D, IEntity`
-- `AbstractArea2DEntity : Area2D, IEntity`
-
-All provide `OnInit/OnRecycle/OnShow/OnHide/OnUpdate` lifecycle matching the Game Framework entity lifecycle.
+Entities directly inherit Godot node types and implement `IEntity` (no abstract base-class layer). Entity scripts are **generated** by `ScriptGenerateInspector` as split partial classes (Ge half in `GameProto/EntityGe/`, Logic half in `GameScripts/Entity/`). Lifecycle: `OnInit/OnRecycle/OnShow/OnHide/OnUpdate` (see `docs/EntitySystem.md`).
 
 **TheGame project entity hierarchy:**
 ```
-AbstractCharacterBody2DEntity
-  └── ActorEntity              ← Has ActorData (Hp/MaxHp), EntityTeam, PhysicsCheck2D, Die()
+CharacterBody2D (Godot)
+  └── ActorEntity : IEntity, IActor  ← ActorData (Hp/MaxHp), EntityTeam, PhysicsCheck2D, Die()
        ├── CatEntity           ← Player cat: keyboard move, auto-aim, spawns GanTanEntity
        ├── AngerEntity         ← Enemy
        └── GanTanEntity        ← Projectile with BulletData (Direction, Speed, IsPlayerBullet)
@@ -144,20 +142,22 @@ Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<
 
 ### UI System
 
-`ControlUIForm : Control, IUIForm` is the base class. Auto-collects `UIStringLabelKey` localization text nodes.
+UI forms are **generated** partial classes: `partial class XxxForm : Control, IUIForm` (no shared `ControlUIForm` base class). Localization text nodes implement `IStringKey` and are auto-collected from descendants (see `docs/UISystem.md`).
 
 UI lifecycle: `OnInit` → `OnOpen` → `OnCover`/`OnReveal` → `OnUpdate` → `OnClose`.
 
 Opening: `GF.UI.OpenUIForm(UIFormId.MenuForm)` or `await GF.UI.OpenUIFormAsync<T>(UIFormId.MenuForm)`.
 
-TheGame UIs: `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`.
+TheGame UIs: `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`, `LogInForm`.
 
-`UIItemBase : Control` for reusable UI widgets (e.g., `ScorePopupItem`). Pooled via `UIItemInstanceObject`.
+`UIItemBase : Control` for reusable UI widgets. Pooled via `UIItemInstanceObject` (infrastructure present; the sample `ScorePopupItem` is currently commented out).
 
 ### Procedure (FSM) System
 
-Procedures manage top-level game states. TheGame procedures:
-- `ProcedureLaunch` — validates components, loads entity/UI/sound groups and localization, then transitions to `ProcedureGame`
+Procedures manage top-level game states. TheGame procedure chain:
+- `ProcedureLaunch` — validates all framework components, then → `ProcedureUpdate`
+- `ProcedureUpdate` — hot-update: version check, concurrent pack download via `GF.Download`, integrity verify, subpackage loading (see `docs/DownloadSystem.md`), then → `ProcedurePrelode`
+- `ProcedurePrelode` — loads entity/UI/sound groups and localization, then → `ProcedureGame`
 - `ProcedureGame` — gameplay loop, opens `MenuForm` on entry
 
 Change state: `ChangeState<T>(procedureOwner)`. Each procedure can have its own nested FSM for sub-states.
@@ -193,25 +193,23 @@ Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClic
 
 `addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `ProcedureComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, `SettingComponentInspectorPlugin`, `EntityComponentInspectorPlugin`, `UIComponentInspectorPlugin`, `SoundComponentInspectorPlugin`, `LocalizationComponentInspectorPlugin`, and `ScriptGenerateInspector` — each providing custom property editors, dropdowns, and debug info in the Godot editor inspector panel.
 
-### UIForm Script Generation
+### UIForm / Entity Script Generation
 
-`ScriptGenerateInspector` (an `EditorInspectorPlugin`) — shows a **"Generate Script"** button in the inspector for **any `Control` node** (`_CanHandle` returns `@object is Control`). It scaffolds a UIForm as a **split partial class** across two files in separate output directories:
+`ScriptGenerateInspector` (an `EditorInspectorPlugin`) — shows a **"Generate Script"** button in the inspector for **`CanvasItem` or `Node3D` nodes** (`Control` → UIForm templates, other 2D/3D nodes → Entity templates). It scaffolds a **split partial class** across two files:
 
-- `<ClassName>.cs` (output: `OutPutPathGe`) — regenerated boilerplate: `[Export]` child-node fields, `IUIForm` properties, localization collector. **Always overwritten.**
-- `<ClassName>.cs` (output: `OutPutPathLogic`) — user lifecycle code (`OnInit`/`OnOpen`/`OnClose`/…). **Only created if absent** (never clobbers edits).
-
-> ⚠️ **Godot 要求文件名必须与类名一致**，否则 Inspector 无法识别 `[Export]` 字段。因此 Ge 和 Logic 输出在不同目录，文件名都是 `<类名>.cs`。
+- Ge half `<ClassName>.cs` (output: `UIOutPutPathGe` / `EntityOutPutPathGe`) — regenerated boilerplate: `[Export]` child-node fields, interface properties, localization collector. **Always overwritten.**
+- Logic half `<ClassName>.Logic.cs` (output: `UIOutPutPathLogic` / `EntityOutPutPathLogic`) — user lifecycle code (`OnInit`/`OnOpen`/`OnClose`/…). **Only created if absent** (never clobbers edits).
 
 **Template placeholders:** `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` / `_CHILDNODES_`
 
-Templates: `Framework/GodotGameFrameworkCore/Templet/UIFormTemplet.txt` (Ge), `UIFormLogicTemplet.txt` (Logic).
+Templates: `Framework/GodotGameFrameworkCore/Templet/` (`UIFormTemplet.txt` / `UIFormLogicTemplet.txt` + entity equivalents).
 
 **Config:** `TheGame/Resources/ScriptGenerateRes.tres` (`ScriptGenerateRes : Resource`):
 | Field | Purpose | Default |
 |-------|---------|---------|
 | `NameSpace` | 生成的命名空间 | `"GameLogic"` |
-| `OutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
-| `OutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
+| `UIOutPutPathGe` / `EntityOutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
+| `UIOutPutPathLogic` / `EntityOutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
 | `NodePrefix` | 子节点名称前缀（用于自动收集） | `"m_"` |
 
 The plugin reads config **by property name** off the base `Resource` (not a typed cast) so it works even before the C# type is registered in the editor.
@@ -252,9 +250,7 @@ Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` r
 
 ## Source Generators (Tools/)
 
-`Tools/GameEventSourceGenerator/` at the repo root contains a C# Source Generator project:
-- `GameEventAnalyzer/` — Roslyn analyzer for game events
-- `SourceGenerator/` — Roslyn source generator (auto-generates event boilerplate)
+`Tools/GameEventSourceGenerator/` at the repo root is a **Unity/TEngine legacy** C# Source Generator project (`GameEventAnalyzer/` + `SourceGenerator/`). It generates `UnityEngine`/`TEngine` code, is **not referenced** by `GodotProject.csproj`, and is unrelated to GGF's current event system.
 
 ## Editor Plugins (`addons/`)
 
@@ -290,33 +286,29 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ## Resource System
 
-`IResourceManager` with 8 members (reduced from ~97 Unity-era members):
+`IResourceManager` with 9 members (reduced from ~97 Unity-era members). Details: `docs/ResourceSystem.md`.
 
 | Mode | Status |
 |------|--------|
-| `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader) |
-| `Updatable` / `UpdatableWhilePlaying` | 📅 P2 (.pck hot-update via `user://` subpackage loading) |
+| `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader; no subpackage loading in this mode) |
+| `Updatable` | ✅ Hot-update pipeline live (`ProcedureUpdate` downloads + loads `.pck` subpackages) |
+| `UpdatableWhilePlaying` | 📅 Not implemented |
 
 ### Loading
 
-Two `TaskPool<T>` instances for async loading:
-- `m_AssetTaskPool` (LoadAssetTask) — Godot.ResourceLoader.Load + callback
-- `m_BinaryTaskPool` (LoadBinaryTask) — FileAccess + callback
+Single FIFO `Queue<LoadAssetTask>` drives async asset loading (`ResourceLoader.LoadThreadedRequest` + per-frame status polling). The `priority` parameter is recorded but not used for scheduling. `LoadBinaryTask`/`LoadBinaryAgent` exist but are **not wired up** — `LoadBinary()`/`LoadText()` on `ResourceComponent` are synchronous main-thread implementations. Async API: `LoadAsset`/`LoadAssetAsync<T>` (no `LoadSceneAsync` on ResourceComponent; scene loading goes through `SceneComponent`).
 
-Convenience on `ResourceComponent`: `LoadBinary()`, `LoadText()`, `LoadAsync<T>()`, `LoadSceneAsync()`.
+### Subpackage System (Updatable mode)
 
-### Subpackage System
-
-`ResourceManager` loads additional `.pck` files as subpackages at startup:
-
-- **Package mode** (`DeserializePackagePackVersion`): reads `subpackages/GameFrameworkVersion.dat` alongside the executable, loads each listed `.pck` via `ProjectSettings.LoadResourcePack()`.
-- **Updatable mode** (`DeserializeUpdatablePackVersion`): reads `user://GameFrameworkVersion.dat`, loads subpackages from `user://subpackages/` — enables runtime download/swap without touching the main installation.
+`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Audit trail: `docs/ResourceHotUpdateAudit.md`.
 
 `PackVersionList` structure (`PackVersionList.cs`):
 ```csharp
-public struct PackVersionList {
-    public string Version;     // user-defined, e.g. "1.0.0"
-    public Pack[] Packs;       // name, size, hash, url
+public class PackVersionList {
+    public string Version;        // e.g. "1.0.0"
+    public Pack[] Packs;          // Name, Size, Hash(SHA256), Url, Type(Resource/Config/Script)
+    public string MinAppVersion;  // below this → must update the app
+    public bool   ForceUpdate;    // non-skippable update flag
 }
 ```
 

@@ -43,6 +43,7 @@
 - [编辑器插件](#-编辑器插件)
 - [系统要求](#-系统要求)
 - [开源项目推荐](#-开源项目推荐)
+- 📚 **[系统文档索引 (Godot/docs)](Godot/docs/README.md)** — 16 个子系统的深度文档 + 热更设计/审计
 
 ---
 
@@ -128,7 +129,11 @@ MainForm (Logic) : partial                         ← 用户编写的生命周�
 
 ## 🧩 核心模块
 
+> 📚 每个模块都有对应的深度系统文档（架构 / 数据流 / 核心机制 / API / FAQ），完整索引见 **[Godot/docs/README.md](Godot/docs/README.md)**。下方仅为速览。
+
 ### 实体模块 (EntityComponent)
+
+> 📖 详细文档：[EntitySystem.md](Godot/docs/EntitySystem.md)
 
 - ✅ 基于 `IEntityManager` 的实体生命周期管理
 - ✅ `ShowEntity(EntityId)` Luban 配置驱动，支持对象池复用
@@ -149,6 +154,8 @@ CharacterBody2D + IEntity + IActor
 
 ### UI 模块 (UIComponent)
 
+> 📖 详细文档：[UISystem.md](Godot/docs/UISystem.md)
+
 - ✅ 基于 `IUIManager` 的窗体管理
 - ✅ 4 个默认 UI 层级：Background / Normal / Popup / Tips
 - ✅ 界面组管理，支持深度排序
@@ -161,6 +168,8 @@ CharacterBody2D + IEntity + IActor
 
 ### 音频模块 (SoundComponent)
 
+> 📖 详细文档：[SoundSystem.md](Godot/docs/SoundSystem.md)
+
 - ✅ 基于 `ISoundManager` 的音频管理
 - ✅ 默认声音组：Music / SFX / UI（通过 LoadEntityGroup 阶段从 `TbSoundConfig` 配置）
 - ✅ 优先级抢占算法
@@ -170,19 +179,21 @@ CharacterBody2D + IEntity + IActor
 
 ### 资源模块 (ResourceModule)
 
+> 📖 详细文档：[ResourceSystem.md](Godot/docs/ResourceSystem.md) ｜ 热更审计：[ResourceHotUpdateAudit.md](Godot/docs/ResourceHotUpdateAudit.md)
+
 - ✅ **精简 IResourceManager** — 从 Unity 版本 97 个成员精简为 6 个核心方法，移除所有 Unity 管线遗留代码
 - ✅ **Godot 原生异步加载** — `ResourceLoader.LoadThreadedRequest` 后台线程加载，`Queue<LoadAssetTask>` 内部调度管理
 - ✅ **同步读写** — 二进制文件通过 `FileAccess` 同步读写，`LoadBinary` 在调用时立即返回结果
-- ✅ **子包加载系统** — 支持 `Package` 和 `Updatable` 两种模式，加载时机由流程控制
-  - `Package` 模式：从 exe 同级 `subpackages/` 目录加载 .pck 子包
-  - `Updatable` 模式：先加载 exe 旁基础包，再用 `user://subpackages/` 的更新包覆盖
-- ✅ **版本清单** — `GameFrameworkVersion.dat` 记录所有子包名称、大小、哈希，用于校验和热更新
-- ✅ **多模式设计** — `ResourceMode` 枚举：`Package` / `Updatable` / `UpdatableWhilePlaying`
-- ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`, `LoadAssetAsync<T>()`, `LoadSceneAsync()`
+- ✅ **子包加载系统** — `Updatable` 模式下由热更流程（`ProcedureUpdate`）下载并加载 `user://subpackages/` 的 .pck 更新包；`Package` 模式仅使用主包（不加载子包）
+- ✅ **版本清单** — `GameFrameworkVersion.dat` 记录所有子包名称、大小、SHA256 哈希及 `MinAppVersion`/`ForceUpdate`，用于校验和热更新
+- ✅ **多模式设计** — `ResourceMode` 枚举：`Package` / `Updatable` / `UpdatableWhilePlaying`（最后者未实现）
+- ✅ `ResourceComponent` 便捷方法：`LoadBinary()`, `LoadText()`（同步）, `LoadAssetAsync<T>()`（异步；场景加载走 `SceneComponent`）
 - ✅ `HasAsset()` — 检查资源/二进制文件是否存在
 - ✅ **EasySave** — JSON 序列化存储工具（`SaveInUserAsync<T>()` / `LoadInUserAsync<T>()`），用于版本文件持久化
 
 ### Web 请求模块 (WebRequestComponent)
+
+> 📖 详细文档：[WebRequestSystem.md](Godot/docs/WebRequestSystem.md)
 
 - ✅ **异步 API** — `SendRequestAsync(url)` 返回 `Task<WebRequestCompleteEventArgs>`，支持 GET / POST
 - ✅ **事件驱动** — `SendRequest(url)` 通过 `EventComponent` 推送结果，适合多请求集中处理
@@ -190,13 +201,28 @@ CharacterBody2D + IEntity + IActor
 - ✅ **响应解析** — `WebRequestCompleteEventArgs` 提供 `Body`(byte[])、`ResponseCode`、`Headers`、`Url`
 - ✅ **纯 C# 层** — `IWebRequestManager` + `WebRequestManager`（TaskPool 驱动）在 `GameFramework/WebRequest/` 中保留
 
+### 下载模块 (DownloadComponent)
+
+> 📖 详细文档：[DownloadSystem.md](Godot/docs/DownloadSystem.md)
+
+- ✅ 任务队列 + 多代理并发（默认 3 agent），优先级 / 标签 / 暂停 / 速度统计
+- ✅ 流式下载（64KB 缓冲）+ `.download` 断点续传（HTTP Range，失败自动续传）
+- ✅ 无进度超时（默认 30s，非总时长限制）
+- ✅ `DownloadFileAsync()` 可 await API：大小 + SHA256 校验，失败返回 false 不抛异常
+- ✅ `user://`、`res://` 虚拟路径自动转换
+- ✅ 热更流程 `ProcedureUpdate` 的多包并发下载即基于本模块
+
 ### 事件模块 (EventComponent)
+
+> 📖 详细文档：[EventSystem.md](Godot/docs/EventSystem.md)
 
 - ✅ 基于 `IEventManager` 的线程安全事件系统
 - ✅ 延迟分发（Fire）和立即分发（FireNow）
 - ✅ 自定义事件继承 `GameFrameworkEventArgs`
 
 ### 流程模块 (ProcedureComponent)
+
+> 📖 详细文档：[ProcedureSystem.md](Godot/docs/ProcedureSystem.md) ｜ 状态机基础：[FsmSystem.md](Godot/docs/FsmSystem.md)
 
 - ✅ 基于 `IFsmManager` 的流程状态机
 - ✅ Inspector 配置可用的 Procedure 类型
@@ -205,11 +231,15 @@ CharacterBody2D + IEntity + IActor
 
 ### 数据表模块 (DataTableComponent)
 
+> 📖 详细文档：[DataTableSystem.md](Godot/docs/DataTableSystem.md)
+
 - ✅ Luban 生成的二进制数据反序列化
 - ✅ `GF.DataTable` 返回类型安全的 `Tables` 实例
 - ✅ 懒加载支持
 
 ### 场景模块 (SceneComponent)
+
+> 📖 详细文档：[SceneSystem.md](Godot/docs/SceneSystem.md)
 
 - ✅ 基于 `ISceneManager` 的场景加载/卸载管理
 - ✅ `LoadScene(sceneAssetName, priority, userData)` / `UnloadScene(sceneAssetName)`
@@ -218,7 +248,20 @@ CharacterBody2D + IEntity + IActor
 - ✅ 事件通知：`LoadSceneSuccess` / `LoadSceneFailure` / `UnloadSceneSuccess` / `UnloadSceneFailure`
 - 🚧 场景切换过渡动画、异步加载进度回调待实现
 
+### 其他模块
+
+| 模块 | 速览 | 详细文档 |
+|------|------|----------|
+| 框架核心 (Base/GF/GameEntry) | 启动序列、组件生命周期、ReferencePool、条件日志 | [FrameworkCore.md](Godot/docs/FrameworkCore.md) |
+| 状态机 (FsmComponent) | 泛型 IFsm/FsmState、SetData/GetData、池化销毁 | [FsmSystem.md](Godot/docs/FsmSystem.md) |
+| 对象池 (ObjectPoolComponent) | Spawn/Unspawn、容量/过期/优先级、与 ReferencePool 对照 | [ObjectPoolSystem.md](Godot/docs/ObjectPoolSystem.md) |
+| 数据结点 (DataNodeComponent) | 树形数据、路径访问、Variable 池化类型 | [DataNodeSystem.md](Godot/docs/DataNodeSystem.md) |
+| 设置 (SettingComponent) | ConfigFile → `user://settings.cfg`、Save/Load | [SettingSystem.md](Godot/docs/SettingSystem.md) |
+| 本地化 (LocalizationComponent) | TSV 字典、语言切换、IStringKey 自动刷新 | [LocalizationSystem.md](Godot/docs/LocalizationSystem.md) |
+
 ### NodeExtension 扩展
+
+> 📖 详细文档：[FrameworkCore.md](Godot/docs/FrameworkCore.md)
 
 `GodotGameFrameworkCore/Utility/NodeExtension.cs` 提供常用 Node 查询扩展方法：
 - `FindChildOfType<T>()` — 递归查找子节点
@@ -467,6 +510,8 @@ Log.Error("Failed to load: {0}", path);
 
 ## 📊 数据管线
 
+> 📖 详细文档：[DataTableSystem.md](Godot/docs/DataTableSystem.md)
+
 集成 **Luban** 配置表解决方案：
 
 ```
@@ -501,12 +546,12 @@ TheGame/DataTables/GameConfigs/*.bytes             ← 二进制数据（运行�
 
 ### UIForm / Entity 脚本生成
 
+> 📖 详细文档：[UISystem.md](Godot/docs/UISystem.md)（生成器工作流）
+
 选中任意 **Control** 节点或 **实体节点** 后，检视面板会出现 **Generate Script** 按钮，一键脚手架拆分为**双 partial 文件**：
 
-- `<类名>.cs`（`OutPutPathGe` 目录）— 框架样板（`[Export]` 子节点字段、`IUIForm`/`IEntity` 属性、本地化收集器），**每次生成都覆盖**
-- `<类名>.cs`（`OutPutPathLogic` 目录）— 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` / `OnShow` / `OnHide` …），**仅首次创建，不会覆盖已有逻辑**
-
-> ⚠️ **Godot 要求文件名与类名一致**，否则 Inspector 无法正确显示 `[Export]` 字段。两个 partial 文件输出在不同目录。
+- `<类名>.cs`（`UIOutPutPathGe` / `EntityOutPutPathGe` 目录）— 框架样板（`[Export]` 子节点字段、`IUIForm`/`IEntity` 属性、本地化收集器），**每次生成都覆盖**
+- `<类名>.Logic.cs`（`UIOutPutPathLogic` / `EntityOutPutPathLogic` 目录）— 用户生命周期代码（`OnInit` / `OnOpen` / `OnClose` / `OnShow` / `OnHide` …），**仅首次创建，不会覆盖已有逻辑**
 
 **模板占位符:** `_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` / `_CHILDNODES_`
 
@@ -519,8 +564,8 @@ TheGame/DataTables/GameConfigs/*.bytes             ← 二进制数据（运行�
 | 字段 | 说明 | 默认值 |
 |------|------|--------|
 | `NameSpace` | 生成代码的命名空间 | `"GameLogic"` |
-| `OutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
-| `OutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
+| `UIOutPutPathGe` / `EntityOutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
+| `UIOutPutPathLogic` / `EntityOutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
 | `NodePrefix` | 子节点名称前缀（用于自动收集） | `"m_"` |
 
 **子节点自动收集与赋值：** 递归遍历节点树，收集名称以 `NodePrefix`（默认 `m_`）开头的子节点，生成 `[Export] public Type NodeName;` 字段。`SetScript` 之后自动调用 `node.Set(child.Name, child)` 为每个 `[Export]` 字段赋值子节点引用，无需手动拖拽。
@@ -612,14 +657,16 @@ GameFramework (GameEntry)
 
 ### 资源系统
 
-- [ ] **Updatable / UpdatableWhilePlaying 资源模式** — P2 规划，需通过 .pck 热更新机制实现
+- [x] **Updatable 资源模式** — 热更管线已上线（2026-07）：版本比对 → `GF.Download` 并发下载 → SHA256 校验 → 子包加载，详见 [DownloadSystem.md](Godot/docs/DownloadSystem.md) 与 [ResourceHotUpdateAudit.md](Godot/docs/ResourceHotUpdateAudit.md)
+- [ ] **UpdatableWhilePlaying 模式** — 边玩边下载，未实现
 - [ ] **补丁包加载** — 运行时检测 `user://patch.pck`，通过 `ProjectSettings.LoadResourcePack()` 加载补丁包，优先级高于主包。同路径文件自动覆盖，未变动的从主包回退，无需重导整个游戏
 
 ### 网络系统
 
 - [x] **纯 C# 层** — `NetworkManager`（含 TCP 通道、心跳、封包处理）、`DownloadManager`（含下载计数器）、`WebRequestManager` 已完整实现
 - [x] **WebRequestComponent** — 基于 Godot `HttpRequest` 的异步 API + 事件驱动，支持 GET/POST、超时控制
-- [ ] **NetworkComponent / DownloadComponent** — Godot 桥接组件待实现
+- [x] **DownloadComponent** — Godot 桥接组件已实现（2026-07）：多代理并发、断点续传、`DownloadFileAsync` 校验下载，详见 [DownloadSystem.md](Godot/docs/DownloadSystem.md)
+- [ ] **NetworkComponent** — Godot 桥接组件待实现
 
 ### 场景系统
 

@@ -44,7 +44,7 @@ namespace GameFramework
                 {
                     return null;
                 }
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if !TOOLS
                 return IsSubPath(regularPath, UnityEngine.Application.persistentDataPath) ? regularPath : (regularPath.Contains("://") ? regularPath : ("file:///" + regularPath).Replace("file:////", "file:///"));
 #else
                 return regularPath.Contains("://") ? regularPath : ("file:///" + regularPath).Replace("file:////", "file:///");
