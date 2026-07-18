@@ -47,7 +47,6 @@ namespace GodotGameFramework.Sound
         [Export] private bool m_EnablePlaySoundSuccessEvent = true;
         [Export] private bool m_EnablePlaySoundFailureEvent = true;
         [Export] private bool m_EnablePlaySoundUpdateEvent = false;
-        [Export] private bool m_EnablePlaySoundDependencyAssetEvent = false;
         [Export] private string m_SoundHelperTypeName = "GodotGameFramework.Sound.DefaultSoundHelper";
         [Export] private string m_SoundGroupHelperTypeName = "GodotGameFramework.Sound.DefaultSoundGroupHelper";
         [Export] private string m_SoundAgentHelperTypeName = "GodotGameFramework.Sound.DefaultSoundAgentHelper";
@@ -67,7 +66,6 @@ namespace GodotGameFramework.Sound
             if (m_EnablePlaySoundSuccessEvent) m_SoundManager.PlaySoundSuccess += OnPlaySoundSuccess;
             m_SoundManager.PlaySoundFailure += OnPlaySoundFailure;
             if (m_EnablePlaySoundUpdateEvent) m_SoundManager.PlaySoundUpdate += OnPlaySoundUpdate;
-            if (m_EnablePlaySoundDependencyAssetEvent) m_SoundManager.PlaySoundDependencyAsset += OnPlaySoundDependencyAsset;
 
             m_SoundManager.SetResourceManager(GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
             SoundHelperBase soundHelper = Helper.CreateHelper(m_SoundHelperTypeName, m_SoundHelper);
@@ -255,21 +253,8 @@ namespace GodotGameFramework.Sound
 
         private void OnPlaySoundSuccess(object sender, GameFramework.Sound.PlaySoundSuccessEventArgs e)
         {
-            // PlaySoundInfo playSoundInfo = (PlaySoundInfo)e.UserData;
-            // if (playSoundInfo != null)
-            // {
-            //     SoundAgentHelperBase soundAgentHelper = (SoundAgentHelperBase)e.SoundAgent.Helper;
-            //     if (playSoundInfo.BindingEntity != null)
-            //     {
-            //         soundAgentHelper.SetBindingEntity(playSoundInfo.BindingEntity);
-            //     }
-            //     else
-            //     {
-            //         soundAgentHelper.SetWorldPosition(playSoundInfo.WorldPosition);
-            //     }
-            // }
-
-            // m_EventComponent.Fire(this, PlaySoundSuccessEventArgs.Create(e));
+            if (m_EnablePlaySoundSuccessEvent)
+                m_EventComponent.Fire(this, PlaySoundSuccessEventArgs.Create(e));
         }
 
         private void OnPlaySoundFailure(object sender, GameFramework.Sound.PlaySoundFailureEventArgs e)
@@ -283,9 +268,5 @@ namespace GodotGameFramework.Sound
             m_EventComponent.Fire(this, PlaySoundUpdateEventArgs.Create(e));
         }
 
-        private void OnPlaySoundDependencyAsset(object sender, GameFramework.Sound.PlaySoundDependencyAssetEventArgs e)
-        {
-            // PlaySoundDependencyAssetEventArgs 继承自 GameFrameworkEventArgs，无法通过 EventComponent 转发
-        }
     }
 }

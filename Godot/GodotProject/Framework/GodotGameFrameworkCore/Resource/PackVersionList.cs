@@ -79,8 +79,9 @@ namespace GameFramework.Resource
             Type = type;
         }
 
-        /// <summary>检查此 Pack 是否有效（有名称和大小）。</summary>
+        /// <summary>检查此 Pack 是否有效（名称、大小、SHA256 均合法）。</summary>
         public readonly bool IsValid() =>
-            !string.IsNullOrEmpty(Name) && Size > 0;
+            !string.IsNullOrEmpty(Name) && Size > 0 &&
+            !string.IsNullOrEmpty(Hash) && Hash.Length == 64;
     }
 }

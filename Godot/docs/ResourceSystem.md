@@ -287,5 +287,5 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 - [ ] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制，替换主线程同步整读）
 - [ ] `LoadAssetTask` 队列改为按 `priority` 排序或多任务并行轮询（消除队首阻塞）
 - [ ] Package 模式的本地子包加载（读取安装目录 `subpackages/GameFrameworkVersion.dat`，`SubPack` 常量已预留）
-- [ ] `GameFramework/Resource/` Unity 遗留文件清理（版本清单序列化器等 60+ 未使用文件）
+- [x] `GameFramework/Resource/` Unity 遗留文件清理（版本清单序列化器等 47 个未使用文件）✅ 2026-07
 - [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`）

@@ -219,20 +219,14 @@ private void OnSceneLoaded(object sender, GameEventArgs e)
 **Q: `LoadSceneAsync` 失败时表现？**
 await 处抛异常（TCS.TrySetException）。空路径除外（返回 null）。
 
-**⚠️ 已知边界：卸载流程未闭环。**
-`SceneManager.UnloadScene` 当前只把资源名加入 `m_UnloadingSceneAssetNames` 便返回——构造函数里准备的 `m_UnloadSceneCallbacks`（`UnloadSceneSuccessCallback`：移出三表、经 `ISceneHelper.ReleaseScene` 对实例 `QueueFree`、发 `UnloadSceneSuccess` 事件）**没有任何调用点**（Unity 版此处由 `m_ResourceManager.UnloadScene(...)` 驱动，Godot 版 `IResourceManager` 精简后未保留该成员）。实际后果：
-
-1. 调用 `UnloadScene` 后场景节点**不会被释放**，仍留在树中
-2. 该资源永久停在 "unloading" 状态，之后再 `LoadScene` 同一场景会抛 "is being unloaded"
-3. `UnloadSceneSuccessEventArgs`（Godot 层）永远不会触发
-
-**当前替代做法**：持有 `LoadSceneAsync` 返回的 `Node` 自行 `QueueFree()`；如需继续使用框架登记，需等待卸载链路补全（在 `UnloadScene` 中直接调用 `m_UnloadSceneCallbacks` 的成功回调即可闭环）。
+**Q: 卸载场景后节点会怎样？**
+✅（2026-07 修复）`UnloadScene` 直接调用 `UnloadSceneSuccessCallback`：清理登记表 → 经 `ISceneHelper.ReleaseScene` 对实例 `QueueFree` → 触发 `UnloadSceneSuccess` C# 事件 → `SceneComponent` 转发 Godot 层全局事件（`UnloadSceneSuccessEventArgs`）。卸载后资源名从三表中移除，可再次 `LoadScene`。
 
 **Q: 组件销毁时场景怎么办？**
-`GameFrameworkEntry.Shutdown` → `SceneManager.Shutdown` 会对所有已加载场景调用 `UnloadScene`（受上述边界影响，仅清理登记表）；场景节点本身随 `Scene` 组件节点一起被 Godot 树销毁回收，进程退出无泄漏。
+`GameFrameworkEntry.Shutdown` → `SceneManager.Shutdown` 会对所有已加载场景调用 `UnloadScene`，不再仅清理登记表。
 
 ### 后续计划
 
-- [ ] 补全卸载链路（触发 `UnloadSceneSuccessCallback` → `ReleaseScene`/`QueueFree` → 事件）
+- [x] 补全卸载链路（触发 `UnloadSceneSuccessCallback` → `ReleaseScene`/`QueueFree` → 事件）✅ 2026-07
 - [ ] `UnloadSceneAsync` 可 await 封装
 - [ ] `LoadSceneUpdate` 进度转发（配合 loading 界面）

@@ -270,7 +270,7 @@ Godot CharacterBody2D                     Godot Area2D
 仍在实体组容器节点下（`Visible=false` 由 `OnHide`/`OnRecycle` 自行设置），作为池内对象等待复用；超过 `ExpireTime` 且池自动释放时才 `QueueFree`。
 
 **Q: 加载中的实体能取消吗？**
-`HideEntity(id)` 即可——资源加载不中断，但到位后直接释放，不会触发 OnShow；对应的 `ShowEntityAsync` 的 Task 不会完结（无 Success/Failure 事件），避免对加载中实体 await 后再隐藏。
+`HideEntity(id)` 即可——资源加载不中断，但到位后直接释放，不会触发 OnShow。✅（2026-07 修复）对应的 `ShowEntityAsync` 的 Task 会以 `GameFrameworkException`（"Load entity '...' cancelled by HideEntity."）完结，调用方可通过 try/catch 获知取消。
 
 **Q: `ShowEntityFailure` 时 userData 里的引用会泄漏吗？**
 事件参数本体是池化对象会回收；userData 原样透传，生命周期由调用方负责。
@@ -285,6 +285,6 @@ Godot CharacterBody2D                     Godot Area2D
 
 ## 8. 已知边界与后续计划
 
-- [ ] 加载中隐藏实体时完结对应 `ShowEntityAsync` 的 TCS（当前该 Task 悬挂，靠调用方超时兜底）
+- [x] 加载中隐藏实体时完结对应 `ShowEntityAsync` 的 TCS（当前该 Task 悬挂，靠调用方超时兜底）✅ 2026-07
 - [ ] `EntityConfig.Priority` 接入 ShowEntity 扩展与资源加载调度
 - [ ] 抽象实体基类库（若多项目复用 ActorEntity 模式，可下沉到 `GodotGameFrameworkCore/Base/Node/`）

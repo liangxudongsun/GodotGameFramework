@@ -93,26 +93,34 @@ namespace GodotGameFramework.Sound
         }
 
         /// <summary>
-        /// 停止所有背景音乐。
-        ///
-        /// 通过隐藏 Music 组实现，组内所有 Agent 的声音都会被停止。
+        /// 停止所有背景音乐（仅 Music 组）。
         /// </summary>
         /// <param name="soundComponent">音频组件。</param>
         public static void StopBGM(this SoundComponent soundComponent)
         {
-            soundComponent.StopAllLoadedSounds();
+            ISoundGroup group = soundComponent.GetSoundGroup(SoundComponent.DefaultMusicGroup);
+            group?.StopAllLoadedSounds();
         }
 
         /// <summary>
-        /// 淡出停止所有背景音乐。
-        ///
-        /// 通过逐渐降低音量实现平滑过渡的停止效果。
+        /// 淡出停止所有背景音乐（仅 Music 组）。
         /// </summary>
         /// <param name="soundComponent">音频组件。</param>
         /// <param name="fadeOutSeconds">淡出时长（秒）。</param>
         public static void StopBGM(this SoundComponent soundComponent, float fadeOutSeconds)
         {
-            soundComponent.StopAllLoadedSounds(fadeOutSeconds);
+            ISoundGroup group = soundComponent.GetSoundGroup(SoundComponent.DefaultMusicGroup);
+            group?.StopAllLoadedSounds(fadeOutSeconds);
+        }
+
+        /// <summary>
+        /// 停止所有音效（仅 SFX 组）。
+        /// </summary>
+        /// <param name="soundComponent">音频组件。</param>
+        public static void StopSFX(this SoundComponent soundComponent)
+        {
+            ISoundGroup group = soundComponent.GetSoundGroup(SoundComponent.DefaultSfxGroup);
+            group?.StopAllLoadedSounds();
         }
     }
 }

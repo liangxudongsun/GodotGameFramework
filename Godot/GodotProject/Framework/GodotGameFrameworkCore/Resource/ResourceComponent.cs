@@ -35,7 +35,7 @@ namespace GodotGameFramework.Resource
         public override void OnInit()
         {
             base.OnInit();
-            m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback, LoadAssetDependencyAssetCallback);
+            m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback);
             m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
             m_EventComponent = GameEntry.GetComponent<EventComponent>();
             m_ResourceManager.SetResourceMode(_resourceMode);
@@ -163,13 +163,5 @@ namespace GodotGameFramework.Resource
 
         }
 
-        private void LoadAssetDependencyAssetCallback(string entityAssetName, string dependencyAssetName, int loadedCount, int totalCount, object userData)
-        {
-
-        }
-        public PackVersionList GetPackVersionList()
-        {
-            return m_ResourceManager.PackVersionList;
-        }
     }
 }

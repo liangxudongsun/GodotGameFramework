@@ -164,15 +164,6 @@ namespace GodotGameFramework.Sound
         }
 
         /// <summary>
-        /// Godot有资源自身导入设置进行循环的设置
-        /// </summary>
-        public override bool Loop
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// 获取或设置声音优先级。
         ///
         /// 在 UGF 中，AudioSource.priority 是 0=最高、256=最低，

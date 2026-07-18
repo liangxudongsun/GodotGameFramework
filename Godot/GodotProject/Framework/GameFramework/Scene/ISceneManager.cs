@@ -34,7 +34,6 @@ namespace GameFramework.Scene
         /// <summary>
         /// 加载场景时加载依赖资源事件。
         /// </summary>
-        event EventHandler<LoadSceneDependencyAssetEventArgs> LoadSceneDependencyAsset;
 
         /// <summary>
         /// 卸载场景成功事件。

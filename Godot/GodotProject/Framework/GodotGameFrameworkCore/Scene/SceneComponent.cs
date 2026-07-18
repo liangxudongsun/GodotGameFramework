@@ -26,6 +26,7 @@ namespace GodotGameFramework.Scene
 
         [Export] private bool m_EnableLoadSceneSuccessEvent = true;
         [Export] private bool m_EnableLoadSceneFailureEvent = true;
+        [Export] private bool m_EnableUnloadSceneSuccessEvent = true;
 
         [Export]
         private string m_SceneHelperTypeName = "GodotGameFramework.Scene.DefaultSceneHelper";
@@ -49,6 +50,7 @@ namespace GodotGameFramework.Scene
             }
             m_SceneManager.LoadSceneSuccess += OnLoadSceneSuccess;
             m_SceneManager.LoadSceneFailure += OnLoadSceneFailure;
+            m_SceneManager.UnloadSceneSuccess += OnUnloadSceneSuccess;
         }
 
         public override void OnEnter()
@@ -75,6 +77,7 @@ namespace GodotGameFramework.Scene
             {
                 m_SceneManager.LoadSceneSuccess -= OnLoadSceneSuccess;
                 m_SceneManager.LoadSceneFailure -= OnLoadSceneFailure;
+                m_SceneManager.UnloadSceneSuccess -= OnUnloadSceneSuccess;
             }
             base.OnExitTree();
         }
@@ -198,10 +201,14 @@ namespace GodotGameFramework.Scene
                 tcs.TrySetException(new Exception(e.ErrorMessage));
                 m_LoadingTasks.Remove(e.SceneAssetName);
             }
-
-            // 触发 Godot 层事件
             if (m_EnableLoadSceneFailureEvent)
                 m_EventComponent.Fire(this, Scene.LoadSceneFailureEventArgs.Create(e.SceneAssetName, e.ErrorMessage));
+        }
+
+        private void OnUnloadSceneSuccess(object sender, GameFramework.Scene.UnloadSceneSuccessEventArgs e)
+        {
+            if (m_EnableUnloadSceneSuccessEvent)
+                m_EventComponent.Fire(this, Scene.UnloadSceneSuccessEventArgs.Create(e.SceneAssetName));
         }
 
         /// <summary>

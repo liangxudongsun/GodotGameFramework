@@ -198,4 +198,48 @@ public static class EasySave
 
         return downloadPath;
     }
+    /// <summary>
+    /// 比较语义化版本号。a > b 返回 1，a == b 返回 0，a < b 返回 -1。
+    /// 简单实现：按 "." 分割后逐段比较数字。
+    /// </summary>
+    public static int CompareVersions(string a, string b)
+    {
+        if (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) return 0;
+        if (string.IsNullOrEmpty(a)) return -1;
+        if (string.IsNullOrEmpty(b)) return 1;
+
+        string[] aParts = a.Split('.');
+        string[] bParts = b.Split('.');
+        int maxLen = Math.Max(aParts.Length, bParts.Length);
+
+        for (int i = 0; i < maxLen; i++)
+        {
+            int aNum = i < aParts.Length && int.TryParse(aParts[i], out int va) ? va : 0;
+            int bNum = i < bParts.Length && int.TryParse(bParts[i], out int vb) ? vb : 0;
+            if (aNum > bNum) return 1;
+            if (aNum < bNum) return -1;
+        }
+        return 0;
+    }
+    /// <summary>获取当前 App 版本号（来自 project.godot 的 config/version）。</summary>
+    public static string GetAppVersion()
+    {
+        return ProjectSettings.GetSetting("application/config/version").AsString() ?? "1.0.0";
+    }
+
+    /// <summary>获取指定目录所在磁盘的剩余空间，失败返回 -1。</summary>
+    public static long GetFreeDiskSpace(string dir)
+    {
+        try
+        {
+            string root = Path.GetPathRoot(dir);
+            if (string.IsNullOrEmpty(root)) return -1;
+            var driveInfo = new DriveInfo(root);
+            return driveInfo.IsReady ? driveInfo.AvailableFreeSpace : -1;
+        }
+        catch
+        {
+            return -1;
+        }
+    }
 }

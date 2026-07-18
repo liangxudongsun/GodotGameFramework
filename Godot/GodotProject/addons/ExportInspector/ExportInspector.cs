@@ -3,6 +3,7 @@ using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Resource;
 using Godot;
+using GodotGameFramework.Json;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -1012,7 +1013,7 @@ namespace GodotGameFramework.Editor
                 {
                     Name = info.Name,
                     Size = fileInfo.Exists ? fileInfo.Length : 0,
-                    Hash = fileInfo.Exists ? ComputeFileHash(pckPath) : string.Empty,
+                    Hash = fileInfo.Exists ? EasySave.ComputeSHA256(pckPath) : string.Empty,
                     Url = res.Get(UpdateSettingRes.Parameters.RemoteUrl) + "/" + info.Name + ".pck",
                     Type = PackType.Resource,
                 };
@@ -1027,13 +1028,6 @@ namespace GodotGameFramework.Editor
             GD.Print($"[ExportInspector] 版本文件已生成: {filePath}");
         }
 
-        private static string ComputeFileHash(string filePath)
-        {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            using var stream = File.OpenRead(filePath);
-            var hashBytes = sha256.ComputeHash(stream);
-            return Convert.ToHexString(hashBytes).ToLowerInvariant();
-        }
     }
 }
 #endif

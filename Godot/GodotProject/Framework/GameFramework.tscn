@@ -66,10 +66,12 @@ EntityGroupRes = ExtResource("4_mfmie")
 
 [node name="UI" type="Node" parent="." unique_id=274540037]
 script = ExtResource("13_ui")
+m_EnableOpenUIFormUpdateEvent = true
 UIGroupRes = ExtResource("3_44wmx")
 
 [node name="Sound" type="Node" parent="." unique_id=334327208]
 script = ExtResource("14_snd")
+m_EnablePlaySoundUpdateEvent = true
 SoundGroupRes = ExtResource("5_6l6dh")
 
 [node name="Localization" type="Node" parent="." unique_id=445100001]

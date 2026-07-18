@@ -79,7 +79,6 @@ namespace GameFramework.UI
         /// <summary>
         /// 打开界面时加载依赖资源事件。
         /// </summary>
-        event EventHandler<OpenUIFormDependencyAssetEventArgs> OpenUIFormDependencyAsset;
 
         /// <summary>
         /// 关闭界面完成事件。

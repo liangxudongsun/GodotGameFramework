@@ -23,6 +23,7 @@ using GodotGameFramework.Web;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 using GodotGameFramework.Download;
 using GodotGameFramework.Extensions;
+using GodotGameFramework.UI;
 
 /// <summary>
 /// 更新检测流程。
@@ -101,7 +102,23 @@ public class ProcedureUpdate : ProcedureBase
         catch (Exception ex)
         {
             Log.Error("[ProcedureUpdate] 更新流程异常: {0}", ex);
-            SkipToNext(procedureOwner);
+
+            // 检查是否为强制更新，若是则阻塞而非跳过
+            var localVersion = EasySave.LoadFromUser<PackVersionList>(
+                ResourceManager.GameFrameworkVersionData);
+            if (localVersion?.ForceUpdate == true)
+            {
+                bool retry = await ShowForceUpdateDialogAsync("更新流程异常: " + ex.Message + "请重试或退出游戏。");
+                if (retry)
+                {
+                    await RunUpdateFlowAsync(procedureOwner);
+                    return;
+                }
+                GameEntry.Shutdown(ShutdownType.Quit);
+                return;
+            }
+
+            await SkipToNextAsync(procedureOwner);
         }
     }
 
@@ -136,51 +153,73 @@ public class ProcedureUpdate : ProcedureBase
                 ResourceManager.GameFrameworkVersionData);
             if (localVersion != null)
             {
-                // 加载前校验本地文件完整性
-                int damaged = VerifyLocalPackIntegrity(localVersion);
+                int damaged = await VerifyLocalPackIntegrityAsync(localVersion);
                 if (damaged > 0)
                     Log.Warning("[ProcedureUpdate] 本地 {0} 个文件损坏，但无法连接服务器修复。", damaged);
-                LoadDownloadedPacks(localVersion);
+                await LoadDownloadedPacksAsync(localVersion);
             }
             ChangeState<ProcedurePrelode>(procedureOwner);
             return;
         }
 
-        // 打开登录界面显示进度
-        GF.UI.AddUIGroup("MainPack");
-        m_loginForm = await GF.UI.OpenUIFormAsync(
-            ResourcesCollectionConstant.Resources_LogInForm, "MainPack") as LogInForm;
+        m_loginForm = await GF.UI.OpenLogInUIFormAsync();
 
         try
         {
+            bool isForceUpdate = false;
+            PackVersionList serverVersion = null;
+
             // ── 1. 请求服务器版本文件 ──
             string versionUrl = $"{remoteUrl.TrimEnd('/')}/{ResourceManager.GameFrameworkVersionData}";
             Log.Info("[ProcedureUpdate] 请求版本文件: {0}", versionUrl);
             m_loginForm?.SetLogState("检测更新...", 0);
 
-            PackVersionList serverVersion = await FetchVersionWithRetryAsync(versionUrl);
+            // 先加载本地版本，用于 ForceUpdate 回退判断
+            var localVersionPre = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
+            isForceUpdate = localVersionPre?.ForceUpdate == true;
+
+            serverVersion = await FetchVersionWithRetryAsync(versionUrl);
             if (serverVersion == null || !serverVersion.IsValid())
             {
+                if (isForceUpdate)
+                {
+                    // 强制更新模式下，服务器不可达时阻塞等待
+                    string msg = localVersionPre?.ForceUpdate == true
+                        ? "本次为强制更新，但无法连接服务器。\n请检查网络后重试。"
+                        : "版本检测失败，请检查网络后重试。";
+                    bool retry = await ShowForceUpdateDialogAsync(msg);
+                    if (retry)
+                    {
+                        // 重试整个更新流程
+                        GF.UI.CloseUIForm(m_loginForm);
+                        await RunUpdateFlowAsync(procedureOwner);
+                        return;
+                    }
+                    GameEntry.Shutdown(ShutdownType.Quit);
+                    return;
+                }
+
                 m_loginForm?.SetLogState("版本检测失败", 100);
                 await Task.Delay(1500);
-                SkipToNext(procedureOwner);
+                await SkipToNextAsync(procedureOwner);
                 return;
             }
 
+            isForceUpdate = serverVersion.ForceUpdate;
             Log.Info("[ProcedureUpdate] 服务器版本: {0}, {1} 个子包",
                 serverVersion.Version, serverVersion.Packs?.Length ?? 0);
 
             // ── 2. 版本兼容性检查 ──
-            string appVersion = GetAppVersion();
-            if (!string.IsNullOrEmpty(serverVersion.MinAppVersion) &&
-                CompareVersions(appVersion, serverVersion.MinAppVersion) < 0)
+            string appVersion = EasySave.GetAppVersion();
+            if (!string.IsNullOrEmpty(serverVersion.MinAppVersion) && EasySave.CompareVersions(appVersion, serverVersion.MinAppVersion) < 0)
             {
                 Log.Warning("[ProcedureUpdate] App 版本过低 ({0} < {1})，需要去商店更新。",
                     appVersion, serverVersion.MinAppVersion);
                 m_loginForm?.SetLogState("请更新App版本", 100);
                 await Task.Delay(3000);
-                // TODO: 弹窗引导用户去商店更新，然后退出
-                SkipToNext(procedureOwner);
+                await ShowForceUpdateDialogAsync("客户端版本过低，请升级客户端后再试。");
+                HotUpdateSafetyGuard.MarkStartupSuccess();
+                GameEntry.Shutdown(ShutdownType.Quit);
                 return;
             }
 
@@ -188,8 +227,7 @@ public class ProcedureUpdate : ProcedureBase
             var localVersion = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
             m_loginForm?.SetLogState("校验本地数据...", 5);
 
-            // 自检：逐包校验本地文件是否完整（存在 + 大小 + SHA256）
-            int damagedCount = VerifyLocalPackIntegrity(localVersion);
+            int damagedCount = await VerifyLocalPackIntegrityAsync(localVersion);
             if (damagedCount > 0)
             {
                 Log.Warning("[ProcedureUpdate] 本地客户端不完整！{0} 个包已损坏或丢失，将重新下载。", damagedCount);
@@ -199,11 +237,9 @@ public class ProcedureUpdate : ProcedureBase
             // ── 4. 与服务器版本比对 ──
             var toDownload = FindPacksToUpdate(serverVersion, localVersion);
 
-            // 强制更新：有更新包且服务器标记为强制
-            if (toDownload.Count > 0 && serverVersion.ForceUpdate)
+            if (toDownload.Count > 0 && isForceUpdate)
             {
                 Log.Info("[ProcedureUpdate] 本次为强制更新。");
-                // 强制更新时，即使下载失败也不跳过——在下载失败处理中不再允许跳过
             }
 
             // ── 4. 下载更新的包 ──
@@ -211,14 +247,30 @@ public class ProcedureUpdate : ProcedureBase
             {
                 // 磁盘空间预检
                 long totalSize = toDownload.Sum(x => x.Pack.Size);
-                long freeSpace = GetFreeDiskSpace(SubpackDir);
-                if (freeSpace > 0 && freeSpace < totalSize * 2) // 需要 2x（文件 + .tmp）
+                long freeSpace = EasySave.GetFreeDiskSpace(SubpackDir);
+                if (freeSpace > 0 && freeSpace < totalSize * 2)
                 {
                     Log.Warning("[ProcedureUpdate] 磁盘空间不足: 需要 {0}, 可用 {1}",
                         StringExtension.FormatBytes(totalSize * 2), StringExtension.FormatBytes(freeSpace));
                     m_loginForm?.SetLogState("磁盘空间不足", 100);
+
+                    if (isForceUpdate)
+                    {
+                        await Task.Delay(1000);
+                        bool retry = await ShowForceUpdateDialogAsync(
+                            $"磁盘空间不足（需要 {StringExtension.FormatBytes(totalSize * 2)}），请清理后重试。");
+                        if (retry)
+                        {
+                            GF.UI.CloseUIForm(m_loginForm);
+                            await RunUpdateFlowAsync(procedureOwner);
+                            return;
+                        }
+                        GameEntry.Shutdown(ShutdownType.Quit);
+                        return;
+                    }
+
                     await Task.Delay(2000);
-                    SkipToNext(procedureOwner);
+                    await SkipToNextAsync(procedureOwner);
                     return;
                 }
 
@@ -229,51 +281,91 @@ public class ProcedureUpdate : ProcedureBase
 
                 if (downloaded == 0)
                 {
+                    if (isForceUpdate)
+                    {
+                        bool retry = await ShowForceUpdateDialogAsync(
+                            "更新下载失败，请检查网络后重试。");
+                        if (retry)
+                        {
+                            GF.UI.CloseUIForm(m_loginForm);
+                            await RunUpdateFlowAsync(procedureOwner);
+                            return;
+                        }
+                        GameEntry.Shutdown(ShutdownType.Quit);
+                        return;
+                    }
+
                     m_loginForm?.SetLogState("下载失败，请检查网络", 100);
                     await Task.Delay(2000);
-                    SkipToNext(procedureOwner);
+                    await SkipToNextAsync(procedureOwner);
                     return;
                 }
+
+                // ── 4. 先加载子包（验证可用） ──
+                m_loginForm?.SetLogState("加载资源...", 95);
+                HotUpdateSafetyGuard.MarkStartupBegin();
+
+                await LoadDownloadedPacksAsync(serverVersion);
+
+                // ── 5. 加载成功后再保存版本文件（带备份） ──
+                if (localVersion == null || localVersion.Version != serverVersion.Version)
+                {
+                    if (EasySave.ExistsInUser(ResourceManager.GameFrameworkVersionData))
+                    {
+                        EasySave.SaveInUser(localVersion,
+                            ResourceManager.GameFrameworkVersionData + ".bak");
+                    }
+
+                    await EasySave.SaveInUserAsync(serverVersion, ResourceManager.GameFrameworkVersionData);
+                    Log.Info("[ProcedureUpdate] 版本文件已保存。");
+                }
+
+                m_loginForm?.SetLogState("更新完成", 100);
+                await Task.Delay(500);
+
+                GF.UI.OpenQuestionTipsAsync("更新完成，是否重启？", () =>
+                {
+                    HotUpdateSafetyGuard.MarkStartupSuccess();
+                    GameEntry.Shutdown(ShutdownType.Quit);
+                }, () =>
+                {
+                    HotUpdateSafetyGuard.MarkStartupSuccess();
+                    GameEntry.Shutdown(ShutdownType.Restart);
+                });
             }
             else
             {
                 Log.Info("[ProcedureUpdate] 所有包已是最新，无需下载。");
+                ChangeState<ProcedurePrelode>(procedureOwner);
             }
-
-            // ── 4. 先加载子包（验证可用） ──
-            //     顺序很重要：先加载验证 → 再保存版本。
-            //     如果加载时崩溃，版本文件仍是旧版，下次启动不会陷入死循环。
-            m_loginForm?.SetLogState("加载资源...", 95);
-
-            // 写入启动锁：加载期间如果崩溃，下次启动会检测到
-            HotUpdateSafetyGuard.MarkStartupBegin();
-
-            LoadDownloadedPacks(serverVersion);
-
-            // ── 5. 加载成功后再保存版本文件（带备份） ──
-            if (toDownload.Count > 0 || localVersion == null ||
-                (localVersion != null && localVersion.Version != serverVersion.Version))
-            {
-                // 备份旧版本
-                if (EasySave.ExistsInUser(ResourceManager.GameFrameworkVersionData))
-                {
-                    EasySave.SaveInUser(localVersion,
-                        ResourceManager.GameFrameworkVersionData + ".bak");
-                }
-
-                await EasySave.SaveInUserAsync(serverVersion, ResourceManager.GameFrameworkVersionData);
-                Log.Info("[ProcedureUpdate] 版本文件已保存。");
-            }
-
-            m_loginForm?.SetLogState("更新完成", 100);
-            await Task.Delay(500);
         }
         finally
         {
             GF.UI.CloseUIForm(m_loginForm);
         }
 
-        ChangeState<ProcedurePrelode>(procedureOwner);
+    }
+
+    /// <summary>
+    /// 强制更新/阻塞对话框。
+    /// 显示提示信息，提供"退出游戏"和"重试"按钮。
+    /// </summary>
+    /// <returns>true = 用户选择重试</returns>
+    private async Task<bool> ShowForceUpdateDialogAsync(string message)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+
+        m_loginForm?.SetLogState(message, 100);
+
+        GF.UI.OpenQuestionTipsAsync(message, () =>
+        {
+            tcs.TrySetResult(false); // 退出
+        }, () =>
+        {
+            tcs.TrySetResult(true);  // 重试
+        });
+
+        return await tcs.Task;
     }
 
 
@@ -285,7 +377,7 @@ public class ProcedureUpdate : ProcedureBase
     /// 损坏或丢失的包从 localVersion 中移除，后续会自动与服务器对齐重新下载。
     /// </summary>
     /// <returns>损坏/丢失的包数量</returns>
-    private int VerifyLocalPackIntegrity(PackVersionList localVersion)
+    private async Task<int> VerifyLocalPackIntegrityAsync(PackVersionList localVersion)
     {
         Log.Info("[ProcedureUpdate] 开始校验本地文件完整性...");
         if (localVersion?.Packs == null || localVersion.Packs.Length == 0)
@@ -315,12 +407,12 @@ public class ProcedureUpdate : ProcedureBase
                 {
                     damageReason = $"大小不匹配 (期望 {pack.Size}, 实际 {fileInfo.Length})";
                 }
-                // 3. SHA256 校验（>1MB 的文件）
-                else if (!string.IsNullOrEmpty(pack.Hash) && fileInfo.Length > 1024 * 1024)
+                // 3. SHA256 校验（>1MB 文件，线程池执行避免卡帧）
+                else if (fileInfo.Length > 1024 * 1024)
                 {
                     try
                     {
-                        string actualHash = EasySave.ComputeSHA256(packPath);
+                        string actualHash = await Task.Run(() => EasySave.ComputeSHA256(packPath));
                         if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
                         {
                             damageReason = "SHA256 校验失败（文件已损坏或被修改）";
@@ -395,7 +487,7 @@ public class ProcedureUpdate : ProcedureBase
                 Log.Info("[ProcedureUpdate] 发现新包: {0} ({1} bytes)", sp.Name, sp.Size);
                 toDownload.Add((sp, url));
             }
-            else if (lp.Hash != sp.Hash || lp.Size != sp.Size)
+            else if (!string.Equals(lp.Hash, sp.Hash, StringComparison.OrdinalIgnoreCase) || lp.Size != sp.Size)
             {
                 Log.Info("[ProcedureUpdate] 包有更新: {0} ({1}→{2} bytes)",
                     sp.Name, lp.Size, sp.Size);
@@ -461,10 +553,6 @@ public class ProcedureUpdate : ProcedureBase
         {
             var (pack, url) = packs[i];
             string savePath = Path.Combine(SubpackDir, pack.Name + ".pck");
-
-            // 清理旧 StreamingDownloader 实现遗留的 .tmp 临时文件
-            EasySave.TryDelete(savePath + ".tmp");
-
             tasks.Add(RunPackAsync(i, pack, url, savePath));
         }
 
@@ -581,7 +669,7 @@ public class ProcedureUpdate : ProcedureBase
     /// 先加载 Config 类型（Luban/本地化），再加载 Resource 类型（场景/贴图）。
     /// 加载前大小校验，对大文件做 SHA256 重校验。
     /// </summary>
-    private void LoadDownloadedPacks(PackVersionList version)
+    private async Task LoadDownloadedPacksAsync(PackVersionList version)
     {
         if (version?.Packs == null || version.Packs.Length == 0)
             return;
@@ -617,12 +705,12 @@ public class ProcedureUpdate : ProcedureBase
                 continue;
             }
 
-            // 对大文件做 SHA256 重校验（防御磁盘静默损坏）
-            if (!string.IsNullOrEmpty(pack.Hash) && fileInfo.Length > 1024 * 1024) // > 1MB
+            // 对大文件做 SHA256 重校验（线程池执行，防御磁盘静默损坏）
+            if (fileInfo.Length > 1024 * 1024)
             {
                 try
                 {
-                    string actualHash = EasySave.ComputeSHA256(packPath);
+                    string actualHash = await Task.Run(() => EasySave.ComputeSHA256(packPath));
                     if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
                     {
                         Log.Warning("[ProcedureUpdate] SHA256 重校验失败，文件可能损坏: {0}", pack.Name);
@@ -731,12 +819,12 @@ public class ProcedureUpdate : ProcedureBase
             Directory.CreateDirectory(path);
     }
 
-    private void SkipToNext(ProcedureOwner procedureOwner)
+    private async Task SkipToNextAsync(ProcedureOwner procedureOwner)
     {
         // 尝试加载已存在的本地版本
         var local = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
         if (local != null)
-            LoadDownloadedPacks(local);
+            await LoadDownloadedPacksAsync(local);
 
         ChangeState<ProcedurePrelode>(procedureOwner);
     }
@@ -744,53 +832,5 @@ public class ProcedureUpdate : ProcedureBase
     protected internal override void OnLeave(ProcedureOwner procedureOwner, bool isShutdown)
     {
         base.OnLeave(procedureOwner, isShutdown);
-    }
-
-    // ── 版本工具 ──
-
-    /// <summary>获取当前 App 版本号（来自 project.godot 的 config/version）。</summary>
-    private string GetAppVersion()
-    {
-        return ProjectSettings.GetSetting("application/config/version").AsString() ?? "1.0.0";
-    }
-
-    /// <summary>获取指定目录所在磁盘的剩余空间，失败返回 -1。</summary>
-    private long GetFreeDiskSpace(string dir)
-    {
-        try
-        {
-            string root = Path.GetPathRoot(dir);
-            if (string.IsNullOrEmpty(root)) return -1;
-            var driveInfo = new DriveInfo(root);
-            return driveInfo.IsReady ? driveInfo.AvailableFreeSpace : -1;
-        }
-        catch
-        {
-            return -1;
-        }
-    }
-
-    /// <summary>
-    /// 比较语义化版本号。a > b 返回 1，a == b 返回 0，a < b 返回 -1。
-    /// 简单实现：按 "." 分割后逐段比较数字。
-    /// </summary>
-    private int CompareVersions(string a, string b)
-    {
-        if (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) return 0;
-        if (string.IsNullOrEmpty(a)) return -1;
-        if (string.IsNullOrEmpty(b)) return 1;
-
-        string[] aParts = a.Split('.');
-        string[] bParts = b.Split('.');
-        int maxLen = Math.Max(aParts.Length, bParts.Length);
-
-        for (int i = 0; i < maxLen; i++)
-        {
-            int aNum = i < aParts.Length && int.TryParse(aParts[i], out int va) ? va : 0;
-            int bNum = i < bParts.Length && int.TryParse(bParts[i], out int vb) ? vb : 0;
-            if (aNum > bNum) return 1;
-            if (aNum < bNum) return -1;
-        }
-        return 0;
     }
 }

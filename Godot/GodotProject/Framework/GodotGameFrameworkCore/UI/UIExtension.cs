@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GameConfig;
+using GameConfig.Constant;
 using GameConfig.UI;
 using GameFramework.UI;
+using GameLogic;
 
 namespace GodotGameFramework.UI
 {
@@ -92,6 +94,32 @@ namespace GodotGameFramework.UI
             }
             var uIForm = await uiComponent.OpenUIFormAsync(formConfig.AssetPath, formConfig.UIGroupName, userData);
             return uIForm as T;
+        }
+
+        const string MainPack = "MainPack";
+        public static async Task<LogInForm> OpenLogInUIFormAsync(this UIComponent uiComponent)
+        {
+            if (GF.UI.AddUIGroup(MainPack))
+            {
+                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_LogInForm, MainPack);
+            }
+            else
+            {
+                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_LogInForm, MainPack);
+            }
+        }
+        public static async void OpenQuestionTipsAsync(this UIComponent uiComponent, string txt, Action cancel = null, Action confirm = null)
+        {
+            if (GF.UI.AddUIGroup(MainPack))
+            {
+                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_QuestionTips, MainPack);
+                tip.SetAction(txt, cancel, confirm);
+            }
+            else
+            {
+                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_QuestionTips, MainPack);
+                tip.SetAction(txt, cancel, confirm);
+            }
         }
         public static bool HasUIForm(this UIComponent uiComponent, UIFormId formId)
         {

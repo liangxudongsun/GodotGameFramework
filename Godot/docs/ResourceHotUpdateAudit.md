@@ -27,7 +27,7 @@
 | 1.1 | 🟡 | ✅ **已修复 (2026-07)** — RemoteUrl 为空时仍加载已下载的本地补丁（加载前先做逐包完整性校验）。原问题：不加载本地补丁，断网启动补丁全失效。 | 断网启动 → 本地补丁正常生效 | `ProcedureUpdate:131-147` |
 | 1.2 | 🟡 | `FetchVersionWithRetryAsync` 的**单次请求没有独立超时**，完全依赖 `WebRequestComponent` 的全局 30s 超时。3 次重试 × 30s = 最长等 90s 才失败。对用户来说像卡死。（版本清单仍走 `GF.WebRequest`，未迁移到 GF.Download） | 弱网下等一分半才提示"版本检测失败" | `ProcedureUpdate:539` |
 | 1.3 | 🟢 | `LoginForm` 可能打开失败（场景路径错误、UI 配置缺失），`await` 会抛异常，进入外层 catch → `SkipToNext`。但用户完全不知道发生了什么——没有 Toast、没有提示。 | 用户看到黑屏 → 然后直接进游戏 | `ProcedureUpdate:151` |
-| 1.4 | 🟢 | 🔶 **部分修复 (2026-07)** — `Pack.IsValid()` 已校验 `Name` 非空 + `Size > 0`，比对/下载/加载全链路过滤无效包；但 `Hash=""` 仍会通过并跳过校验（见 4.2）。原问题：`Size=0` / `Hash=""` 的包能通过校验进入下载流程。 | 服务器配 Size=0 → 被过滤；配空 Hash → 仍会下载且不校验 | `PackVersionList:83` + `ProcedureUpdate:383` |
+| 1.4 | 🟢 | 🔶 **部分修复 (2026-07)** — `Pack.IsValid()` 已校验 `Name` 非空 + `Size > 0`，比对/下载/加载全链路过滤无效包；✅ `Pack.IsValid()` 已校验 Hash 非空 + 64 字符（2026-07）。空 Hash / 无效 Hash 的包在全链路被过滤。 | 服务器配无效 Hash → 被过滤 | `PackVersionList:83-84` |
 
 ---
 
@@ -36,7 +36,7 @@
 | # | 严重度 | 问题 | 现象 | 文件:行 |
 |---|:---:|------|------|---------|
 | 2.1 | 🟡 | ✅ **已修复 (2026-07)** — 子包加载完成后 `CleanStalePacks` 清理磁盘上不在当前版本清单中的废弃 `.pck`。原问题：服务器删包后本地文件残留，磁盘泄漏。 | 运营调整子包结构 → 废弃 .pck 自动清理 | `ProcedureUpdate:670-693` |
-| 2.2 | 🟡 | Hash 比较依赖服务器一致性：`FindPacksToUpdate` 里本地/服务器 Hash 用**大小写敏感的 `!=` 比较**，校验处才是 `OrdinalIgnoreCase`。**本地计算的 SHA256 hex 是小写**（`EasySave.ComputeSHA256` → `ToLowerInvariant`），如果服务器发大写或带 "-" 的格式（如 `a1-b2-c3`），比对/校验就失效或误判"有更新"。 | 运维换人/切换打包工具 → Hash 格式变了 → 每次都认为"有更新" → 重复下载 | `ProcedureUpdate:398`（比对）+ `DownloadComponent:411`（校验） |
+| 2.2 | 🟡 | ✅ **已修复 (2026-07)** — `FindPacksToUpdate` 改用 `OrdinalIgnoreCase` 比较；`Pack.IsValid()` 增加 Hash 非空 + 64 字符校验。原问题：大小写敏感导致重复下载；Hash 为空时静默跳过校验。 | Hash 归一化 + 空 Hash 拒绝 | `ProcedureUpdate:490` + `PackVersionList:83-84` |
 | 2.3 | 🟢 | 下载 URL 每次在 `FindPacksToUpdate` 中从 `GF.Resource.UpdateSettingRes` 读取（原 `GetRemoteUrlBase()` 已内联），但如果 `UpdateSettingRes` 是 Resource 类型且在热更 .pck 中被覆盖了，**读到的 URL 可能是旧/新版本的**，行为不确定。 | URL 变更 → 下载请求打到错误的 CDN | `ProcedureUpdate:391` |
 
 ---
@@ -63,7 +63,7 @@
 | # | 严重度 | 问题 | 现象 | 文件:行 |
 |---|:---:|------|------|---------|
 | 4.1 | 🟡 | 🔶 **部分修复 (2026-07)** — 下载完成后的 SHA256 校验已移入线程池（`Task.Run`）且哈希计算为流式（内存 O(1)，不再整份进内存）；但启动自检 `VerifyLocalPackIntegrity` 和加载前重校验（>1MB）仍在**主线程同步**执行 `EasySave.ComputeSHA256`，大文件会卡帧。 | 启动时校验多个大包 → 卡顿数秒 | `DownloadComponent:410`（线程池）+ `ProcedureUpdate:323,625`（主线程） |
-| 4.2 | 🟢 | Hash 为空时**跳过 SHA256 校验**（`DownloadFileAsync` 的 `expectedHash` 非空才校验；`ProcedureUpdate` 各处同样 `if (!string.IsNullOrEmpty(pack.Hash))`）。这意味着如果服务器忘记配 Hash，任何下载内容都被接受。应该是 Hash 为空 = 拒绝。 | 运维忘记配 Hash → 下载到的垃圾内容通过校验 | `DownloadComponent:407` + `ProcedureUpdate:319,621` |
+| 4.2 | 🟢 | ✅ **已修复 (2026-07)** — `Pack.IsValid()` 要求 Hash 非空 + 64 字符，无效包在全链路被过滤。`DownloadFileAsync` 的 `expectedHash` 非空检查保留为防御性代码。 | 空 Hash / 无效 Hash → 被 IsValid 过滤 | `PackVersionList:83-84` |
 
 ---
 
@@ -108,7 +108,7 @@
                🔶 部分修复: 4.1, 5.3, 5.5
                仍存在: 0.2, 0.3, 1.2, 2.2, 3.7, 6.2, 7.2
   🟢 轻度     → 🔶 部分修复: 1.4, 3.8
-               仍存在: 1.3, 2.3, 4.2, 6.3, 7.3
+               仍存在: 1.3, 2.3, 6.3, 7.3
 ```
 
 ### 修复优先级
@@ -134,5 +134,5 @@
 | 4.1 | 启动自检 / 加载前 SHA256 移出主线程 |
 | 1.2 | 版本清单请求的单次独立超时 |
 | 0.2 / 0.3 | 版本文件完整性校验；ResourceManager 与 ProcedureUpdate 版本数据统一 |
-| 2.2 / 4.2 | Hash 格式归一化；Hash 为空时拒绝而非跳过校验 |
+| 2.2 / 4.2 | Hash 格式归一化 ✅ 已完成 (2026-07) |
 | 3.7 / 3.8 / 6.2 / 7.2 / 7.3 | Size 溢出防御、下载取消 UI、Prelode 加载异常捕获、删除失败日志、日志持久化 |

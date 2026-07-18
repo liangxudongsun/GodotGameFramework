@@ -228,7 +228,7 @@ m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList
 ## 6. 注意事项 / FAQ
 
 **Q: `DataTableBase` / `IDataTable<T>` / `IDataRow` / `DefaultDataTableHelper` 还能用吗？**
-这些是原版 Game Framework"CSV 逐行解析"机制的移植遗留，代码保留但**当前没有任何调用方接线**（`DataTableManager` 已改为 Luban `Tables` 直连，`DefaultDataTableHelper` 未被实例化）。除非要恢复原版机制，否则新表一律走 Luban。
+✅（2026-07 已清理）这些原版 Game Framework"CSV 逐行解析"的遗留代码已删除。当前仅保留 Luban 驱动路径（`IDataTableManager` → `DataTableManager` → `Tables`）。新表一律走 Luban。
 
 **Q: 修改 Excel 后运行时数据没变？**
 必须重新执行生成脚本——运行时读的是 `.bytes` 二进制，不是 Excel。生成后无需重启 Godot 编辑器，但需要 `dotnet build`（若结构变化产生了新代码）。
@@ -237,7 +237,7 @@ m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList
 首次 `GetTables()` 时同步加载**全部**表。当前表量小无感知；表规模变大后可考虑使用 `gen_code_bin_to_project_lazyload.bat` 生成懒加载版本代码（按表首次访问再读文件）。
 
 **Q: `GameFramework/DataTable` 为什么依赖了 Godot 桥接层？**
-`DataTableManager` 直接持有 `ResourceComponent`（而非 `IResourceManager` 接口）并引用生成命名空间 `GameConfig`，违反了双层架构约定。属已知技术债：理想做法是注入 `Func<string, byte[]>` 或 `IResourceManager`，将 Luban 依赖留在游戏侧。
+✅（2026-07 已修复）`DataTableManager` 已改为接收 `Func<string, byte[]>` 加载器，不再直接引用 `ResourceComponent`。路径格式化（`GameFolderConstant.GameConfigs`）移至 `DataTableComponent`，纯 C# 层零 Godot 依赖。
 
 **Q: 能在运行时增删行吗？**
 不能。生成代码所有字段 `readonly`，容器只读暴露。运行时可变数据请使用 DataNode（见 `DataNodeSystem.md`）或 Setting。
@@ -249,6 +249,6 @@ Luban 内建 `vector2/vector3` 等数学类型与 Godot `Vector2/Vector3` 之间
 
 ## 7. 已知边界与后续计划
 
-- [ ] `DataTableManager` 解耦 `ResourceComponent` 具体类型（恢复纯 C# 层洁净）
-- [ ] 清理或明确标注原版 CSV 数据表遗留代码
+- [x] `DataTableManager` 解耦 `ResourceComponent` 具体类型（恢复纯 C# 层洁净）✅ 2026-07
+- [x] 清理原版 CSV 数据表遗留代码（6 个文件：DataTableBase、DataTableTable、IDataRow、IDataTable、IDataTableHelper、DefaultDataTableHelper）✅ 2026-07
 - [ ] 表规模增长后切换 lazyload 生成模式

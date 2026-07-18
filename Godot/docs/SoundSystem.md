@@ -249,10 +249,10 @@ GF.Sound.SetSoundGroupMute("SFX", sfxMuteCheck.ButtonPressed);
 ## 5. 注意事项 / FAQ
 
 **Q: `PlaySoundParams.Loop = true` 为什么不循环？**
-`DefaultSoundAgentHelper.Loop` 只是存储值，不作用于 AudioStreamPlayer。Godot 中循环由**音频资源的导入设置**决定（WAV 的 Loop Mode、OGG/MP3 的 Loop 勾选）。BGM 请在导入面板开循环；自然播完的非循环声音会经 `Finished` 信号自动回收代理。
+`DefaultSoundAgentHelper.Loop` 只是存储值，不作用于 AudioStreamPlayer。Godot 中循环由**音频资源的导入设置**决定（WAV 的 Loop Mode、OGG/MP3 的 Loop 勾选）。✅（2026-07）设置 `Loop=true` 时框架会打印 Warning 提醒。BGM 请在导入面板开循环。
 
 **Q: `StopBGM()` 把音效也停了？**
-是。当前实现调用的是 `soundComponent.StopAllLoadedSounds()`（组件级，遍历所有组），并非只停 Music 组。只停 BGM 可用 `GetSoundGroup("Music").StopAllLoadedSounds()`（`PlayBGM` 内部即如此做）。
+✅（2026-07 修复）已改为只停 Music 组（`GetSoundGroup("Music").StopAllLoadedSounds()`），不再影响 SFX/UI 组。
 
 **Q: `PauseSound/ResumeSound` 抛 `GameFrameworkException`？**
 serialId 对应的声音已不在任何代理上（播完被回收/被抢占/从未成功）时会抛（原版 GF 行为）。`StopSound` 则返回 false 不抛。
@@ -261,7 +261,7 @@ serialId 对应的声音已不在任何代理上（播完被回收/被抢占/从
 这是抢占调度的预期行为。增大该组 `AgentCounts`（`SoundGroupRes.tres`），或给不希望被顶的声音更高 `Priority`，或开启组的 `AvoidBeingReplacedBySamePriority`。
 
 **Q: 为什么订阅不到全局 PlaySoundSuccess 事件？**
-`SoundComponent.OnPlaySoundSuccess` 的 `m_EventComponent.Fire(...)` 当前整体被注释（连同 3D 位置绑定逻辑）。需要时可恢复注释，或直接订阅 `GameFrameworkEntry.GetModule<ISoundManager>().PlaySoundSuccess`。
+✅（2026-07 修复）`SoundComponent.OnPlaySoundSuccess` 已恢复 `m_EventComponent.Fire` 转发，经 `PlaySoundSuccessEventArgs`（Godot 层）全局分发。订阅 `PlaySoundSuccessEventArgs.EventId` 即可。
 
 **Q: 暂停游戏（SceneTree.Paused）时 BGM 会停吗？**
 不会。Music 组的 AudioStreamPlayer 被设置为 `ProcessMode = Always`；SFX/UI 组会随树暂停。

@@ -21,6 +21,13 @@ namespace GodotGameFramework
         private static bool m_Shutdown = false;
         private bool m_StartProcedure = false;
 
+        public override void OnInit()
+        {
+            // Restart 后场景重载，重置静态状态
+            m_Shutdown = false;
+            GF.ClearCache();
+        }
+
         public override void OnUpdate(double delta)
         {
             base.OnUpdate(delta);
@@ -93,7 +100,6 @@ namespace GodotGameFramework
 
         public static void Shutdown(ShutdownType shutdownType)
         {
-            m_Shutdown = true;
             GD.Print($"[GGF] Shutdown Game Framework ({shutdownType})...");
 
             if (m_BaseComponent != null)
@@ -103,13 +109,23 @@ namespace GodotGameFramework
             }
             m_Components.Clear();
 
-            if (shutdownType == ShutdownType.None) return;
+            if (shutdownType == ShutdownType.None)
+            {
+                m_Shutdown = true;
+                return;
+            }
 
             var sceneTree = (SceneTree)Engine.GetMainLoop();
             if (shutdownType == ShutdownType.Restart)
+            {
+                m_Shutdown = true;
                 sceneTree.ReloadCurrentScene();
+            }
             else if (shutdownType == ShutdownType.Quit)
+            {
+                m_Shutdown = true;
                 sceneTree.Quit();
+            }
         }
 
         internal static void RegisterComponent(GameFrameworkComponent component)

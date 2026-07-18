@@ -27,7 +27,6 @@ namespace GameFramework.Scene
         private EventHandler<LoadSceneSuccessEventArgs> m_LoadSceneSuccessEventHandler;
         private EventHandler<LoadSceneFailureEventArgs> m_LoadSceneFailureEventHandler;
         private EventHandler<LoadSceneUpdateEventArgs> m_LoadSceneUpdateEventHandler;
-        private EventHandler<LoadSceneDependencyAssetEventArgs> m_LoadSceneDependencyAssetEventHandler;
         private EventHandler<UnloadSceneSuccessEventArgs> m_UnloadSceneSuccessEventHandler;
         private EventHandler<UnloadSceneFailureEventArgs> m_UnloadSceneFailureEventHandler;
 
@@ -40,14 +39,13 @@ namespace GameFramework.Scene
             m_LoadingSceneAssetNames = new List<string>();
             m_UnloadingSceneAssetNames = new List<string>();
             m_LoadedSceneInstances = new Dictionary<string, object>();
-            m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback, LoadAssetDependencyAssetCallback);
+            m_LoadAssetCallbacks = new LoadAssetCallbacks(LoadAssetSuccessCallback, LoadAssetFailureCallback, LoadAssetUpdateCallback);
             m_UnloadSceneCallbacks = new UnloadSceneCallbacks(UnloadSceneSuccessCallback, UnloadSceneFailureCallback);
             m_ResourceManager = null;
             m_SceneHelper = null;
             m_LoadSceneSuccessEventHandler = null;
             m_LoadSceneFailureEventHandler = null;
             m_LoadSceneUpdateEventHandler = null;
-            m_LoadSceneDependencyAssetEventHandler = null;
             m_UnloadSceneSuccessEventHandler = null;
             m_UnloadSceneFailureEventHandler = null;
         }
@@ -112,17 +110,6 @@ namespace GameFramework.Scene
         /// <summary>
         /// 加载场景时加载依赖资源事件。
         /// </summary>
-        public event EventHandler<LoadSceneDependencyAssetEventArgs> LoadSceneDependencyAsset
-        {
-            add
-            {
-                m_LoadSceneDependencyAssetEventHandler += value;
-            }
-            remove
-            {
-                m_LoadSceneDependencyAssetEventHandler -= value;
-            }
-        }
 
         /// <summary>
         /// 卸载场景成功事件。
@@ -469,6 +456,10 @@ namespace GameFramework.Scene
             }
 
             m_UnloadingSceneAssetNames.Add(sceneAssetName);
+
+            // 原版 Unity GF 此处由 m_ResourceManager.UnloadScene 驱动回调；
+            // GGF 中 IResourceManager 精简后未保留该成员，改为同步完成卸载链。
+            m_UnloadSceneCallbacks.UnloadSceneSuccessCallback(sceneAssetName, userData);
         }
 
         private void LoadAssetSuccessCallback(string sceneAssetName, object sceneAsset, float duration, object userData)
@@ -520,15 +511,6 @@ namespace GameFramework.Scene
             }
         }
 
-        private void LoadAssetDependencyAssetCallback(string sceneAssetName, string dependencyAssetName, int loadedCount, int totalCount, object userData)
-        {
-            if (m_LoadSceneDependencyAssetEventHandler != null)
-            {
-                LoadSceneDependencyAssetEventArgs loadSceneDependencyAssetEventArgs = LoadSceneDependencyAssetEventArgs.Create(sceneAssetName, dependencyAssetName, loadedCount, totalCount, userData);
-                m_LoadSceneDependencyAssetEventHandler(this, loadSceneDependencyAssetEventArgs);
-                ReferencePool.Release(loadSceneDependencyAssetEventArgs);
-            }
-        }
 
         private void UnloadSceneSuccessCallback(string sceneAssetName, object userData)
         {

@@ -44,9 +44,6 @@ namespace GodotGameFramework.UI
         private bool m_EnableOpenUIFormUpdateEvent = false;
 
         [Export]
-        private bool m_EnableOpenUIFormDependencyAssetEvent = false;
-
-        [Export]
         private bool m_EnableCloseUIFormCompleteEvent = true;
 
         [Export]
@@ -145,16 +142,7 @@ namespace GodotGameFramework.UI
             }
         }
         private static readonly Dictionary<int, TaskCompletionSource<IUIForm>> m_UIFormTask = new Dictionary<int, TaskCompletionSource<IUIForm>>();
-        /// <summary>
-        /// 游戏框架组件初始化。
-        ///
-        /// 注意：初始化逻辑放在 OnInit（对应 _Ready）而非 OnEnter（对应 _EnterTree）中，
-        /// 这是因为：
-        /// 1. _Ready 按子→父顺序调用，此时所有同级组件（Base、Resource、Event 等）
-        ///    已完成注册，GameEntry.GetComponent&lt;T&gt;() 可正确返回。
-        /// 2. 而 OnEnter/_EnterTree 按父→子顺序调用，此时其他组件尚未注册（注册在 _Ready 中），
-        ///    导致 GameEntry.GetComponent&lt;T&gt;() 返回 null，SetResourceManager 等调用不会执行。
-        /// </summary>
+
         public override void OnInit()
         {
             base.OnInit();
@@ -185,9 +173,7 @@ namespace GodotGameFramework.UI
                 m_UIManager.OpenUIFormUpdate += OnOpenUIFormUpdate;
             }
 
-            if (m_EnableOpenUIFormDependencyAssetEvent)
             {
-                m_UIManager.OpenUIFormDependencyAsset += OnOpenUIFormDependencyAsset;
             }
 
             if (m_EnableCloseUIFormCompleteEvent)
@@ -701,10 +687,6 @@ namespace GodotGameFramework.UI
             m_EventComponent.Fire(this, OpenUIFormUpdateEventArgs.Create(e));
         }
 
-        private void OnOpenUIFormDependencyAsset(object sender, GameFramework.UI.OpenUIFormDependencyAssetEventArgs e)
-        {
-            m_EventComponent.Fire(this, OpenUIFormDependencyAssetEventArgs.Create(e));
-        }
 
         private void OnCloseUIFormComplete(object sender, GameFramework.UI.CloseUIFormCompleteEventArgs e)
         {

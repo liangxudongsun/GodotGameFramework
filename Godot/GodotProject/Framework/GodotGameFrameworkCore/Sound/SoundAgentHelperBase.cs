@@ -19,7 +19,8 @@ namespace GodotGameFramework.Sound
 
         public abstract float Time { get; set; }
         public abstract bool Mute { get; set; }
-        public abstract bool Loop { get; set; }
+        [Obsolete("Godot的音频是否循环取决于资源导入设置")]
+        public bool Loop { get; set; }
         public abstract int Priority { get; set; }
         public abstract float Volume { get; set; }
         public abstract float Pitch { get; set; }

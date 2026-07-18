@@ -28,7 +28,6 @@ namespace GodotGameFramework.Entity
         [Export] private bool m_EnableShowEntitySuccessEvent = true;
         [Export] private bool m_EnableShowEntityFailureEvent = true;
         [Export] private bool m_EnableShowEntityUpdateEvent = false;
-        [Export] private bool m_EnableShowEntityDependencyAssetEvent = false;
         [Export] private bool m_EnableHideEntityCompleteEvent = true;
         [Export] private float m_InstanceAutoReleaseInterval = 60f;
         [Export] private int m_InstanceCapacity = 16;
@@ -56,7 +55,6 @@ namespace GodotGameFramework.Entity
             if (m_EnableShowEntitySuccessEvent) m_EntityManager.ShowEntitySuccess += OnShowEntitySuccess;
             m_EntityManager.ShowEntityFailure += OnShowEntityFailure;
             if (m_EnableShowEntityUpdateEvent) m_EntityManager.ShowEntityUpdate += OnShowEntityUpdate;
-            if (m_EnableShowEntityDependencyAssetEvent) m_EntityManager.ShowEntityDependencyAsset += OnShowEntityDependencyAsset;
             if (m_EnableHideEntityCompleteEvent) m_EntityManager.HideEntityComplete += OnHideEntityComplete;
 
             m_EntityManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
@@ -76,7 +74,6 @@ namespace GodotGameFramework.Entity
                 m_EntityManager.ShowEntitySuccess -= OnShowEntitySuccess;
                 m_EntityManager.ShowEntityFailure -= OnShowEntityFailure;
                 m_EntityManager.ShowEntityUpdate -= OnShowEntityUpdate;
-                m_EntityManager.ShowEntityDependencyAsset -= OnShowEntityDependencyAsset;
                 m_EntityManager.HideEntityComplete -= OnHideEntityComplete;
             }
             base.OnExitTree();
@@ -352,10 +349,6 @@ namespace GodotGameFramework.Entity
             m_EventComponent.Fire(this, ShowEntityUpdateEventArgs.Create(e));
         }
 
-        private void OnShowEntityDependencyAsset(object sender, GameFramework.Entity.ShowEntityDependencyAssetEventArgs e)
-        {
-            m_EventComponent.Fire(this, ShowEntityDependencyAssetEventArgs.Create(e));
-        }
 
         private void OnHideEntityComplete(object sender, HideEntityCompleteEventArgs e) => m_EventComponent.Fire(this, e);
     }

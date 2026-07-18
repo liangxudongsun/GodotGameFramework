@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 // Game Framework
 // Copyright © 2013-2021 Jiang Yin. All rights reserved.
 // Homepage: https://gameframework.cn/
@@ -6,24 +6,21 @@
 //------------------------------------------------------------
 
 using GameConfig;
-using GameConfig.Constant;
-using GameFramework.Resource;
-using GodotGameFramework;
-using GodotGameFramework.Resource;
 using Luban;
 using System;
-using System.Collections.Generic;
 
 namespace GameFramework.DataTable
 {
     /// <summary>
     /// 数据表管理器。
+    /// 通过注入的 Func&lt;string, byte[]&gt; 加载器读取 Luban 二进制配置，
+    /// 不再依赖 Godot 桥接层的 ResourceComponent。
     /// </summary>
     internal sealed partial class DataTableManager : GameFrameworkModule, IDataTableManager
     {
         private bool _init = false;
-
         private Tables _tables;
+        private Func<string, byte[]> _dataLoader;
 
         public Tables Tables
         {
@@ -33,15 +30,10 @@ namespace GameFramework.DataTable
                 {
                     Load();
                 }
-
                 return _tables;
             }
         }
-        private ResourceComponent m_ResourceCmp;
 
-        /// <summary>
-        /// 加载配置。
-        /// </summary>
         public void Load()
         {
             _tables = new Tables(LoadByteBuf);
@@ -55,35 +47,30 @@ namespace GameFramework.DataTable
 
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
-
         }
 
-
         /// <summary>
-        /// 加载二进制配置。
+        /// Luban Tables 构造函数的加载委托。
+        /// 由桥接层注入的 _dataLoader 提供实际文件读取能力。
         /// </summary>
-        /// <param name="file">FileName</param>
-        /// <returns>ByteBuf</returns>
         private ByteBuf LoadByteBuf(string file)
         {
-            string path = Utility.Text.Format(GameFolderConstant.GameConfigs, file);
-            byte[] bytes = m_ResourceCmp.LoadBinary(path);
+            byte[] bytes = _dataLoader(file);
             if (bytes == null || bytes.Length == 0)
             {
-                throw new Exception($"Failed to load config file: {path}");
+                throw new Exception($"Failed to load config file: {file}");
             }
             return new ByteBuf(bytes);
         }
 
-        public void SetResourcesComponent(object dataTableComponent)
+        public void SetDataLoader(Func<string, byte[]> loader)
         {
-            m_ResourceCmp = dataTableComponent as ResourceComponent;
+            _dataLoader = loader ?? throw new GameFrameworkException("Data loader is invalid.");
         }
 
         public Tables GetTables()
         {
             return Tables;
         }
-
     }
 }

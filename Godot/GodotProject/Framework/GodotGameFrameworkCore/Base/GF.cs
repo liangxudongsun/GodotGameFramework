@@ -205,5 +205,28 @@ namespace GodotGameFramework
                 return m_Download;
             }
         }
+
+        /// <summary>
+        /// 清除所有组件缓存。场景重载（Restart）后调用，避免指向旧场景已销毁的节点。
+        /// </summary>
+        public static void ClearCache()
+        {
+            m_Event = null;
+            m_Fsm = null;
+            m_Procedure = null;
+            m_ObjectPool = null;
+            m_DataNode = null;
+            m_Resource = null;
+            m_Entity = null;
+            m_UI = null;
+            m_Sound = null;
+            m_DataTable = null;
+            m_Localization = null;
+            m_Setting = null;
+            m_Base = null;
+            m_Scene = null;
+            m_WebRequest = null;
+            m_Download = null;
+        }
     }
 }

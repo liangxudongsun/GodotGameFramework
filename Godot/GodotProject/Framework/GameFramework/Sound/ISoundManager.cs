@@ -42,7 +42,6 @@ namespace GameFramework.Sound
         /// <summary>
         /// 播放声音时加载依赖资源事件。
         /// </summary>
-        event EventHandler<PlaySoundDependencyAssetEventArgs> PlaySoundDependencyAsset;
 
         /// <summary>
         /// 设置资源管理器。

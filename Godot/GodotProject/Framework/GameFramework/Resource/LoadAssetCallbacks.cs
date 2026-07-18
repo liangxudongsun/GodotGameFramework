@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 // Game Framework
 // Copyright © 2013-2021 Jiang Yin. All rights reserved.
 // Homepage: https://gameframework.cn/
@@ -9,137 +9,38 @@ namespace GameFramework.Resource
 {
     /// <summary>
     /// 加载资源回调函数集。
+    /// 注：Godot 资源系统自动处理依赖，不需要 Unity 式的 DependencyAsset 回调，已移除。
     /// </summary>
     public sealed class LoadAssetCallbacks
     {
         private readonly LoadAssetSuccessCallback m_LoadAssetSuccessCallback;
         private readonly LoadAssetFailureCallback m_LoadAssetFailureCallback;
         private readonly LoadAssetUpdateCallback m_LoadAssetUpdateCallback;
-        private readonly LoadAssetDependencyAssetCallback m_LoadAssetDependencyAssetCallback;
 
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
         public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback)
-            : this(loadAssetSuccessCallback, null, null, null)
+            : this(loadAssetSuccessCallback, null, null)
         {
         }
 
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
-        /// <param name="loadAssetFailureCallback">加载资源失败回调函数。</param>
         public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback, LoadAssetFailureCallback loadAssetFailureCallback)
-            : this(loadAssetSuccessCallback, loadAssetFailureCallback, null, null)
+            : this(loadAssetSuccessCallback, loadAssetFailureCallback, null)
         {
         }
 
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
-        /// <param name="loadAssetUpdateCallback">加载资源更新回调函数。</param>
         public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback, LoadAssetUpdateCallback loadAssetUpdateCallback)
-            : this(loadAssetSuccessCallback, null, loadAssetUpdateCallback, null)
+            : this(loadAssetSuccessCallback, null, loadAssetUpdateCallback)
         {
         }
 
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
-        /// <param name="loadAssetDependencyAssetCallback">加载资源时加载依赖资源回调函数。</param>
-        public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback, LoadAssetDependencyAssetCallback loadAssetDependencyAssetCallback)
-            : this(loadAssetSuccessCallback, null, null, loadAssetDependencyAssetCallback)
-        {
-        }
-
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
-        /// <param name="loadAssetFailureCallback">加载资源失败回调函数。</param>
-        /// <param name="loadAssetUpdateCallback">加载资源更新回调函数。</param>
         public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback, LoadAssetFailureCallback loadAssetFailureCallback, LoadAssetUpdateCallback loadAssetUpdateCallback)
-            : this(loadAssetSuccessCallback, loadAssetFailureCallback, loadAssetUpdateCallback, null)
         {
-        }
-
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
-        /// <param name="loadAssetFailureCallback">加载资源失败回调函数。</param>
-        /// <param name="loadAssetDependencyAssetCallback">加载资源时加载依赖资源回调函数。</param>
-        public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback, LoadAssetFailureCallback loadAssetFailureCallback, LoadAssetDependencyAssetCallback loadAssetDependencyAssetCallback)
-            : this(loadAssetSuccessCallback, loadAssetFailureCallback, null, loadAssetDependencyAssetCallback)
-        {
-        }
-
-        /// <summary>
-        /// 初始化加载资源回调函数集的新实例。
-        /// </summary>
-        /// <param name="loadAssetSuccessCallback">加载资源成功回调函数。</param>
-        /// <param name="loadAssetFailureCallback">加载资源失败回调函数。</param>
-        /// <param name="loadAssetUpdateCallback">加载资源更新回调函数。</param>
-        /// <param name="loadAssetDependencyAssetCallback">加载资源时加载依赖资源回调函数。</param>
-        public LoadAssetCallbacks(LoadAssetSuccessCallback loadAssetSuccessCallback, LoadAssetFailureCallback loadAssetFailureCallback, LoadAssetUpdateCallback loadAssetUpdateCallback, LoadAssetDependencyAssetCallback loadAssetDependencyAssetCallback)
-        {
-            if (loadAssetSuccessCallback == null)
-            {
-                throw new GameFrameworkException("Load asset success callback is invalid.");
-            }
-
-            m_LoadAssetSuccessCallback = loadAssetSuccessCallback;
+            m_LoadAssetSuccessCallback = loadAssetSuccessCallback ?? throw new GameFrameworkException("Load asset success callback is invalid.");
             m_LoadAssetFailureCallback = loadAssetFailureCallback;
             m_LoadAssetUpdateCallback = loadAssetUpdateCallback;
-            m_LoadAssetDependencyAssetCallback = loadAssetDependencyAssetCallback;
         }
 
-        /// <summary>
-        /// 获取加载资源成功回调函数。
-        /// </summary>
-        public LoadAssetSuccessCallback LoadAssetSuccessCallback
-        {
-            get
-            {
-                return m_LoadAssetSuccessCallback;
-            }
-        }
-
-        /// <summary>
-        /// 获取加载资源失败回调函数。
-        /// </summary>
-        public LoadAssetFailureCallback LoadAssetFailureCallback
-        {
-            get
-            {
-                return m_LoadAssetFailureCallback;
-            }
-        }
-
-        /// <summary>
-        /// 获取加载资源更新回调函数。
-        /// </summary>
-        public LoadAssetUpdateCallback LoadAssetUpdateCallback
-        {
-            get
-            {
-                return m_LoadAssetUpdateCallback;
-            }
-        }
-
-        /// <summary>
-        /// 获取加载资源时加载依赖资源回调函数。
-        /// </summary>
-        public LoadAssetDependencyAssetCallback LoadAssetDependencyAssetCallback
-        {
-            get
-            {
-                return m_LoadAssetDependencyAssetCallback;
-            }
-        }
+        public LoadAssetSuccessCallback LoadAssetSuccessCallback => m_LoadAssetSuccessCallback;
+        public LoadAssetFailureCallback LoadAssetFailureCallback => m_LoadAssetFailureCallback;
+        public LoadAssetUpdateCallback LoadAssetUpdateCallback => m_LoadAssetUpdateCallback;
     }
 }

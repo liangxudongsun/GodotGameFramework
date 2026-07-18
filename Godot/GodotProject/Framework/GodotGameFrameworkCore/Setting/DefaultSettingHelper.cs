@@ -32,7 +32,7 @@ namespace GodotGameFramework.Setting
         /// - Linux: ~/.local/share/godot/app_userdata/[项目名]/
         /// - macOS: ~/Library/Application Support/Godot/app_userdata/[项目名]/
         /// </summary>
-        private readonly string m_FilePath = "user://settings.cfg";
+        private readonly string m_FilePath = "user://Settings.cfg";
 
         /// <summary>
         /// Godot ConfigFile 实例，用于读写配置。
