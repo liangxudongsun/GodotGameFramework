@@ -10,10 +10,12 @@ size = Vector2(20, 75)
 script = ExtResource("1_kqipa")
 
 [node name="Fuhao" type="Sprite2D" parent="." unique_id=1144455434]
+rotation = 1.5707964
 texture = ExtResource("2_ps62e")
 region_enabled = true
 region_rect = Rect2(1141, 41, 19, 77)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=790920554]
 position = Vector2(0, -0.5)
+rotation = 1.5707964
 shape = SubResource("RectangleShape2D_44wmx")

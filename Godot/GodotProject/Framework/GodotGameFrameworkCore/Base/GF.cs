@@ -1,4 +1,5 @@
 using GameConfig;
+using GodotGameFramework.Debugger;
 using GodotGameFramework.Download;
 using GodotGameFramework.Entity;
 using GodotGameFramework.Localization;
@@ -29,6 +30,7 @@ namespace GodotGameFramework
         private static SceneComponent m_Scene;
         private static WebRequestComponent m_WebRequest;
         private static DownloadComponent m_Download;
+        private static DebuggerComponent m_Debugger;
         public static EventComponent Event
         {
             get
@@ -205,6 +207,17 @@ namespace GodotGameFramework
                 return m_Download;
             }
         }
+        public static DebuggerComponent Debugger
+        {
+            get
+            {
+                if (m_Debugger == null)
+                {
+                    m_Debugger = GameEntry.GetComponent<DebuggerComponent>();
+                }
+                return m_Debugger;
+            }
+        }
 
         /// <summary>
         /// 清除所有组件缓存。场景重载（Restart）后调用，避免指向旧场景已销毁的节点。
@@ -227,6 +240,7 @@ namespace GodotGameFramework
             m_Scene = null;
             m_WebRequest = null;
             m_Download = null;
+            m_Debugger = null;
         }
     }
 }

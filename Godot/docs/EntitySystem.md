@@ -101,6 +101,7 @@ void OnAttached/OnDetached/OnAttachTo/OnDetachFrom(IEntity other, object userDat
 - **一次性初始化放 `isNewInstance` 分支**（如信号订阅 `BodyEntered += ...`），否则池复用会重复订阅
 - **可变状态在 `OnShow` 里重置**（复用实例带着上次的脏状态回来）
 - `OnRecycle` 后 `Id == 0` 但 Godot 信号仍可能触发——用 `m_IsDead` 之类标志防止 HideEntity 后再次操作
+- ⚠️ **userData 必须原样透传**：纯层管理器把 `ShowEntity(..., userData)` 的 userData **原样**交给 `entity.OnShow(userData)`，中间没有任何解包层。`EntityExtension` 等封装**不得**把 userData 包进 `ShowEntityInfo` 之类的包装对象——否则实体侧 `userData is BulletData` 这类判断会静默失败（2026-07 曾因此导致子弹方向失效），且池化包装对象无人归还
 
 ### 3.2 实体组与对象池
 
@@ -140,7 +141,7 @@ Luban 表 `TbEntityConfig`（Excel 源：`Configs/GameConfig/Datas/实体.xlsx`�
 
 ### 3.5 异步显示与事件
 
-`ShowEntityAsync` 用 `Dictionary<int, TaskCompletionSource<IEntity>>`（按实体编号）桥接 `ShowEntitySuccess/Failure` 事件；失败时 Task 以 `GameFrameworkException(ErrorMessage)` 完结。管理器事件同时经 `EventComponent` 全局转发（Inspector 五个开关控制），事件参数为池化对象，**回调返回后即回收，不可持有**。
+`ShowEntityAsync` 用 `Dictionary<int, TaskCompletionSource<IEntity>>`（按实体编号）桥接 `ShowEntitySuccess/Failure` 事件；失败时 Task 以 `GameFrameworkException(ErrorMessage)` 完结。管理器事件同时经 `EventComponent` 全局转发（Inspector 四个开关控制），事件参数为池化对象，**回调返回后即回收，不可持有**。✅（2026-07）转发时按事件约定**复制**参数（纯层全参 `Create(...)` 或 Godot 层包装 `Create(e)`），不再直接转发管理器实例（详见 `EventSystem.md` §3.4 双重归还说明）。
 
 加载中途 `HideEntity`：不会取消资源加载，而是记入 `m_EntitiesToReleaseOnLoad`，资源到位后直接释放不显示。
 
@@ -154,7 +155,7 @@ Luban 表 `TbEntityConfig`（Excel 源：`Configs/GameConfig/Datas/实体.xlsx`�
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `m_EnableShowEntitySuccessEvent` 等 3 个开关（Success/Failure/HideComplete 开，Update 关） | [Export] 配置 | 是否向全局 EventComponent 转发对应事件。Godot 自动管理依赖，无 DependencyAsset |
+| `m_EnableShowEntitySuccessEvent` 等 4 个开关（Success/Failure/HideComplete 开，Update 关） | [Export] 配置 | 是否向全局 EventComponent 转发对应事件。Godot 自动管理依赖，无 DependencyAsset。⚠️ Success 开关同时控制 `ShowEntitySuccess` 的订阅，而 `ShowEntityAsync` 的 TCS 结算在同一订阅回调里——**关闭 Success 开关会导致 `ShowEntityAsync` 永不完结**（Failure 恒订阅不受此影响） |
 | `m_EntityHelperTypeName` | `GodotGameFramework.Entity.DefaultEntityHelper` | 实体辅助器类型（Inspector 下拉可选自定义实现） |
 | `m_EntityGroupHelperTypeName` | `GodotGameFramework.Entity.DefaultEntityGroupHelper` | 实体组辅助器类型 |
 | `EntityGroupRes` | — | 实体组定义资源（`ProcedurePrelode` 读取注册） |

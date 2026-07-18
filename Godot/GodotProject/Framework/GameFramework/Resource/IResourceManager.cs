@@ -38,5 +38,10 @@ namespace GameFramework.Resource
         /// 获取二进制资源的长度
         /// </summary>
         int GetBinaryLength(string binaryAssetName);
+        /// <summary>
+        /// 设置资源加载代理数量
+        /// </summary>
+        /// <param name="agentCount">
+        void SetLoadAssetAgentCount(int agentCount);
     }
 }

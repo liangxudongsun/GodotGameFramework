@@ -335,8 +335,9 @@ public class ProcedureUpdate : ProcedureBase
             }
             else
             {
-                Log.Info("[ProcedureUpdate] 所有包已是最新，无需下载。");
+                await LoadDownloadedPacksAsync(localVersion);
                 ChangeState<ProcedurePrelode>(procedureOwner);
+                Log.Info("[ProcedureUpdate] 所有包已是最新，无需下载。");
             }
         }
         finally

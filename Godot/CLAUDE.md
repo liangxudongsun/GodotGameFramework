@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download.
+**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download, Debugger.
 
-> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download + hot-update design & audit). See `docs/README.md` for the index. Prefer those docs over this file for system details.
+> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Debugger / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download + hot-update design & audit). See `docs/README.md` for the index. Prefer those docs over this file for system details.
 
 - **Godot .NET SDK**: `Godot.NET.Sdk/4.7.0` (NuGet)
 - **Build**: `cd GodotProject && dotnet build`
@@ -42,7 +42,8 @@ GodotProject/
       Download/ WebRequest/         ← DownloadComponent (queue+resume+verify), WebRequestComponent (Godot HttpRequest)
       HotUpdate/                    ← HotUpdateSafetyGuard (crash-safe hot update)
       DataTable/ DataNode/ Setting/ Localization/
-      Event/ Fsm/ Procedure/ ObjectPool/
+      Event/ Fsm/ Procedure/ ObjectPool/          ← ObjectPool 含 ReferencePoolComponent（引用池严格检查策略）
+      Debugger/                     ← UGF 风格运行时调试器（FPS 图标 + Console/Information/Profiler/Other 页签）
       Config/ Variable/             ← GameFolderConstant, VarInt32/VarString/VarBoolean/VarSingle
       Json/                         ← Newtonsoft.Json helper (local .dll reference) + EasySave
       Lib/LubanLib/                 ← Luban runtime (ByteBuf, BeanBase, StringUtil)
@@ -86,10 +87,11 @@ Main scene: `Framework/GameFramework.tscn` (uid `bggentry001`), set as `run/main
 
 ```
 GameFramework (GameEntry : GodotComponent)
-├── Base / Event / Resource / DataTable
-├── Procedure / Scene / Fsm / DataNode
-├── ObjectPool / Setting / Entity / UI
-├── Sound / Localization / WebRequest / Download
+├── Base / Event / Resource / Debugger
+├── DataTable / Procedure / Scene / Fsm
+├── DataNode / ObjectPool / ReferencePool / Setting
+├── Entity / UI / Sound / Localization
+├── WebRequest / Download
 ```
 
 Each component type can only register one instance. Component list mirrors the `GF.cs` static facade.
@@ -118,7 +120,7 @@ OnInit()       → OnEnter()  → OnUpdate(delta) / OnFixedUpdate(delta) → OnE
 GF.Base / GF.Event / GF.Fsm / GF.Procedure
 GF.Resource / GF.Entity / GF.UI / GF.Sound / GF.Scene
 GF.DataTable / GF.DataNode / GF.ObjectPool
-GF.Localization / GF.Setting / GF.WebRequest / GF.Download
+GF.Localization / GF.Setting / GF.WebRequest / GF.Download / GF.Debugger
 ```
 
 Each property calls `GameEntry.GetComponent<T>()` and caches the result.
@@ -185,9 +187,15 @@ Godot Component (e.g., EntityComponent)
 
 Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClickedEventArgs`, `ScoreChangedEventArgs`, `TestPhaseChangedEventArgs`. Fire via `GF.Event.Fire(this, e)`.
 
+**Critical rule — copy on forward:** pure-layer managers release their event args **immediately after the callback returns**. A Godot component forwarding a manager event into `GF.Event.Fire` must fire a **copy** (`XxxEventArgs.Create(e)` or full-parameter `Create(...)`), never the manager's instance — otherwise EventPool releases it a second time (strict check throws `The reference has been released.`) and subscribers read cleared data.
+
 ### ReferencePool / Object Pool
 
-`IReference` interface + `ReferencePool.Acquire<T>()`/`Release()` for lightweight object reuse. `ObjectPoolComponent` wraps `ObjectPoolManager` for pooled Godot objects.
+`IReference` interface + `ReferencePool.Acquire<T>()`/`Release()` for lightweight object reuse. `ObjectPoolComponent` wraps `ObjectPoolManager` for pooled Godot objects. `ReferencePoolComponent` (scene node `ReferencePool`) applies a strict-check policy (`ReferenceStrictCheckType`, default `AlwaysEnable`) — double-`Release` throws instead of silently corrupting the pool.
+
+### Debugger
+
+UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand) + full window with `Console | Information | Profiler | Other` tab groups, rendered as BBCode into a RichTextLabel (IMGUI-style, `[url]` links route interactions). Console captures framework logs via `DefaultLogHelper.LogMessageReceived`. Custom windows: `GF.Debugger.RegisterDebuggerWindow("Game/Cheat", window)`. Details: `docs/DebuggerSystem.md`.
 
 ## Component Inspector Addon
 
@@ -284,9 +292,11 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 `Log.Debug/Info/Warning/Error/Fatal` are `[Conditional]` — zero runtime overhead when the symbol is undefined. Release builds can remove the entire `DefineConstants` line.
 
+`DefaultLogHelper` bridges framework logs to `GD.Print/PushWarning/PushError` and raises the static event `DefaultLogHelper.LogMessageReceived(level, message, stackTrace)` (stack trace captured for Error/Fatal) — consumed by the debugger's Console window.
+
 ## Resource System
 
-`IResourceManager` with 9 members (reduced from ~97 Unity-era members). Details: `docs/ResourceSystem.md`.
+`IResourceManager` with 10 members (reduced from ~97 Unity-era members). Details: `docs/ResourceSystem.md`.
 
 | Mode | Status |
 |------|--------|
@@ -296,7 +306,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ### Loading
 
-Single FIFO `Queue<LoadAssetTask>` drives async asset loading (`ResourceLoader.LoadThreadedRequest` + per-frame status polling). The `priority` parameter is recorded but not used for scheduling. `LoadBinaryTask`/`LoadBinaryAgent` exist but are **not wired up** — `LoadBinary()`/`LoadText()` on `ResourceComponent` are synchronous main-thread implementations. Async API: `LoadAsset`/`LoadAssetAsync<T>` (no `LoadSceneAsync` on ResourceComponent; scene loading goes through `SceneComponent`).
+`TaskPool<LoadAssetTask>` drives async asset loading (`ResourceLoader.LoadThreadedRequest` + per-frame status polling) with a configurable number of load agents (`ResourceComponent.AgentCount` export, default 10, via `SetLoadAssetAgentCount`). The waiting queue is ordered by `priority` (descending). `LoadBinaryTask`/`LoadBinaryAgent` exist but are **not wired up** — `LoadBinary()`/`LoadText()` on `ResourceComponent` are synchronous main-thread implementations. Async API: `LoadAsset`/`LoadAssetAsync<T>` (no `LoadSceneAsync` on ResourceComponent; scene loading goes through `SceneComponent`).
 
 ### Subpackage System (Updatable mode)
 

@@ -2956,3 +2956,35 @@ Godot/docs/SoundSystem.md
 Godot/production/session-logs/session-log.md
 ---
 
+## Session End: 20260719_024504
+### Commits
+287e063 文档更新
+bd05e9c 完善流程，代码冗余
+### Uncommitted Changes
+Godot/CLAUDE.md
+Godot/GodotProject/Framework/GameFramework.tscn
+Godot/GodotProject/Framework/GameFramework/Resource/IResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Base/GF.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/EntityComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/EntityExtension.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Entity/ShowEntityUpdateEventArgs.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Resource/ResourceManager.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Sound/PlaySoundInfo.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Sound/PlaySoundInfo.cs.uid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Sound/PlaySoundSuccessEventArgs.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Sound/PlaySoundUpdateEventArgs.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Utility/DefaultLogHelper.cs
+Godot/GodotProject/TheGame/Entitys/GanTanEntity.tscn
+Godot/GodotProject/TheGame/GameScripts/Entity/GanTanEntity.Logic.cs
+Godot/GodotProject/TheGame/GameScripts/Procedure/ProcedureUpdate.cs
+Godot/GodotProject/addons/TopMenu/GameFrameworkTopMenu.cs
+Godot/docs/EntitySystem.md
+Godot/docs/EventSystem.md
+Godot/docs/FrameworkCore.md
+Godot/docs/ObjectPoolSystem.md
+Godot/docs/README.md
+Godot/docs/ResourceHotUpdateAudit.md
+Godot/docs/ResourceSystem.md
+---
+

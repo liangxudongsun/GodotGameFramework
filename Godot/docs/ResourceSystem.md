@@ -8,7 +8,7 @@
 
 ## 1. 概述
 
-资源系统是 [Game Framework](https://gameframework.cn/) Resource 模块的 Godot 移植。原版 Unity 侧约 97 个接口成员被大幅裁剪——Godot 的 `ResourceLoader` / `.pck` 机制天然覆盖了 AssetBundle 依赖管理，因此当前 `IResourceManager` 只保留 9 个成员。遵循框架**双层架构**：
+资源系统是 [Game Framework](https://gameframework.cn/) Resource 模块的 Godot 移植。原版 Unity 侧约 97 个接口成员被大幅裁剪——Godot 的 `ResourceLoader` / `.pck` 机制天然覆盖了 AssetBundle 依赖管理，因此当前 `IResourceManager` 只保留 10 个成员。遵循框架**双层架构**：
 
 | 层 | 位置 | 职责 | Godot 依赖 |
 |----|------|------|:--:|
@@ -47,7 +47,7 @@ ResourceComponent (Godot 桥接层，场景节点 "Resource")
     │  TaskCompletionSource 字典（path → TCS）把回调转成 await
     ▼
 ResourceManager : GameFrameworkModule (实现放在 Godot 层，因直接调 Godot API)
-    └── TaskPool<LoadAssetTask>                   ← 16 Agent 并发，按优先级调度
+    └── TaskPool<LoadAssetTask>                   ← N Agent 并发（AgentCount，默认 10），按优先级调度
         └── Update(): 遍历所有 WorkingAgent
                 LoadThreadedGetStatus(path)
                   ├─ Loaded     → LoadThreadedGet → SuccessCallback → Agent 归还池
@@ -75,12 +75,12 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 | 文件 | 职责 |
 |------|------|
-| `GameFramework/Resource/IResourceManager.cs` | 管理器接口（9 成员） |
+| `GameFramework/Resource/IResourceManager.cs` | 管理器接口（10 成员，含 `SetLoadAssetAgentCount`） |
 | `GameFramework/Resource/ResourceMode.cs` | Package / Updatable 枚举 |
 | `GameFramework/Resource/HasAssetResult.cs` | 资源存在性结果 |
 | `GameFramework/Resource/LoadAssetCallbacks.cs` | 加载回调委托组（Success/Failure/Update）——Godot 自动管理依赖，无 DependencyAsset |
 | `GameFramework/Resource/LoadBinaryCallbacks.cs` 等 | 二进制加载回调委托组 |
-| `GodotGameFrameworkCore/Resource/ResourceManager.cs` | 实现：`TaskPool<LoadAssetTask>` + 16 Agent 并发、二进制读取、清单反序列化 |
+| `GodotGameFrameworkCore/Resource/ResourceManager.cs` | 实现：`TaskPool<LoadAssetTask>` + 可配置 Agent 并发、二进制读取、清单反序列化 |
 | `GodotGameFrameworkCore/Resource/ResourceComponent.cs` | 组件封装：同步/异步 API、`UpdateSettingRes` 配置入口 |
 | `GodotGameFrameworkCore/Resource/PackVersionList.cs` | 版本清单 `PackVersionList` / `Pack` / `PackType` |
 | `GodotGameFrameworkCore/Resource/LoadAssetTask.cs` | 资源加载任务（`TaskBase` + `ReferencePool` 池化） |
@@ -92,7 +92,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 ## 3. 核心机制
 
-### 3.1 异步加载队列（TaskPool + 16 Agent 并发）
+### 3.1 异步加载队列（TaskPool + 可配置 Agent 并发）
 
 `ResourceManager.LoadAsset` 的做法：
 
@@ -104,7 +104,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 要点：
 
-- **并行加载 + 并行交付**——16 个 Agent 各自轮询自己的任务，互不阻塞。队首大资源加载慢不影响其他已完成任务的交付。
+- **并行加载 + 并行交付**——各 Agent 各自轮询自己的任务，互不阻塞。队首大资源加载慢不影响其他已完成任务的交付。Agent 数量由 `ResourceComponent.AgentCount`（Inspector，0–20，默认 10）经 `SetLoadAssetAgentCount` 在 `OnInit` 时注入（✅ 2026-07，取代原先硬编码的 16）。
 - `priority` 参数控制**等待队列中的排序**，高优先级任务先被分配到 Agent（`TaskPool.AddTask` 按 Priority 降序插入链表）。
 - 任务对象经 `ReferencePool` 回收，Agent 经 `ITaskAgent` 重置复用，无每帧分配。
 - `ResourceComponent.LoadAssetAsync` 用 `Dictionary<string, TaskCompletionSource<Godot.Resource>>` 按**资源路径**匹配回调 → 因此**同一路径不允许并发 await 两次**，第二次会得到 `InvalidOperationException("is already being loaded")`。
@@ -122,7 +122,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 | 阶段 | 执行者 | 内容 |
 |------|--------|------|
-| 启动 | `ResourceComponent.OnInit` | `SetResourceMode(Inspector 配置)` → `SetReadWritePath(user://)` → `DeserializeUpdatablePackVersion()` 读 `user://GameFrameworkVersion.dat`（`Utility.Json` 反序列化，缺失/损坏仅警告不中断） |
+| 启动 | `ResourceComponent.OnInit` | `SetResourceMode(Inspector 配置)` → `SetReadWritePath(user://)` → `SetLoadAssetAgentCount(AgentCount)` → `DeserializeUpdatablePackVersion()` 读 `user://GameFrameworkVersion.dat`（`Utility.Json` 反序列化，缺失/损坏仅警告不中断） |
 | 热更 | `ProcedureUpdate` | 远端清单比对 → `GF.Download` 差量下载到 `SubpackDir` → `EasySave.SaveInUserAsync` 保存新清单（旧清单备份为 `.bak`） |
 | 加载 | `ProcedureUpdate.LoadDownloadedPacks` | 按 `PackType.Config` 优先排序（配置先于场景就绪）→ 逐包大小校验 + 大文件(>1MB) SHA256 重校验 → `ProjectSettings.LoadResourcePack(packPath)` → `CleanStalePacks` 清理不在清单中的废弃 `.pck` → 有失败包则 `RollbackVersionFile()` |
 
@@ -170,6 +170,7 @@ public struct Pack {
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `_resourceMode` | `ResourceMode` | `Package` | 资源模式，`OnInit` 时写入 `ResourceManager` |
+| `AgentCount` | `int`（0–20） | `10` | 资源加载代理数量（并发上限），`OnInit` 时经 `SetLoadAssetAgentCount` 注入 |
 | `_UpdateSettingRes` | `UpdateSettingRes` | — | 热更配置资源（`RemoteUrl` 远端地址、`HotUpdatePath` 补丁目录），供 `ProcedureUpdate` / ExportInspector 读取 |
 
 ### 4.2 API 总览
@@ -261,10 +262,10 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 不能。第二次调用在任务字典 `TryAdd` 失败，Task 以 `InvalidOperationException` 完结。需要共享结果请自行缓存首个 Task。
 
 **Q: `priority` 参数生效吗？**
-✅（2026-07 已修复）等待队列按 `TaskPool.AddTask` 的 `Priority` 降序排序，高优先级任务先分配到 Agent。同时 16 Agent 并发加载，不再 FIFO 队首阻塞。
+✅（2026-07 已修复）等待队列按 `TaskPool.AddTask` 的 `Priority` 降序排序，高优先级任务先分配到 Agent。同时多 Agent 并发加载（`AgentCount`，默认 10），不再 FIFO 队首阻塞。
 
 **Q: 大量并发加载会过载吗？**
-不会。`ResourceManager` 内置 16 个 `LoadAssetAgent`（`TaskPool` 控制），同时最多提交 16 个 `LoadThreadedRequest`，超出部分排队等待。
+不会。`ResourceManager` 的 `LoadAssetAgent` 数量由 `ResourceComponent.AgentCount` 配置（默认 10，`TaskPool` 控制），同时最多提交同等数量的 `LoadThreadedRequest`，超出部分排队等待。
 
 **Q: Package 模式下能读到 `GetPackVersionList()` 吗？**
 不能，返回 `null`。Package 模式不读任何清单。判空后再使用。
@@ -286,7 +287,7 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 ## 7. 已知边界与后续计划
 
 - [ ] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制，替换主线程同步整读）
-- [x] `LoadAssetTask` 队列改为 TaskPool + 16 Agent 并发（消除队首阻塞，支持优先级调度）✅ 2026-07
+- [x] `LoadAssetTask` 队列改为 TaskPool + 多 Agent 并发（消除队首阻塞，支持优先级调度；后续 Agent 数改为 `AgentCount` 配置，默认 10）✅ 2026-07
 - [ ] Package 模式的本地子包加载（读取安装目录 `subpackages/GameFrameworkVersion.dat`，`SubPack` 常量已预留）
 - [x] `GameFramework/Resource/` Unity 遗留文件清理（47 个文件已删除，保留 25 个实际使用文件）✅ 2026-07
 - [x] `LoadAssetDependencyAssetCallback`/`LoadSceneDependencyAssetCallback` 清理（Godot 自动管理资源依赖）✅ 2026-07

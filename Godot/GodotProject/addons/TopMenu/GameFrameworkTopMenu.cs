@@ -141,11 +141,7 @@ public partial class GameFrameworkTopMenu : EditorPlugin
         try
         {
             string path = Folder[index].Define.Replace("/", "\\");
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = true
-            });
+            OS.ShellOpen(path);
         }
         catch (Exception ex)
         {

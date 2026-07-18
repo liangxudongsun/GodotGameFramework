@@ -138,6 +138,18 @@ private async void OnDownloadSuccess(object sender, GameEventArgs e)
 
 同理，`Fire` 之后调用方也**不得再持有/复用** `e` —— 每次 Fire 都必须用 `Create()` 新取一个实例。
 
+**组件层转发管理器事件必须复制**（2026-07 因此修复过 EntityComponent 的双重归还崩溃）：纯层管理器（Entity/Sound/UI/Download 等）的 C# 事件回调返回后，管理器会**立即 `ReferencePool.Release` 事件参数**；Godot 组件若把同一实例直接 `Fire` 入事件池，事件池分发完会再次 Release —— 严格检查下抛 `The reference has been released.`，关闭严格检查则订阅者读到已被 `Clear()` 的脏数据。
+
+```csharp
+// ❌ 双重归还：管理器回调结束会回收 e，事件池下一帧又回收一次
+private void OnShowEntitySuccess(object sender, ShowEntitySuccessEventArgs e)
+    => m_EventComponent.Fire(this, e);
+
+// ✅ 复制后入队（Godot 层包装 Create(e)，或纯层全参 Create(...)）
+private void OnShowEntitySuccess(object sender, ShowEntitySuccessEventArgs e)
+    => m_EventComponent.Fire(this, ShowEntitySuccessEventArgs.Create(e.Entity, e.Duration, e.UserData));
+```
+
 ---
 
 ## 4. EventComponent API

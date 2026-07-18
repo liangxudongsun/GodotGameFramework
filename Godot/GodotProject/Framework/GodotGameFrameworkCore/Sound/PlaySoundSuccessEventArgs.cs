@@ -25,7 +25,6 @@ namespace GodotGameFramework.Sound
             SoundAssetName = null;
             SoundGroupName = null;
             Duration = 0f;
-            BindingEntity = null;
             UserData = null;
         }
 
@@ -43,9 +42,6 @@ namespace GodotGameFramework.Sound
         /// <summary>获取加载持续时间。</summary>
         public float Duration { get; private set; }
 
-        /// <summary>获取声音绑定的实体。</summary>
-        public IEntity BindingEntity { get; private set; }
-
         /// <summary>获取用户自定义数据。</summary>
         public object UserData { get; private set; }
 
@@ -54,14 +50,12 @@ namespace GodotGameFramework.Sound
         /// </summary>
         public static PlaySoundSuccessEventArgs Create(GameFramework.Sound.PlaySoundSuccessEventArgs e)
         {
-            PlaySoundInfo playSoundInfo = (PlaySoundInfo)e.UserData;
             PlaySoundSuccessEventArgs args = ReferencePool.Acquire<PlaySoundSuccessEventArgs>();
             args.SerialId = e.SerialId;
             args.SoundAssetName = e.SoundAssetName;
             args.SoundGroupName = e.SoundAgent?.SoundGroup?.Name;
             args.Duration = e.Duration;
-            args.BindingEntity = playSoundInfo?.BindingEntity;
-            args.UserData = playSoundInfo?.UserData;
+            args.UserData = e.UserData;
             return args;
         }
 
@@ -71,7 +65,6 @@ namespace GodotGameFramework.Sound
             SoundAssetName = null;
             SoundGroupName = null;
             Duration = 0f;
-            BindingEntity = null;
             UserData = null;
         }
     }

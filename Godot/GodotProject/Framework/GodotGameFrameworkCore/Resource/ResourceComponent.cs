@@ -30,7 +30,9 @@ namespace GodotGameFramework.Resource
             get => _resourceMode;
             set => _resourceMode = value;
         }
-
+        [UpperDescription("资源加载代理数量")]
+        [Export(PropertyHint.Range, "0,20,1")]
+        public int AgentCount = 10;
         private readonly Dictionary<string, TaskCompletionSource<Godot.Resource>> m_LoadingTasks = new();
         public override void OnInit()
         {
@@ -40,9 +42,9 @@ namespace GodotGameFramework.Resource
             m_EventComponent = GameEntry.GetComponent<EventComponent>();
             m_ResourceManager.SetResourceMode(_resourceMode);
             m_ResourceManager.SetReadWritePath(ProjectSettings.GlobalizePath("user://"));
-
-            Log.Info("[ResourceComponent] Initialized. Mode: {0}", _resourceMode);
             ProcessMode = ProcessModeEnum.Always;
+            m_ResourceManager.SetLoadAssetAgentCount(AgentCount);
+            Log.Info("[ResourceComponent] Initialized. Mode: {0}", _resourceMode);
         }
 
         /// <summary>

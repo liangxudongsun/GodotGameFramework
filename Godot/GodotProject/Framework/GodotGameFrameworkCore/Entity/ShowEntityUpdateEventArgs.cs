@@ -106,14 +106,21 @@ namespace GodotGameFramework.Entity
         /// <returns>创建的显示实体更新事件。</returns>
         public static ShowEntityUpdateEventArgs Create(GameFramework.Entity.ShowEntityUpdateEventArgs e)
         {
-            ShowEntityInfo showEntityInfo = (ShowEntityInfo)e.UserData;
             ShowEntityUpdateEventArgs showEntityUpdateEventArgs = ReferencePool.Acquire<ShowEntityUpdateEventArgs>();
             showEntityUpdateEventArgs.EntityId = e.EntityId;
-            showEntityUpdateEventArgs.EntityLogicType = showEntityInfo.EntityLogicType;
             showEntityUpdateEventArgs.EntityAssetName = e.EntityAssetName;
             showEntityUpdateEventArgs.EntityGroupName = e.EntityGroupName;
             showEntityUpdateEventArgs.Progress = e.Progress;
-            showEntityUpdateEventArgs.UserData = showEntityInfo.UserData;
+            if (e.UserData is ShowEntityInfo showEntityInfo)
+            {
+                showEntityUpdateEventArgs.EntityLogicType = showEntityInfo.EntityLogicType;
+                showEntityUpdateEventArgs.UserData = showEntityInfo.UserData;
+            }
+            else
+            {
+                showEntityUpdateEventArgs.UserData = e.UserData;
+            }
+
             return showEntityUpdateEventArgs;
         }
 

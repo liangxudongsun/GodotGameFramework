@@ -9,9 +9,6 @@ namespace GameFramework.Resource
         public const string GameFrameworkVersionData = "GameFrameworkVersion.dat";
         public const string SubPack = "subpackages";
 
-        /// <summary>最大并发加载数（= Agent 数量），复用 GF TaskPool 的优先级调度 + 并发控制。</summary>
-        private const int MaxConcurrent = 16;
-
         public ResourceMode ResourceMode { get; private set; } = ResourceMode.Package;
 
         private TaskPool<LoadAssetTask> m_AssetTaskPool;
@@ -20,15 +17,22 @@ namespace GameFramework.Resource
         public ResourceManager()
         {
             m_AssetTaskPool = new TaskPool<LoadAssetTask>();
-            for (int i = 0; i < MaxConcurrent; i++)
-            {
-                m_AssetTaskPool.AddAgent(new LoadAssetAgent());
-            }
+
         }
 
         public void SetReadWritePath(string readWritePath = null)
         {
             m_ReadWritePath = readWritePath ?? ProjectSettings.GlobalizePath("user://");
+        }
+        /// <summary>
+        /// 最大并发加载数（= Agent 数量），TaskPool 的优先级调度 + 并发控制。
+        /// </summary>
+        public void SetLoadAssetAgentCount(int agentCount)
+        {
+            for (int i = 0; i < agentCount; i++)
+            {
+                m_AssetTaskPool.AddAgent(new LoadAssetAgent());
+            }
         }
 
         public void SetResourceMode(ResourceMode mode) => ResourceMode = mode;

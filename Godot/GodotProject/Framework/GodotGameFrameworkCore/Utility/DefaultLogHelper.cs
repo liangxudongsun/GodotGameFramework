@@ -7,6 +7,7 @@
 
 using GameFramework;
 using Godot;
+using System;
 
 namespace GodotGameFramework
 {
@@ -27,6 +28,12 @@ namespace GodotGameFramework
     public class DefaultLogHelper : GameFrameworkLog.ILogHelper
     {
         /// <summary>
+        /// 日志记录事件（level, message, stackTrace）。
+        /// 供调试器控制台等订阅；stackTrace 仅在 Error / Fatal 级别时捕获。
+        /// </summary>
+        public static event Action<GameFrameworkLogLevel, string, string> LogMessageReceived;
+
+        /// <summary>
         /// 记录日志。
         /// 由核心框架的 GameFrameworkLog 类自动调用。
         /// </summary>
@@ -34,6 +41,14 @@ namespace GodotGameFramework
         /// <param name="message">日志内容</param>
         public void Log(GameFrameworkLogLevel level, object message)
         {
+            if (LogMessageReceived != null)
+            {
+                string stackTrack = level >= GameFrameworkLogLevel.Error
+                    ? new System.Diagnostics.StackTrace(2, true).ToString()
+                    : string.Empty;
+                LogMessageReceived.Invoke(level, message?.ToString() ?? "<null>", stackTrack);
+            }
+
             switch (level)
             {
                 case GameFrameworkLogLevel.Debug:

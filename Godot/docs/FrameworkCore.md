@@ -147,7 +147,7 @@ BaseComponent.OnPreDestroy()（节点销毁通知）
 ```csharp
 GF.Base  GF.Event  GF.Fsm  GF.Procedure  GF.ObjectPool  GF.DataNode
 GF.Resource  GF.Entity  GF.UI  GF.Sound  GF.DataTable  GF.Localization
-GF.Setting  GF.Scene  GF.WebRequest  GF.Download        // 共 16 个
+GF.Setting  GF.Scene  GF.WebRequest  GF.Download  GF.Debugger   // 共 17 个
 ```
 
 > ✅（2026-07）`ShutdownType.Restart` 时 `GameEntry.OnInit` 自动调用 `GF.ClearCache()` 清除所有静态缓存，不再存在指向旧实例的问题。
@@ -167,13 +167,13 @@ ReferencePool.Add<MyArgs>(16);
 ReferencePool.RemoveAll<MyArgs>();
 ReferencePoolInfo[] infos = ReferencePool.GetAllReferencePoolInfos();
 
-// 开发期建议开启严格检查（检测重复 Release、非法类型）
+// 严格检查（检测重复 Release、非法类型）——由场景 ReferencePool 节点按策略统一设置
 ReferencePool.EnableStrictCheck = true;
 ```
 
 - 内部按类型维护 `ReferenceCollection`（`Queue<IReference>` + lock），**线程安全**。
 - `Release` 会先调 `Clear()` 再入队 —— 归还后严禁再持有/访问该引用。
-- 严格检查关闭时（默认），重复 Release 不会抛异常，会导致同一实例被入队两次，后果是两处调用方拿到同一对象 —— 开发期务必打开 `EnableStrictCheck`。
+- 严格检查关闭时，重复 Release 不会抛异常，会导致同一实例被入队两次，后果是两处调用方拿到同一对象。✅（2026-07）场景新增 `ReferencePool` 节点（`ReferencePoolComponent`，命名空间 `GodotGameFramework.Reference`），按 `ReferenceStrictCheckType` 策略在 `OnEnter` 统一设置开关：`AlwaysEnable`（当前默认）/ `OnlyEnableInEditor`（`OS.HasFeature("editor")`）/ `OnlyOpenWhenDevelopment`（`OS.IsDebugBuild()`）/ `AlwaysDisable`。调试器 `Profiler/Reference Pool` 页签可查看各池计数并运行时切换严格检查（见 `DebuggerSystem.md`）。
 
 ### 3.6 日志系统
 
@@ -186,6 +186,7 @@ Log（Godot 桥接层，[Conditional] 编译期裁剪，1~16 泛型参数重载�
 ```
 
 - `BaseComponent.OnInit()` 按 Inspector 中的类型名（默认 `GodotGameFramework.DefaultLogHelper`）反射创建并 `GameFrameworkLog.SetLogHelper()`。TextHelper（`DefaultTextHelper`，StringBuilder 缓存的 `Utility.Text.Format`）与 JsonHelper 同理。
+- ✅（2026-07）`DefaultLogHelper` 在写 GD 输出前触发静态事件 `LogMessageReceived(level, message, stackTrace)`（堆栈仅 Error/Fatal 级别捕获），调试器控制台由此捕获全部框架日志（见 `DebuggerSystem.md`）；无订阅者时零额外开销。
 - 各级别生效条件（`GodotProject.csproj` 的 `<DefineConstants>`）：
 
 | 方法 | 生效符号（任一命中即编译保留） |

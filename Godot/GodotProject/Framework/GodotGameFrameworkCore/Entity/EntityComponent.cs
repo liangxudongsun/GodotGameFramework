@@ -324,7 +324,8 @@ namespace GodotGameFramework.Entity
 
         private void OnShowEntitySuccess(object sender, ShowEntitySuccessEventArgs e)
         {
-            m_EventComponent.Fire(this, e);
+            // 管理器会在回调返回后立即回收 e，入事件池队列必须复制一份，否则会双重归还
+            m_EventComponent.Fire(this, ShowEntitySuccessEventArgs.Create(e.Entity, e.Duration, e.UserData));
             if (m_LoadingTasks.ContainsKey(e.Entity.Id))
             {
                 m_LoadingTasks[e.Entity.Id].SetResult(e.Entity);
@@ -336,7 +337,10 @@ namespace GodotGameFramework.Entity
         {
             Log.Warning("Show entity failure, asset '{0}', group '{1}', msg '{2}'.",
                 e.EntityAssetName, e.EntityGroupName, e.ErrorMessage);
-            if (m_EnableShowEntityFailureEvent) m_EventComponent.Fire(this, e);
+            if (m_EnableShowEntityFailureEvent)
+            {
+                m_EventComponent.Fire(this, ShowEntityFailureEventArgs.Create(e.EntityId, e.EntityAssetName, e.EntityGroupName, e.ErrorMessage, e.UserData));
+            }
             if (m_LoadingTasks.ContainsKey(e.EntityId))
             {
                 m_LoadingTasks[e.EntityId].SetException(new GameFrameworkException(e.ErrorMessage));
@@ -348,8 +352,9 @@ namespace GodotGameFramework.Entity
         {
             m_EventComponent.Fire(this, ShowEntityUpdateEventArgs.Create(e));
         }
-
-
-        private void OnHideEntityComplete(object sender, HideEntityCompleteEventArgs e) => m_EventComponent.Fire(this, e);
+        private void OnHideEntityComplete(object sender, HideEntityCompleteEventArgs e)
+        {
+            m_EventComponent.Fire(this, HideEntityCompleteEventArgs.Create(e.EntityId, e.EntityAssetName, e.EntityGroup, e.UserData));
+        }
     }
 }

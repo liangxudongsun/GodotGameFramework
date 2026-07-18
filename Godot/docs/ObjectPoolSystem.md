@@ -37,6 +37,8 @@
 
 两者是**嵌套关系**：`ObjectBase` 派生类实现 `IReference`，其包装壳照例从 `ReferencePool.Acquire` 创建、释放时归还——对象池管理"贵重货物"（`Target`），引用池管理"包装纸"。
 
+> ✅（2026-07）场景新增 `ReferencePool` 节点（`ReferencePoolComponent`）：按 `ReferenceStrictCheckType` 策略（`AlwaysEnable`〈当前默认〉/ `OnlyEnableInEditor` / `OnlyOpenWhenDevelopment` / `AlwaysDisable`）统一设置 `ReferencePool.EnableStrictCheck`，双重 `Release` 直接抛异常而非静默污染池。运行时可在调试器 `Profiler/Object Pool`（逐池参数 + Release 按钮）与 `Profiler/Reference Pool`（7 列计数表 + 严格检查开关）页签观察两种池（见 `DebuggerSystem.md`）。
+
 ---
 
 ## 2. 架构与数据流

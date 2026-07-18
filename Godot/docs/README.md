@@ -11,6 +11,7 @@
 | [EventSystem.md](EventSystem.md) | EventPool 机制、EventId 约定、Fire vs FireNow、订阅退订、池化回收禁忌 |
 | [FsmSystem.md](FsmSystem.md) | IFsm/FsmState 泛型设计、状态生命周期、SetData/GetData、销毁与池化 |
 | [ProcedureSystem.md](ProcedureSystem.md) | 流程 = 顶层 FSM、启动链路、TheGame 流程链 Launch→Update→Prelode→Game、新增流程教程 |
+| [DebuggerSystem.md](DebuggerSystem.md) | 运行时调试器：FPS 图标 + Console/Information/Profiler/Other 多级页签、BBCode-IMGUI 绘制模型、日志捕获、自定义调试窗口 |
 
 ## 资源与内容
 

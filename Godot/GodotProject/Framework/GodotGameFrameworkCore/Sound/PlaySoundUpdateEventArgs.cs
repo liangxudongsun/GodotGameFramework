@@ -33,7 +33,6 @@ namespace GodotGameFramework.Sound
             SoundGroupName = null;
             PlaySoundParams = null;
             Progress = 0f;
-            BindingEntity = null;
             UserData = null;
         }
 
@@ -94,15 +93,6 @@ namespace GodotGameFramework.Sound
         }
 
         /// <summary>
-        /// 获取声音绑定的实体。
-        /// </summary>
-        public IEntity BindingEntity
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
         /// 获取用户自定义数据。
         /// </summary>
         public object UserData
@@ -118,15 +108,13 @@ namespace GodotGameFramework.Sound
         /// <returns>创建的播放声音更新事件。</returns>
         public static PlaySoundUpdateEventArgs Create(GameFramework.Sound.PlaySoundUpdateEventArgs e)
         {
-            PlaySoundInfo playSoundInfo = (PlaySoundInfo)e.UserData;
             PlaySoundUpdateEventArgs playSoundUpdateEventArgs = ReferencePool.Acquire<PlaySoundUpdateEventArgs>();
             playSoundUpdateEventArgs.SerialId = e.SerialId;
             playSoundUpdateEventArgs.SoundAssetName = e.SoundAssetName;
             playSoundUpdateEventArgs.SoundGroupName = e.SoundGroupName;
             playSoundUpdateEventArgs.PlaySoundParams = e.PlaySoundParams;
             playSoundUpdateEventArgs.Progress = e.Progress;
-            playSoundUpdateEventArgs.BindingEntity = playSoundInfo.BindingEntity;
-            playSoundUpdateEventArgs.UserData = playSoundInfo.UserData;
+            playSoundUpdateEventArgs.UserData = e.UserData;
             return playSoundUpdateEventArgs;
         }
 
@@ -140,7 +128,6 @@ namespace GodotGameFramework.Sound
             SoundGroupName = null;
             PlaySoundParams = null;
             Progress = 0f;
-            BindingEntity = null;
             UserData = null;
         }
     }
