@@ -150,7 +150,7 @@ GF.Resource  GF.Entity  GF.UI  GF.Sound  GF.DataTable  GF.Localization
 GF.Setting  GF.Scene  GF.WebRequest  GF.Download        // 共 16 个
 ```
 
-> 缓存永不失效：若组件节点被销毁重建（如 `ShutdownType.Restart`），静态缓存字段仍指向旧实例，属已知边界。
+> ✅（2026-07）`ShutdownType.Restart` 时 `GameEntry.OnInit` 自动调用 `GF.ClearCache()` 清除所有静态缓存，不再存在指向旧实例的问题。
 
 ### 3.5 ReferencePool 引用池
 
@@ -309,7 +309,7 @@ TopMenu 只改 csproj，需要重新 `dotnet build`；编辑器内已加载的�
 
 ## 6. 已知边界
 
-- GF 门面静态缓存不随组件销毁失效（`Restart` 后指向旧实例）。
+- ✅（2026-07 已修复）GF 门面静态缓存问题 — `GameEntry.OnInit` 中 `GF.ClearCache()` 自动清空缓存，`ShutdownType.Restart` 后新场景重新获取。
 - `GameEntry.OnUpdate` 的 realElapseSeconds 在 `TimeScale = 0` 时为 0（原版 Unity GF 使用 `Time.unscaledDeltaTime`，此处语义有差异）。
 - `SingletonNode<T>.Instance` 创建的节点不自动入树，`OnLoad` 只有入树后才会触发。
 - CLAUDE.md 中提到的 `Base/Node/2D` 抽象实体基类（`AbstractNode2DEntity` 等）当前代码中不存在，游戏实体（如 `ActorEntity`）直接继承 Godot 类型并实现 `IEntity`。

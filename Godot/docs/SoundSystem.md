@@ -182,7 +182,7 @@ PlaySound(...) → serialId（立即返回，无论成败）
 |------|--------|------|
 | `m_EnablePlaySoundSuccessEvent` | true | 订阅管理器 Success 事件（转发部分被注释） |
 | `m_EnablePlaySoundUpdateEvent` | false | 加载进度事件转发 |
-| `m_EnablePlaySoundDependencyAssetEvent` | false | （Godot 下无依赖资源概念，转发为空） |
+| — | — | DependencyAsset 相关 Export 字段已于 2026-07 移除（Godot 自动管理依赖） |
 | `m_SoundHelperTypeName` | `GodotGameFramework.Sound.DefaultSoundHelper` | 声音辅助器 |
 | `m_SoundGroupHelperTypeName` | `GodotGameFramework.Sound.DefaultSoundGroupHelper` | 组辅助器 |
 | `m_SoundAgentHelperTypeName` | `GodotGameFramework.Sound.DefaultSoundAgentHelper` | 代理辅助器（可替换为 2D/3D 实现） |

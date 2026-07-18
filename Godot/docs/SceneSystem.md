@@ -122,10 +122,10 @@ Node2D map = GF.Scene.GetLoadedScene<Node2D>("res://TheGame/Scenes/Map.tscn");
 
 | 事件 | 层 | 触发时机 |
 |------|----|---------|
-| `LoadSceneSuccess/Failure/Update/DependencyAsset` | 纯 C#（`ISceneManager` C# 事件） | 加载各阶段（Update/DependencyAsset 组件未订阅） |
+| `LoadSceneSuccess/Failure/Update` | 纯 C#（`ISceneManager` C# 事件） | 加载各阶段（Update 组件未订阅；Godot 自动管理依赖，无 DependencyAsset） |
 | `GodotGameFramework.Scene.LoadSceneSuccessEventArgs` | Godot 全局（EventComponent） | 挂树完成后，携带 `SceneAssetPath` + `SceneInstance` |
 | `GodotGameFramework.Scene.LoadSceneFailureEventArgs` | Godot 全局 | 加载失败，携带 `ErrorMessage` |
-| `GodotGameFramework.Scene.UnloadSceneSuccessEventArgs` | Godot 全局 | **已定义但当前无触发点**（见 §5） |
+| `GodotGameFramework.Scene.UnloadSceneSuccessEventArgs` | Godot 全局 | ✅ 2026-07 已触发：`UnloadScene` 完成时 |
 
 由 Inspector 开关 `m_EnableLoadSceneSuccessEvent` / `m_EnableLoadSceneFailureEvent`（默认均 true）控制转发。事件参数池化，回调返回后即回收，不可持有。
 

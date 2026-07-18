@@ -23,7 +23,7 @@
 - ✅ 同步 `ShowEntity` / 可 await `ShowEntityAsync<T>`（TCS 桥接成功/失败事件）
 - ✅ 完整生命周期：`OnInit → OnShow → OnUpdate(每帧) → OnHide → OnRecycle`
 - ✅ 父子实体（Attach/Detach，同步 Godot 场景树父子关系）
-- ✅ 全局事件转发（ShowEntitySuccess/Failure/Update/DependencyAsset、HideEntityComplete，Inspector 可开关）
+- ✅ 全局事件转发（ShowEntitySuccess/Failure/Update、HideEntityComplete，Inspector 可开关。Godot 自动管理资源依赖，无 DependencyAsset 事件）
 - ✅ 实体脚本 Ge/Logic 双文件生成（`ScriptGenerateInspector`，Node2D/Node3D 节点适用）
 
 ---
@@ -154,7 +154,7 @@ Luban 表 `TbEntityConfig`（Excel 源：`Configs/GameConfig/Datas/实体.xlsx`�
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `m_EnableShowEntitySuccessEvent` 等 5 个开关 | Success/Failure/HideComplete 开，Update/DependencyAsset 关 | 是否向全局 EventComponent 转发对应事件 |
+| `m_EnableShowEntitySuccessEvent` 等 3 个开关（Success/Failure/HideComplete 开，Update 关） | [Export] 配置 | 是否向全局 EventComponent 转发对应事件。Godot 自动管理依赖，无 DependencyAsset |
 | `m_EntityHelperTypeName` | `GodotGameFramework.Entity.DefaultEntityHelper` | 实体辅助器类型（Inspector 下拉可选自定义实现） |
 | `m_EntityGroupHelperTypeName` | `GodotGameFramework.Entity.DefaultEntityGroupHelper` | 实体组辅助器类型 |
 | `EntityGroupRes` | — | 实体组定义资源（`ProcedurePrelode` 读取注册） |

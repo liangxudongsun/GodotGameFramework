@@ -15,7 +15,7 @@
 | 纯 C# 层 | `GameFramework/Resource/` | `IResourceManager` 接口、`ResourceMode`、`HasAssetResult`、加载回调委托（`LoadAssetCallbacks` / `LoadBinaryCallbacks`） | ❌ |
 | Godot 桥接层 | `GodotGameFrameworkCore/Resource/` | `ResourceManager` 实现（ResourceLoader 线程加载 + 版本清单）、`ResourceComponent`、`PackVersionList`、加载任务 | ✅ |
 
-> ⚠️ 说明：`GameFramework/Resource/` 下仍保留大量 Unity 原版遗留文件（`PackageVersionList.*`、`UpdatableVersionList.*`、各类 Serializer、`ResourceUpdate*EventArgs` 等），**当前均未接入运行时**。实际生效的清单类型是 Godot 层的 `PackVersionList`（JSON 序列化）。
+> ✅（2026-07）`GameFramework/Resource/` 下 Unity 原版遗留文件（47 个：`PackageVersionList.*`、`UpdatableVersionList.*`、各类 Serializer/EventArgs 等）已全部清理。实际生效的清单类型是 Godot 层的 `PackVersionList`（JSON 序列化）。保留 25 个实际使用的文件。
 
 ### ResourceMode 现状
 
@@ -47,13 +47,13 @@ ResourceComponent (Godot 桥接层，场景节点 "Resource")
     │  TaskCompletionSource 字典（path → TCS）把回调转成 await
     ▼
 ResourceManager : GameFrameworkModule (实现放在 Godot 层，因直接调 Godot API)
-    ├── ResourceLoader.LoadThreadedRequest(path)   ← 立即发起后台线程加载
-    ├── Queue<LoadAssetTask>                       ← FIFO 队列记录任务
-    └── Update() 每帧轮询队首：
-            LoadThreadedGetStatus(path)
-              ├─ Loaded     → LoadThreadedGet → SuccessCallback → 出队回收
-              ├─ InProgress → UpdateCallback（累计 Duration）
-              └─ Failed     → FailureCallback → 出队回收
+    └── TaskPool<LoadAssetTask>                   ← 16 Agent 并发，按优先级调度
+        └── Update(): 遍历所有 WorkingAgent
+                LoadThreadedGetStatus(path)
+                  ├─ Loaded     → LoadThreadedGet → SuccessCallback → Agent 归还池
+                  ├─ InProgress → UpdateCallback（累计 Duration）
+                  └─ Failed     → FailureCallback → Agent 归还池
+            有闲 Agent 时从等待队列取下一个任务（按 Priority 降序）
 ```
 
 子包加载（Updatable 模式，启动期一次性）：
@@ -78,34 +78,35 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 | `GameFramework/Resource/IResourceManager.cs` | 管理器接口（9 成员） |
 | `GameFramework/Resource/ResourceMode.cs` | Package / Updatable 枚举 |
 | `GameFramework/Resource/HasAssetResult.cs` | 资源存在性结果 |
-| `GameFramework/Resource/LoadAssetCallbacks.cs` 等 | 加载回调委托组（Success/Failure/Update/Dependency） |
+| `GameFramework/Resource/LoadAssetCallbacks.cs` | 加载回调委托组（Success/Failure/Update）——Godot 自动管理依赖，无 DependencyAsset |
 | `GameFramework/Resource/LoadBinaryCallbacks.cs` 等 | 二进制加载回调委托组 |
-| `GameFramework/Resource/`（其余 60+ 文件） | ⚠️ Unity 原版遗留（版本清单序列化器、资源校验事件等），未接入 |
-| `GodotGameFrameworkCore/Resource/ResourceManager.cs` | 实现：线程加载队列、二进制读取、清单反序列化 |
+| `GodotGameFrameworkCore/Resource/ResourceManager.cs` | 实现：`TaskPool<LoadAssetTask>` + 16 Agent 并发、二进制读取、清单反序列化 |
 | `GodotGameFrameworkCore/Resource/ResourceComponent.cs` | 组件封装：同步/异步 API、`UpdateSettingRes` 配置入口 |
 | `GodotGameFrameworkCore/Resource/PackVersionList.cs` | 版本清单 `PackVersionList` / `Pack` / `PackType` |
-| `GodotGameFrameworkCore/Resource/LoadAssetTask.cs` | 资源加载任务（`ReferencePool` 池化） |
-| `GodotGameFrameworkCore/Resource/LoadBinaryTask.cs` / `LoadBinaryAgent.cs` | ⚠️ 预留的异步二进制加载任务/代理（`ITaskAgent` 后台线程读文件），**当前未被任何调用方使用** |
+| `GodotGameFrameworkCore/Resource/LoadAssetTask.cs` | 资源加载任务（`TaskBase` + `ReferencePool` 池化） |
+| `GodotGameFrameworkCore/Resource/LoadAssetAgent.cs` | 加载代理（`ITaskAgent<LoadAssetTask>`，每 Agent 承载一个 LoadThreadedRequest 槽位） |
+| `GodotGameFrameworkCore/Resource/LoadBinaryTask.cs` / `LoadBinaryAgent.cs` | ⚠️ 预留的异步二进制加载任务/代理（`ITaskAgent` 后台线程读文件），当前未接入 |
 | `GodotGameFrameworkCore/Resource/ResourceExtension.cs` | 空扩展类（历史便捷方法已移除） |
 
 ---
 
 ## 3. 核心机制
 
-### 3.1 异步加载队列（LoadThreadedRequest + FIFO 轮询）
+### 3.1 异步加载队列（TaskPool + 16 Agent 并发）
 
 `ResourceManager.LoadAsset` 的做法：
 
 1. 校验路径非空且 `ResourceLoader.Exists`（失败立即同步回调 `LoadResourceStatus.NotExist`）
-2. **立即**调用 `ResourceLoader.LoadThreadedRequest(assetName)` —— Godot 内部并行加载
-3. `LoadAssetTask.Create(...)`（从 `ReferencePool` 取）入 `Queue<LoadAssetTask>`
-4. 每帧 `Update()` 只轮询**队首**任务的 `LoadThreadedGetStatus`，完成后回调并出队
+2. `LoadAssetTask.Create(...)`（从 `ReferencePool` 取）入 `TaskPool<LoadAssetTask>`
+3. 等待队列按 **`Priority` 降序**插入
+4. 有闲 Agent 时，`TaskPool` 取出任务 → Agent.Start 调用 `ResourceLoader.LoadThreadedRequest(assetName)` 提交加载
+5. 每帧 `Update()` **遍历所有 WorkingAgent** 的 `LoadThreadedGetStatus`，独立交付完成回调
 
 要点：
 
-- **加载是并行的，完成回调是串行 FIFO 的**——所有请求在第 2 步就已提交给 Godot 线程池，但结果按入队顺序逐个交付。队首任务未完成时，后续已完成的任务也要等待。
-- `priority` 参数被任务记录但**不参与调度**（FIFO 队列没有排序），当前为预留字段。
-- 任务对象经 `ReferencePool` 回收，无每帧分配。
+- **并行加载 + 并行交付**——16 个 Agent 各自轮询自己的任务，互不阻塞。队首大资源加载慢不影响其他已完成任务的交付。
+- `priority` 参数控制**等待队列中的排序**，高优先级任务先被分配到 Agent（`TaskPool.AddTask` 按 Priority 降序插入链表）。
+- 任务对象经 `ReferencePool` 回收，Agent 经 `ITaskAgent` 重置复用，无每帧分配。
 - `ResourceComponent.LoadAssetAsync` 用 `Dictionary<string, TaskCompletionSource<Godot.Resource>>` 按**资源路径**匹配回调 → 因此**同一路径不允许并发 await 两次**，第二次会得到 `InvalidOperationException("is already being loaded")`。
 
 ### 3.2 二进制加载
@@ -259,11 +260,11 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 **Q: `LoadAssetAsync` 同一路径能并发调用吗？**
 不能。第二次调用在任务字典 `TryAdd` 失败，Task 以 `InvalidOperationException` 完结。需要共享结果请自行缓存首个 Task。
 
-**Q: `priority` 参数为什么不生效？**
-当前实现是 `Queue<LoadAssetTask>` FIFO，`priority` 只是被记录。真实并行度由 Godot 内部线程加载决定，只有**回调交付顺序**受队列约束。
+**Q: `priority` 参数生效吗？**
+✅（2026-07 已修复）等待队列按 `TaskPool.AddTask` 的 `Priority` 降序排序，高优先级任务先分配到 Agent。同时 16 Agent 并发加载，不再 FIFO 队首阻塞。
 
-**Q: 队首资源加载很慢会阻塞后面的回调吗？**
-会。完成回调严格 FIFO，队首 `InProgress` 时后续已完成任务不交付。把大资源放到最后请求，或分帧请求可缓解。
+**Q: 大量并发加载会过载吗？**
+不会。`ResourceManager` 内置 16 个 `LoadAssetAgent`（`TaskPool` 控制），同时最多提交 16 个 `LoadThreadedRequest`，超出部分排队等待。
 
 **Q: Package 模式下能读到 `GetPackVersionList()` 吗？**
 不能，返回 `null`。Package 模式不读任何清单。判空后再使用。
@@ -285,7 +286,8 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 ## 7. 已知边界与后续计划
 
 - [ ] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制，替换主线程同步整读）
-- [ ] `LoadAssetTask` 队列改为按 `priority` 排序或多任务并行轮询（消除队首阻塞）
+- [x] `LoadAssetTask` 队列改为 TaskPool + 16 Agent 并发（消除队首阻塞，支持优先级调度）✅ 2026-07
 - [ ] Package 模式的本地子包加载（读取安装目录 `subpackages/GameFrameworkVersion.dat`，`SubPack` 常量已预留）
-- [x] `GameFramework/Resource/` Unity 遗留文件清理（版本清单序列化器等 47 个未使用文件）✅ 2026-07
+- [x] `GameFramework/Resource/` Unity 遗留文件清理（47 个文件已删除，保留 25 个实际使用文件）✅ 2026-07
+- [x] `LoadAssetDependencyAssetCallback`/`LoadSceneDependencyAssetCallback` 清理（Godot 自动管理资源依赖）✅ 2026-07
 - [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`）

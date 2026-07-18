@@ -221,7 +221,7 @@ public void SetValue()
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `m_EnableOpenUIFormSuccessEvent` 等 5 项 | Success/Failure/CloseComplete=true，Update/DependencyAsset=false | 是否转发到全局 EventComponent |
+| `m_EnableOpenUIFormSuccessEvent` 等 4 项（Success/Failure/CloseComplete 开，Update 关） | [Export] 配置 | 是否转发到全局 EventComponent。Godot 自动管理依赖，无 DependencyAsset |
 | `m_InstanceAutoReleaseInterval` | 60 | 实例池自动释放间隔（秒） |
 | `m_InstanceCapacity` | 16 | 实例池容量 |
 | `m_InstanceExpireTime` | 60 | 实例过期秒数 |
