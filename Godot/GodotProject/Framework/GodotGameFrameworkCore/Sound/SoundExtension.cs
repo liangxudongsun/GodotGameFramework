@@ -122,5 +122,25 @@ namespace GodotGameFramework.Sound
             ISoundGroup group = soundComponent.GetSoundGroup(SoundComponent.DefaultSfxGroup);
             group?.StopAllLoadedSounds();
         }
+        /// <summary>
+        /// 设置音量。
+        /// </summary>
+        /// <param name="soundComponent"></param>
+        /// <param name="bus"></param>
+        /// <param name="volume"></param>
+        public static void SetVolume(this SoundComponent soundComponent, string bus, float volume)
+        {
+            ISoundGroup group = soundComponent.GetSoundGroup(bus);
+            if (group != null)
+            {
+                group.Volume = volume;
+                GF.Setting.SetFloat(bus, volume);
+                GF.Setting.Save();
+            }
+            else
+            {
+                Log.Error($"SoundComponent: SetVolume({bus}, {volume}) failed, group is null.");
+            }
+        }
     }
 }

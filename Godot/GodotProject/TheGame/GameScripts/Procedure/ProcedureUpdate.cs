@@ -33,6 +33,7 @@ public class ProcedureUpdate : ProcedureBase
 {
     private const int MaxRetries = 3;
     private const float RetryBaseDelaySeconds = 1.5f;
+    private const float VersionFetchTimeoutSeconds = 10f;    // 单次版本清单请求超时（秒），不依赖全局 30s
     LogInForm m_loginForm;
 
     /// <summary>
@@ -126,10 +127,11 @@ public class ProcedureUpdate : ProcedureBase
 
     private async Task RunUpdateFlowAsync(ProcedureOwner procedureOwner)
     {
-        // Package 模式不检测更新
+        // Package 模式不检测更新，但尝试加载本地子包（安装目录 subpackages/）
         if (GF.Resource.ResourceMode == ResourceMode.Package)
         {
             Log.Info("[ProcedureUpdate] Package 模式，跳过更新检测。");
+            await TryLoadLocalSubpackagesAsync();
             ChangeState<ProcedurePrelode>(procedureOwner);
             return;
         }
@@ -174,8 +176,11 @@ public class ProcedureUpdate : ProcedureBase
             Log.Info("[ProcedureUpdate] 请求版本文件: {0}", versionUrl);
             m_loginForm?.SetLogState("检测更新...", 0);
 
-            // 先加载本地版本，用于 ForceUpdate 回退判断
-            var localVersionPre = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
+            // 先加载本地版本，用于 ForceUpdate 回退判断（带完整性校验）
+            var localVersionPre = ResourceManager.LocalPackVersionList
+                ?? NodeUtility.LoadAndValidateVersionList(ResourceManager.GameFrameworkVersionData);
+            if (localVersionPre != null)
+                ResourceManager.LocalPackVersionList = localVersionPre;
             isForceUpdate = localVersionPre?.ForceUpdate == true;
 
             serverVersion = await FetchVersionWithRetryAsync(versionUrl);
@@ -210,8 +215,8 @@ public class ProcedureUpdate : ProcedureBase
                 serverVersion.Version, serverVersion.Packs?.Length ?? 0);
 
             // ── 2. 版本兼容性检查 ──
-            string appVersion = EasySave.GetAppVersion();
-            if (!string.IsNullOrEmpty(serverVersion.MinAppVersion) && EasySave.CompareVersions(appVersion, serverVersion.MinAppVersion) < 0)
+            string appVersion = NodeUtility.GetAppVersion();
+            if (!string.IsNullOrEmpty(serverVersion.MinAppVersion) && NodeUtility.CompareVersions(appVersion, serverVersion.MinAppVersion) < 0)
             {
                 Log.Warning("[ProcedureUpdate] App 版本过低 ({0} < {1})，需要去商店更新。",
                     appVersion, serverVersion.MinAppVersion);
@@ -224,7 +229,8 @@ public class ProcedureUpdate : ProcedureBase
             }
 
             // ── 3. 加载本地版本并校验完整性 ──
-            var localVersion = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
+            var localVersion = ResourceManager.LocalPackVersionList
+                ?? NodeUtility.LoadAndValidateVersionList(ResourceManager.GameFrameworkVersionData);
             m_loginForm?.SetLogState("校验本地数据...", 5);
 
             int damagedCount = await VerifyLocalPackIntegrityAsync(localVersion);
@@ -247,7 +253,7 @@ public class ProcedureUpdate : ProcedureBase
             {
                 // 磁盘空间预检
                 long totalSize = toDownload.Sum(x => x.Pack.Size);
-                long freeSpace = EasySave.GetFreeDiskSpace(SubpackDir);
+                long freeSpace = NodeUtility.GetFreeDiskSpace(SubpackDir);
                 if (freeSpace > 0 && freeSpace < totalSize * 2)
                 {
                     Log.Warning("[ProcedureUpdate] 磁盘空间不足: 需要 {0}, 可用 {1}",
@@ -317,6 +323,7 @@ public class ProcedureUpdate : ProcedureBase
                     }
 
                     await EasySave.SaveInUserAsync(serverVersion, ResourceManager.GameFrameworkVersionData);
+                    ResourceManager.LocalPackVersionList = serverVersion;
                     Log.Info("[ProcedureUpdate] 版本文件已保存。");
                 }
 
@@ -413,7 +420,7 @@ public class ProcedureUpdate : ProcedureBase
                 {
                     try
                     {
-                        string actualHash = await Task.Run(() => EasySave.ComputeSHA256(packPath));
+                        string actualHash = await Task.Run(() => NodeUtility.ComputeSHA256(packPath));
                         if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
                         {
                             damageReason = "SHA256 校验失败（文件已损坏或被修改）";
@@ -429,7 +436,8 @@ public class ProcedureUpdate : ProcedureBase
             if (damageReason != null)
             {
                 Log.Warning("[ProcedureUpdate] 本地文件损坏: {0} — {1}", pack.Name, damageReason);
-                EasySave.TryDelete(packPath);
+                if (!EasySave.TryDelete(packPath))
+                    Log.Warning("[ProcedureUpdate] 无法删除损坏文件（可能被占用）: {0}", packPath);
                 damaged++;
             }
             else
@@ -510,7 +518,18 @@ public class ProcedureUpdate : ProcedureBase
         long totalBytes = 0;
 
         foreach (var (pack, _) in packs)
-            totalBytes += pack.Size;
+        {
+            try
+            {
+                totalBytes = checked(totalBytes + pack.Size);
+            }
+            catch (OverflowException)
+            {
+                Log.Error("[ProcedureUpdate] 包大小累加溢出！已截断。请检查服务器 Pack.Size 配置。");
+                totalBytes = long.MaxValue;
+                break;
+            }
+        }
 
         EnsureDirectory(SubpackDir);
 
@@ -637,7 +656,7 @@ public class ProcedureUpdate : ProcedureBase
 
             try
             {
-                var result = await GF.WebRequest.SendRequestAsync(versionUrl);
+                var result = await GF.WebRequest.SendRequestAsync(versionUrl, VersionFetchTimeoutSeconds);
                 if (!IsHttpSuccess(result))
                 {
                     m_loginForm.SetLogState($"版本文件请求失败(再次尝试:{attempt + 1}/{MaxRetries})", 0);
@@ -649,7 +668,16 @@ public class ProcedureUpdate : ProcedureBase
                 string json = Encoding.UTF8.GetString(result.Body);
                 var version = Utility.Json.ToObject<PackVersionList>(json);
                 if (version != null)
+                {
+                    // 校验服务器版本清单完整性
+                    if (!version.Validate(out string validateError))
+                    {
+                        Log.Warning("[ProcedureUpdate] 服务器版本数据校验失败: {0} (attempt {1}/{2})",
+                            validateError, attempt + 1, MaxRetries);
+                        continue;
+                    }
                     return version;
+                }
 
                 Log.Warning("[ProcedureUpdate] 版本 JSON 解析为 null (attempt {0}/{1})",
                     attempt + 1, MaxRetries);
@@ -701,7 +729,8 @@ public class ProcedureUpdate : ProcedureBase
             {
                 Log.Warning("[ProcedureUpdate] 子包大小不匹配({0})，可能已损坏，跳过: {1}",
                     pack.Name, fileInfo.Length);
-                EasySave.TryDelete(packPath);
+                if (!EasySave.TryDelete(packPath))
+                    Log.Warning("[ProcedureUpdate] 无法删除损坏文件（可能被占用）: {0}", packPath);
                 failed++;
                 continue;
             }
@@ -711,11 +740,12 @@ public class ProcedureUpdate : ProcedureBase
             {
                 try
                 {
-                    string actualHash = await Task.Run(() => EasySave.ComputeSHA256(packPath));
+                    string actualHash = await Task.Run(() => NodeUtility.ComputeSHA256(packPath));
                     if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
                     {
                         Log.Warning("[ProcedureUpdate] SHA256 重校验失败，文件可能损坏: {0}", pack.Name);
-                        EasySave.TryDelete(packPath);
+                        if (!EasySave.TryDelete(packPath))
+                            Log.Warning("[ProcedureUpdate] 无法删除损坏文件（可能被占用）: {0}", packPath);
                         failed++;
                         continue;
                     }
@@ -771,7 +801,8 @@ public class ProcedureUpdate : ProcedureBase
                 if (!validNames.Contains(fileName))
                 {
                     Log.Info("[ProcedureUpdate] 清理废弃子包: {0}", fileName);
-                    EasySave.TryDelete(file);
+                    if (!EasySave.TryDelete(file))
+                        Log.Warning("[ProcedureUpdate] 无法删除废弃包（可能被占用）: {0}", file);
                 }
             }
         }
@@ -805,6 +836,47 @@ public class ProcedureUpdate : ProcedureBase
 
     // ── 工具方法 ──
 
+    /// <summary>
+    /// Package 模式下尝试加载安装目录中的本地子包。
+    /// 读取 SubpackDir 下的 GameFrameworkVersion.dat 清单，加载所有 .pck。
+    /// 失败不阻塞启动——日志记录后静默跳过。
+    /// </summary>
+    private async Task TryLoadLocalSubpackagesAsync()
+    {
+        string manifestPath = Path.Combine(SubpackDir, ResourceManager.GameFrameworkVersionData);
+        if (!File.Exists(manifestPath))
+        {
+            Log.Info("[ProcedureUpdate] 本地子包清单不存在，跳过: {0}", manifestPath);
+            return;
+        }
+
+        Log.Info("[ProcedureUpdate] 检测到本地子包清单，尝试加载: {0}", manifestPath);
+
+        try
+        {
+            string json = File.ReadAllText(manifestPath, Encoding.UTF8);
+            var localVersion = Utility.Json.ToObject<PackVersionList>(json);
+
+            if (localVersion == null)
+            {
+                Log.Warning("[ProcedureUpdate] 本地子包清单解析为 null");
+                return;
+            }
+            if (!localVersion.Validate(out string validateError))
+            {
+                Log.Warning("[ProcedureUpdate] 本地子包清单校验失败: {0}", validateError);
+                return;
+            }
+
+            ResourceManager.LocalPackVersionList = localVersion;
+            await LoadDownloadedPacksAsync(localVersion);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning("[ProcedureUpdate] 加载本地子包异常: {0}", ex.Message);
+        }
+    }
+
     private bool IsHttpSuccess(WebRequestCompleteEventArgs result)
     {
         if (result == null) return false;
@@ -822,10 +894,14 @@ public class ProcedureUpdate : ProcedureBase
 
     private async Task SkipToNextAsync(ProcedureOwner procedureOwner)
     {
-        // 尝试加载已存在的本地版本
-        var local = EasySave.LoadFromUser<PackVersionList>(ResourceManager.GameFrameworkVersionData);
+        // 尝试加载已存在的本地版本（优先使用缓存的统一版本，带完整性校验）
+        var local = ResourceManager.LocalPackVersionList
+            ?? NodeUtility.LoadAndValidateVersionList(ResourceManager.GameFrameworkVersionData);
         if (local != null)
+        {
+            ResourceManager.LocalPackVersionList = local;
             await LoadDownloadedPacksAsync(local);
+        }
 
         ChangeState<ProcedurePrelode>(procedureOwner);
     }

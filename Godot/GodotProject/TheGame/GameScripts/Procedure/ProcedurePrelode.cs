@@ -9,6 +9,7 @@ using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Procedure;
 using GodotGameFramework;
+using GodotGameFramework.Sound;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>
@@ -33,13 +34,50 @@ public class ProcedurePrelode : ProcedureBase
     protected internal override void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
-        LoadEntityGroup();
-        LoadLocalization();
-        LoadUIGroup();
-        LoadSoundGroup();
+
+        try
+        {
+            LoadEntityGroup();
+        }
+        catch (System.Exception ex)
+        {
+            Log.Fatal("[ProcedurePrelode] 加载实体组失败（.pck 可能缺失依赖资源）: {0}", ex);
+        }
+
+        try
+        {
+            LoadLocalization();
+        }
+        catch (System.Exception ex)
+        {
+            Log.Fatal("[ProcedurePrelode] 加载本地化失败: {0}", ex);
+        }
+
+        try
+        {
+            LoadUIGroup();
+        }
+        catch (System.Exception ex)
+        {
+            Log.Fatal("[ProcedurePrelode] 加载 UI 组失败（.pck 可能缺失依赖资源）: {0}", ex);
+        }
+
+        try
+        {
+            LoadSoundGroup();
+        }
+        catch (System.Exception ex)
+        {
+            Log.Fatal("[ProcedurePrelode] 加载声音组失败（.pck 可能缺失依赖资源）: {0}", ex);
+        }
 
         if (IsLoadAll())
         {
+            ChangeState<ProcedureGame>(procedureOwner);
+        }
+        else
+        {
+            Log.Warning("[ProcedurePrelode] 部分模块加载失败，继续进入游戏。");
             ChangeState<ProcedureGame>(procedureOwner);
         }
     }
@@ -88,6 +126,9 @@ public class ProcedurePrelode : ProcedureBase
                 return;
             }
         }
+        GF.Sound.SetVolume(SoundComponent.DefaultMusicGroup, GF.Setting.GetFloat(SoundComponent.DefaultMusicGroup, 1));
+        GF.Sound.SetVolume(SoundComponent.DefaultSfxGroup, GF.Setting.GetFloat(SoundComponent.DefaultSfxGroup, 1));
+        GF.Sound.SetVolume(SoundComponent.DefaultUiGroup, GF.Setting.GetFloat(SoundComponent.DefaultUiGroup, 1));
         m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[3], true, false);
     }
 

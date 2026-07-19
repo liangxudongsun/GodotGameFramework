@@ -20,20 +20,6 @@ namespace GodotGameFramework.UI
     /// 不同 CanvasLayer 的 Layer 值决定了它们的绘制顺序：
     /// - Layer 值越大，越后绘制（显示在最上面）
     /// - 同一 CanvasLayer 内的子节点按树顺序绘制
-    ///
-    /// 场景树结构：
-    /// <code>
-    /// UIComponent
-    ///   └── CanvasLayer "UI Root"
-    ///       ├── DefaultUIGroupHelper "Background" (Layer=0)
-    ///       ├── DefaultUIGroupHelper "Normal" (Layer=1)
-    ///       ├── DefaultUIGroupHelper "Popup" (Layer=2)
-    ///       └── DefaultUIGroupHelper "Tips" (Layer=3)
-    /// </code>
-    ///
-    /// 对标 UGF 中的 DefaultUIGroupHelper。
-    /// UGF 默认实现为空（因为 Unity 中 Canvas.sortingOrder 由其他方式控制），
-    /// GGF 中实际设置 CanvasLayer.Layer。
     /// </summary>
     public sealed partial class DefaultUIGroupHelper : UIGroupHelperBase, IUIGroupHelper
     {

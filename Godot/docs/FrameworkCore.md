@@ -173,6 +173,7 @@ ReferencePool.EnableStrictCheck = true;
 
 - 内部按类型维护 `ReferenceCollection`（`Queue<IReference>` + lock），**线程安全**。
 - `Release` 会先调 `Clear()` 再入队 —— 归还后严禁再持有/访问该引用。
+- ⚠️ `ReferencePool.Release(null)` 会抛出 `GameFrameworkException("Reference is invalid.")` —— 调用方必须在 Release 前做空检查（如 `if (m_Check != null) ReferencePool.Release(m_Check)`）。
 - 严格检查关闭时，重复 Release 不会抛异常，会导致同一实例被入队两次，后果是两处调用方拿到同一对象。✅（2026-07）场景新增 `ReferencePool` 节点（`ReferencePoolComponent`，命名空间 `GodotGameFramework.Reference`），按 `ReferenceStrictCheckType` 策略在 `OnEnter` 统一设置开关：`AlwaysEnable`（当前默认）/ `OnlyEnableInEditor`（`OS.HasFeature("editor")`）/ `OnlyOpenWhenDevelopment`（`OS.IsDebugBuild()`）/ `AlwaysDisable`。调试器 `Profiler/Reference Pool` 页签可查看各池计数并运行时切换严格检查（见 `DebuggerSystem.md`）。
 
 ### 3.6 日志系统
@@ -187,6 +188,7 @@ Log（Godot 桥接层，[Conditional] 编译期裁剪，1~16 泛型参数重载�
 
 - `BaseComponent.OnInit()` 按 Inspector 中的类型名（默认 `GodotGameFramework.DefaultLogHelper`）反射创建并 `GameFrameworkLog.SetLogHelper()`。TextHelper（`DefaultTextHelper`，StringBuilder 缓存的 `Utility.Text.Format`）与 JsonHelper 同理。
 - ✅（2026-07）`DefaultLogHelper` 在写 GD 输出前触发静态事件 `LogMessageReceived(level, message, stackTrace)`（堆栈仅 Error/Fatal 级别捕获），调试器控制台由此捕获全部框架日志（见 `DebuggerSystem.md`）；无订阅者时零额外开销。
+- ✅（2026-07）`DefaultLogHelper` 另将 Warning/Error/Fatal 级别日志**持久化写入** `user://session.log`（512KB 滚动、线程安全），便于崩溃后排查。
 - 各级别生效条件（`GodotProject.csproj` 的 `<DefineConstants>`）：
 
 | 方法 | 生效符号（任一命中即编译保留） |
@@ -215,7 +217,7 @@ public partial class MyManager : SingletonNode<MyManager>
 MyManager.Instance.DoSomething();            // 首次访问自动 new + 注册
 ```
 
-- `Instance` 按 `typeof(T).Name` 查 `SingletonSystem` 的节点注册表，不存在则 `new T()` 并 `Retain`。**注意：`Instance` 创建的节点不会自动加入场景树**，需自行 `AddChild`；反之场景里预置的实例在 `_Ready` 时会经 `CheckInstance()` 去重（重复者 `QueueFree`）。
+- `Instance` 按 `typeof(T).Name` 查 `SingletonSystem` 的节点注册表，不存在则 `new T()` 并 `Retain`，随后通过 `tree.Root.CallDeferred(Node.MethodName.AddChild, node)` **自动将节点加入场景树根节点**。使用 `CallDeferred` 避免 `Instance` 在 `_EnterTree` 回调期间首次访问时触发 "Parent node is busy setting up children" 错误。`Active()` 方法在入树前同步执行，用于立即初始化。场景里预置的实例在 `_Ready` 时经 `CheckInstance()` 去重（重复者 `QueueFree`）。
 - `SingletonSystem` 额外维护 `IUpdate` / `IFixedUpdate` 生命周期列表，由 `IUpdateDriver` 驱动（`UpdateDriver : GameFrameworkComponent` 把 `OnUpdate/OnFixedUpdate` 广播给监听者；也可 `SingletonSystem.SetUpdateDriver()` 手动注入）。
 - 节点 `_ExitTree` 时自动 `Release()`（从注册表移除并 `QueueFree`）。
 
@@ -312,5 +314,5 @@ TopMenu 只改 csproj，需要重新 `dotnet build`；编辑器内已加载的�
 
 - ✅（2026-07 已修复）GF 门面静态缓存问题 — `GameEntry.OnInit` 中 `GF.ClearCache()` 自动清空缓存，`ShutdownType.Restart` 后新场景重新获取。
 - `GameEntry.OnUpdate` 的 realElapseSeconds 在 `TimeScale = 0` 时为 0（原版 Unity GF 使用 `Time.unscaledDeltaTime`，此处语义有差异）。
-- `SingletonNode<T>.Instance` 创建的节点不自动入树，`OnLoad` 只有入树后才会触发。
+- `SingletonNode<T>.Instance` 通过 `CallDeferred` 将节点加入根场景树，`OnLoad` 在 `_Ready` 确认非重复实例后触发。
 - CLAUDE.md 中提到的 `Base/Node/2D` 抽象实体基类（`AbstractNode2DEntity` 等）当前代码中不存在，游戏实体（如 `ActorEntity`）直接继承 Godot 类型并实现 `IEntity`。

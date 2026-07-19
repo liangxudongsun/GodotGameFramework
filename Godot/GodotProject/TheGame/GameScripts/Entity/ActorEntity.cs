@@ -196,7 +196,11 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     public override void _ExitTree()
     {
         base._ExitTree();
-        ReferencePool.Release(m_Check);
+        if (m_Check != null)
+        {
+            ReferencePool.Release(m_Check);
+            m_Check = null;
+        }
     }
 
 }

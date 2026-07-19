@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameConfig;
 using GameConfig.Constant;
 using GameFramework;
@@ -16,7 +9,6 @@ namespace GodotGameFramework
     /// <summary>
     /// 数据表组件。
     /// 将 Godot 侧的 ResourceComponent.LoadBinary 封装为 Func&lt;string, byte[]&gt;，
-    /// 注入纯 C# 层 DataTableManager，保持双层架构洁净。
     /// </summary>
     public sealed partial class DataTableComponent : GameFrameworkComponent
     {

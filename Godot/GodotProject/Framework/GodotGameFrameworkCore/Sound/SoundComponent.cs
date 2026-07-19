@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework;
 using GameFramework.Resource;
 using GameFramework.Sound;
@@ -68,7 +61,7 @@ namespace GodotGameFramework.Sound
             if (m_EnablePlaySoundUpdateEvent) m_SoundManager.PlaySoundUpdate += OnPlaySoundUpdate;
 
             m_SoundManager.SetResourceManager(GameFrameworkEntry.GetModule<GameFramework.Resource.IResourceManager>());
-            SoundHelperBase soundHelper = Helper.CreateHelper(m_SoundHelperTypeName, m_SoundHelper);
+            SoundHelperBase soundHelper = (SoundHelperBase)Create(m_SoundHelperTypeName);
             if (soundHelper == null) { Log.Fatal("Can not create sound helper."); return; }
             m_SoundHelper = soundHelper;
             m_SoundHelper.Name = m_SoundHelperTypeName;
@@ -113,33 +106,28 @@ namespace GodotGameFramework.Sound
 
             for (int i = 0; i < agentCount; i++)
             {
-                var audioPlayer = new AudioStreamPlayer();
-                audioPlayer.Name = $"Agent {i}";
+
                 SoundAgentHelperBase agentHelper = (SoundAgentHelperBase)Create(m_SoundAgentHelperTypeName);
+                agentHelper.Name = $"Agent Helper {i}";
                 switch (soundGroupName)
                 {
                     case DefaultMusicGroup:
-                        audioPlayer.ProcessMode = AudioStreamPlayer.ProcessModeEnum.Always;
-                        audioPlayer.Bus = DefaultMusicGroup;
+                        agentHelper.ProcessMode = AudioStreamPlayer.ProcessModeEnum.Always;
+                        agentHelper.Bus = DefaultMusicGroup;
                         break;
                     case DefaultSfxGroup:
-                        audioPlayer.Bus = DefaultSfxGroup;
+                        agentHelper.Bus = DefaultSfxGroup;
                         break;
                     case DefaultUiGroup:
-                        audioPlayer.Bus = DefaultUiGroup;
+                        agentHelper.Bus = DefaultUiGroup;
                         break;
                 }
-                groupHelper.AddChild(audioPlayer);
-
+                groupHelper.AddChild(agentHelper);
                 if (agentHelper == null)
                 {
                     Log.Error("Can not create sound agent helper.");
                     continue;
                 }
-                agentHelper.Name = $"Agent Helper {i}";
-                agentHelper.AudioStreamPlayer = audioPlayer;
-                agentHelper.SetAudioStreamPlayer(audioPlayer);
-                audioPlayer.AddChild(agentHelper);
                 m_SoundManager.AddSoundAgentHelper(soundGroupName, agentHelper);
             }
 

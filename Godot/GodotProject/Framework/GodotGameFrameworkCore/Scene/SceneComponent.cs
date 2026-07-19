@@ -60,7 +60,7 @@ namespace GodotGameFramework.Scene
             m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
             m_SceneManager.SetResourceManager(m_ResourceManager);
 
-            m_SceneHelper = Helper.CreateHelper(m_SceneHelperTypeName, m_SceneHelper);
+            m_SceneHelper = (SceneHelperBase)Create(m_SceneHelperTypeName);
             if (m_SceneHelper == null)
             {
                 Log.Fatal("Can not create scene helper.");

@@ -33,6 +33,10 @@ namespace GodotGameFramework.Resource
         [UpperDescription("资源加载代理数量")]
         [Export(PropertyHint.Range, "0,20,1")]
         public int AgentCount = 10;
+
+        [UpperDescription("二进制加载代理数量")]
+        [Export(PropertyHint.Range, "0,10,1")]
+        public int BinaryAgentCount = 2;
         private readonly Dictionary<string, TaskCompletionSource<Godot.Resource>> m_LoadingTasks = new();
         public override void OnInit()
         {
@@ -44,11 +48,14 @@ namespace GodotGameFramework.Resource
             m_ResourceManager.SetReadWritePath(ProjectSettings.GlobalizePath("user://"));
             ProcessMode = ProcessModeEnum.Always;
             m_ResourceManager.SetLoadAssetAgentCount(AgentCount);
-            Log.Info("[ResourceComponent] Initialized. Mode: {0}", _resourceMode);
+            m_ResourceManager.SetLoadBinaryAgentCount(BinaryAgentCount);
+            Log.Info("[ResourceComponent] Initialized. Mode: {0}, AssetAgents: {1}, BinaryAgents: {2}",
+                _resourceMode, AgentCount, BinaryAgentCount);
         }
 
         /// <summary>
         /// 同步加载二进制文件。返回 null 表示文件不存在。
+        /// 小文件可用（<1MB），大文件请用 LoadBinaryAsync 避免卡帧。
         /// </summary>
         public byte[] LoadBinary(string path)
         {
@@ -64,6 +71,34 @@ namespace GodotGameFramework.Resource
                 Log.Warning("[ResourceComponent] LoadBinary failed: {0}", ex.Message);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 异步加载二进制文件（线程池 IO + 主线程回调）。
+        /// 适合大文件读取场景。
+        /// </summary>
+        public Task<byte[]> LoadBinaryAsync(string path)
+        {
+            var tcs = new TaskCompletionSource<byte[]>();
+            if (string.IsNullOrEmpty(path))
+            {
+                tcs.TrySetResult(null);
+                return tcs.Task;
+            }
+
+            var callbacks = new LoadBinaryCallbacks(
+                (binaryAssetName, binaryData, duration, userData) =>
+                {
+                    tcs.TrySetResult(binaryData);
+                },
+                (binaryAssetName, status, errorMessage, userData) =>
+                {
+                    tcs.TrySetException(new Exception(
+                        Utility.Text.Format("LoadBinaryAsync failed: {0} {1} {2}", binaryAssetName, status, errorMessage)));
+                });
+
+            m_ResourceManager.LoadBinaryAsync(path, callbacks, null);
+            return tcs.Task;
         }
 
         /// <summary>

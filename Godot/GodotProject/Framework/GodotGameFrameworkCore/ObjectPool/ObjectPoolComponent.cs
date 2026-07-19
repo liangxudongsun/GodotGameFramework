@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework;
 using GameFramework.ObjectPool;
 using System;
@@ -21,30 +14,6 @@ namespace GodotGameFramework
     /// 对象池支持两种模式：
     /// - SingleSpawn：同一时刻同一对象只能被获取一次（适用于 Entity 等）
     /// - MultiSpawn：同一对象可以被同时获取多次（引用计数）
-    ///
-    /// 每个对象池有以下可配置参数：
-    /// - capacity：对象池容量
-    /// - expireTime：对象过期时间（秒），过期后可被自动释放
-    /// - priority：对象池优先级，用于决定释放顺序
-    /// - autoReleaseInterval：自动释放间隔（秒）
-    ///
-    /// 使用方式：
-    /// <code>
-    /// ObjectPoolComponent objectPool = GF.ObjectPool;
-    ///
-    /// // 创建对象池
-    /// var pool = objectPool.CreateSingleSpawnObjectPool&lt;MyObject&gt;("MyPool");
-    ///
-    /// // 注册对象
-    /// pool.Register(MyObject.Create(item));
-    ///
-    /// // 获取对象
-    /// MyObject obj = pool.Spawn();
-    ///
-    /// // 归还对象
-    /// pool.Unspawn(obj.Target);
-    /// </code>
-    ///
     /// </summary>
     public sealed partial class ObjectPoolComponent : GameFrameworkComponent
     {

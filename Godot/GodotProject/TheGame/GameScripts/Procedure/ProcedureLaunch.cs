@@ -9,6 +9,7 @@ using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Procedure;
 using GodotGameFramework;
+using GodotGameFramework.NodePool;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>
@@ -53,6 +54,7 @@ public class ProcedureLaunch : ProcedureBase
         m_Components.TryUpdate(m_NeedComponents[10], GF.DataTable != null, false);
         m_Components.TryUpdate(m_NeedComponents[11], GF.WebRequest != null, false);
         m_Components.TryUpdate(m_NeedComponents[12], GF.Download != null, false);
+        NodePool.Instance.Active(); // 启动节点池
         if (m_Components.All(x => x.Value))
         {
             Log.Info($"[LaunchProcedure] 框架组件验证通过");

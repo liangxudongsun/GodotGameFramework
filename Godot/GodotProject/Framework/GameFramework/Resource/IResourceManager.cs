@@ -30,9 +30,14 @@ namespace GameFramework.Resource
         void LoadAsset(string assetName, int priority, LoadAssetCallbacks loadAssetCallbacks, object userData);
 
         /// <summary>
-        /// 异步加载二进制资源。
+        /// 同步加载二进制资源（仅用于小文件，大文件请用 LoadBinaryAsync）。
         /// </summary>
         void LoadBinary(string binaryAssetName, LoadBinaryCallbacks loadBinaryCallbacks, object userData);
+
+        /// <summary>
+        /// 异步加载二进制资源（线程池读取 + 每帧轮询完成）。
+        /// </summary>
+        void LoadBinaryAsync(string binaryAssetName, LoadBinaryCallbacks loadBinaryCallbacks, object userData);
 
         /// <summary>
         /// 获取二进制资源的长度
@@ -43,5 +48,10 @@ namespace GameFramework.Resource
         /// </summary>
         /// <param name="agentCount">
         void SetLoadAssetAgentCount(int agentCount);
+
+        /// <summary>
+        /// 设置二进制加载代理数量
+        /// </summary>
+        void SetLoadBinaryAgentCount(int agentCount);
     }
 }

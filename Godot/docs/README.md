@@ -11,13 +11,13 @@
 | [EventSystem.md](EventSystem.md) | EventPool 机制、EventId 约定、Fire vs FireNow、订阅退订、池化回收禁忌 |
 | [FsmSystem.md](FsmSystem.md) | IFsm/FsmState 泛型设计、状态生命周期、SetData/GetData、销毁与池化 |
 | [ProcedureSystem.md](ProcedureSystem.md) | 流程 = 顶层 FSM、启动链路、TheGame 流程链 Launch→Update→Prelode→Game、新增流程教程 |
-| [DebuggerSystem.md](DebuggerSystem.md) | 运行时调试器：FPS 图标 + Console/Information/Profiler/Other 多级页签、BBCode-IMGUI 绘制模型、日志捕获、自定义调试窗口 |
+| [DebuggerSystem.md](DebuggerSystem.md) | 运行时调试器：FPS 图标 + Console/Information/Profiler/Other 多级页签、BBCode-IMGUI 绘制模型、框架日志+Godot 原生日志双源捕获、自定义调试窗口 |
 
 ## 资源与内容
 
 | 文档 | 内容 |
 |------|------|
-| [ResourceSystem.md](ResourceSystem.md) | ResourceMode 现状、异步加载队列、子包加载、ExportInspector 导出工作流、ResourcesCollectionConstant |
+| [ResourceSystem.md](ResourceSystem.md) | ResourceMode 现状、异步加载队列（Asset+Binary）、子包加载（热更+Package本地）、ExportInspector 导出工作流、ResourcesCollectionConstant |
 | [DataTableSystem.md](DataTableSystem.md) | Luban 管线（Excel→C#+二进制）、运行时懒加载、新增表步骤、Config 子包热更时序 |
 | [DataNodeSystem.md](DataNodeSystem.md) | 树形数据结构、路径访问语义、Variable 池化类型 |
 | [SettingSystem.md](SettingSystem.md) | ConfigFile → user://settings.cfg、Save/Load 语义、与 EasySave 的区别 |
@@ -27,11 +27,12 @@
 
 | 文档 | 内容 |
 |------|------|
-| [EntitySystem.md](EntitySystem.md) | 实体生命周期、实体组+实例池、EntityId 配置驱动、TheGame 继承树、新增实体步骤 |
+| [EntitySystem.md](EntitySystem.md) | 实体生命周期、实体组+实例池、EntityId 配置驱动、TheGame 继承树（ActorEntity/Cat/Anger/GanTan）、新增实体步骤 |
 | [UISystem.md](UISystem.md) | UIForm 生命周期、UI 组遮挡算法、OpenUIFormAsync、脚本生成器（Ge/Logic 双文件）工作流 |
 | [SoundSystem.md](SoundSystem.md) | 声音组与 Audio Bus 映射、代理抢占算法、PlaySoundParams、AudioStreamPlayer 桥接 |
 | [SceneSystem.md](SceneSystem.md) | 场景加载流程、实例挂载位置、LoadSceneAsync、与 ResourceComponent 的关系 |
-| [ObjectPoolSystem.md](ObjectPoolSystem.md) | ObjectBase/IObjectPool 设计、四参数语义、与 ReferencePool 对照、框架内实际使用点 |
+| [ObjectPoolSystem.md](ObjectPoolSystem.md) | ObjectBase/IObjectPool 设计、四参数语义、与 ReferencePool 对照、NodePool 系统（IPoolable + GF.ObjectPool 懒加载） |
+| [NodePoolSystem.md](NodePoolSystem.md) | NodePool 通用节点池：IPoolable 接口、配置驱动注册、懒加载 Instantiate、孤儿节点设计、NodePoolInspectorPlugin 编辑器扫描 |
 
 ## 网络与热更
 
@@ -39,7 +40,7 @@
 |------|------|
 | [WebRequestSystem.md](WebRequestSystem.md) | SendRequestAsync、超时约定、与 Download 模块的分工（小文本 vs 大文件） |
 | [DownloadSystem.md](DownloadSystem.md) | 下载模块全貌：任务队列/断点续传/校验/DownloadFileAsync/热更集成/错误语义表 |
-| [ResourceHotUpdateAudit.md](ResourceHotUpdateAudit.md) | 资源热更审计：风险项清单与修复状态（2026-07 复审） |
+| [ResourceHotUpdateAudit.md](ResourceHotUpdateAudit.md) | 资源热更审计：风险项清单与修复状态（2026-07 复审，致命项全部修复） |
 | [CodeHotUpdateDesign.md](CodeHotUpdateDesign.md) | C# 程序集热更方案设计（ALC，未实施；下载/安全防护等前置能力已落地） |
 
 ## 其他

@@ -287,5 +287,8 @@ Godot CharacterBody2D                     Godot Area2D
 ## 8. 已知边界与后续计划
 
 - [x] 加载中隐藏实体时完结对应 `ShowEntityAsync` 的 TCS（当前该 Task 悬挂，靠调用方超时兜底）✅ 2026-07
+- [x] `ActorEntity._ExitTree()` ReferencePool.Release null 安全（`m_Check` 可能未初始化）✅ 2026-07
+- [x] `CatEntity.OnInit` 实体池复用时重建 `PhysicsCheck2D`（旧实例已在上次 `_ExitTree` 中释放）✅ 2026-07
+- [x] `GanTanEntity.OnBodyEntered` 集成 NodePool 伤害数字（`DamagePop`）✅ 2026-07
 - [ ] `EntityConfig.Priority` 接入 ShowEntity 扩展与资源加载调度
 - [ ] 抽象实体基类库（若多项目复用 ActorEntity 模式，可下沉到 `GodotGameFrameworkCore/Base/Node/`）

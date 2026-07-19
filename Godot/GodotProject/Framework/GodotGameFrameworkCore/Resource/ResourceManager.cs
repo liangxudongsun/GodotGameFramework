@@ -11,13 +11,20 @@ namespace GameFramework.Resource
 
         public ResourceMode ResourceMode { get; private set; } = ResourceMode.Package;
 
+        /// <summary>
+        /// 当前本地缓存的版本清单（与 user://GameFrameworkVersion.dat 同步）。
+        /// 由 ProcedureUpdate 在加载后写入，全局统一从此读取。
+        /// </summary>
+        public static PackVersionList LocalPackVersionList { get; set; }
+
         private TaskPool<LoadAssetTask> m_AssetTaskPool;
+        private TaskPool<LoadBinaryTask> m_BinaryTaskPool;
         private string m_ReadWritePath;
 
         public ResourceManager()
         {
             m_AssetTaskPool = new TaskPool<LoadAssetTask>();
-
+            m_BinaryTaskPool = new TaskPool<LoadBinaryTask>();
         }
 
         public void SetReadWritePath(string readWritePath = null)
@@ -32,6 +39,17 @@ namespace GameFramework.Resource
             for (int i = 0; i < agentCount; i++)
             {
                 m_AssetTaskPool.AddAgent(new LoadAssetAgent());
+            }
+        }
+
+        /// <summary>
+        /// 二进制异步加载代理数量（默认 2，因为大文件 IO 不需要太多并发）。
+        /// </summary>
+        public void SetLoadBinaryAgentCount(int agentCount)
+        {
+            for (int i = 0; i < agentCount; i++)
+            {
+                m_BinaryTaskPool.AddAgent(new LoadBinaryAgent());
             }
         }
 
@@ -101,16 +119,42 @@ namespace GameFramework.Resource
             }
         }
 
+        /// <summary>
+        /// 异步加载二进制文件（线程池 IO，每帧轮询完成回调）。
+        /// 适合大文件读取场景，不阻塞主线程。
+        /// </summary>
+        public void LoadBinaryAsync(string binaryAssetName, LoadBinaryCallbacks loadBinaryCallbacks, object userData)
+        {
+            if (string.IsNullOrEmpty(binaryAssetName))
+            {
+                loadBinaryCallbacks.LoadBinaryFailureCallback?.Invoke(
+                    binaryAssetName, LoadResourceStatus.NotExist, "Binary asset name is invalid.", userData);
+                return;
+            }
+            if (!FileAccess.FileExists(binaryAssetName))
+            {
+                loadBinaryCallbacks.LoadBinaryFailureCallback?.Invoke(
+                    binaryAssetName, LoadResourceStatus.NotExist,
+                    Utility.Text.Format("Binary asset '{0}' does not exist.", binaryAssetName), userData);
+                return;
+            }
+
+            var task = LoadBinaryTask.Create(binaryAssetName, loadBinaryCallbacks, userData);
+            m_BinaryTaskPool.AddTask(task);
+        }
+
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
             // TaskPool 内部遍历所有 WorkingAgent
             // 有闲 Agent 时从等待队列取任务（按优先级降序）
             m_AssetTaskPool.Update(elapseSeconds, realElapseSeconds);
+            m_BinaryTaskPool.Update(elapseSeconds, realElapseSeconds);
         }
 
         internal override void Shutdown()
         {
             m_AssetTaskPool.Shutdown();
+            m_BinaryTaskPool.Shutdown();
         }
     }
 }

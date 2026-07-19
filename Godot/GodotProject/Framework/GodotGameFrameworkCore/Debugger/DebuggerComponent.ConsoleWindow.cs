@@ -35,6 +35,11 @@ public sealed partial class DebuggerComponent
         private bool m_ErrorFilter = true;
         private bool m_FatalFilter = true;
 
+        // Godot 原生日志捕获（文件尾部轮询）
+        private string m_GodotLogPath;
+        private long m_GodotLogPos;
+        private const string GodotLogFileName = "user://logs/godot.log";
+
         /// <summary>
         /// 获取或设置最大日志行数。
         /// </summary>
@@ -117,6 +122,9 @@ public sealed partial class DebuggerComponent
             m_Component ??= GameEntry.GetComponent<DebuggerComponent>();
             LoadSettings();
             DefaultLogHelper.LogMessageReceived += OnLogMessageReceived;
+
+            // 启用 Godot 文件日志以捕获引擎原生输出（GD.PrintErr / C++ 错误等）
+            EnableGodotFileLogging();
         }
 
         public void Shutdown()
@@ -136,6 +144,7 @@ public sealed partial class DebuggerComponent
         public void OnUpdate(float elapseSeconds, float realElapseSeconds)
         {
             Pump();
+            PollGodotLog();
         }
 
         public void OnDraw()
@@ -353,6 +362,172 @@ public sealed partial class DebuggerComponent
             catch (Exception)
             {
             }
+        }
+
+        // ── Godot 原生日志捕获 ──
+
+        /// <summary>
+        /// 启用 Godot 文件日志，以便通过尾部轮询捕获 GD.PrintErr / C++ 引擎错误等原生输出。
+        /// </summary>
+        private void EnableGodotFileLogging()
+        {
+            try
+            {
+                // 确保日志目录存在
+                string logDir = ProjectSettings.GlobalizePath("user://logs");
+                if (!System.IO.Directory.Exists(logDir))
+                    System.IO.Directory.CreateDirectory(logDir);
+
+                m_GodotLogPath = ProjectSettings.GlobalizePath(GodotLogFileName);
+
+                // 清理旧日志，避免无限增长
+                if (System.IO.File.Exists(m_GodotLogPath))
+                {
+                    // 记录当前文件大小作为起始位置（跳过已有历史日志）
+                    m_GodotLogPos = new System.IO.FileInfo(m_GodotLogPath).Length;
+                }
+                else
+                {
+                    m_GodotLogPos = 0;
+                }
+
+                // 启用文件日志（Godot 4.x project setting）
+                ProjectSettings.SetSetting("debug/file_logging/enable_file_logging", true);
+                ProjectSettings.SetSetting("debug/file_logging/log_path", GodotLogFileName);
+
+                // 日志立即刷新，确保尾部轮询及时
+                ProjectSettings.SetSetting("debug/file_logging/flush_stdout_on_print", true);
+            }
+            catch (Exception ex)
+            {
+                GD.PushWarning($"[ConsoleWindow] 无法启用 Godot 文件日志: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 轮询 Godot 日志文件，将新行作为控制台日志入队。
+        /// </summary>
+        private void PollGodotLog()
+        {
+            if (string.IsNullOrEmpty(m_GodotLogPath))
+                return;
+
+            try
+            {
+                if (!System.IO.File.Exists(m_GodotLogPath))
+                    return;
+
+                var fileInfo = new System.IO.FileInfo(m_GodotLogPath);
+                if (fileInfo.Length <= m_GodotLogPos)
+                    return;
+
+                using var fs = new System.IO.FileStream(
+                    m_GodotLogPath,
+                    System.IO.FileMode.Open,
+                    System.IO.FileAccess.Read,
+                    System.IO.FileShare.ReadWrite);
+
+                fs.Seek(m_GodotLogPos, System.IO.SeekOrigin.Begin);
+                using var reader = new System.IO.StreamReader(fs);
+
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    // 解析 Godot 日志行，确定级别
+                    var (level, message) = ParseGodotLogLine(line);
+
+                    // 过滤引擎引导噪声（时间戳/模块加载等无意义行）
+                    if (message == null)
+                        continue;
+
+                    var logNode = LogNode.Create(level, message, null);
+                    lock (m_PendingLock)
+                    {
+                        m_PendingLogNodes.Enqueue(logNode);
+                    }
+                }
+
+                m_GodotLogPos = fs.Position;
+            }
+            catch (Exception)
+            {
+                // 文件可能被 Godot 锁定，下帧重试
+            }
+        }
+
+        /// <summary>
+        /// 解析 Godot 日志行，返回 (日志级别, 消息)。
+        /// 返回 (Debug, null) 表示该行应被跳过（引擎引导噪声）。
+        /// </summary>
+        private static (GameFrameworkLogLevel level, string message) ParseGodotLogLine(string line)
+        {
+            string trimmed = line.Trim();
+
+            // Godot 引擎错误格式: "ERROR: Message" 或 "ERROR: Condition ... is true."
+            if (trimmed.StartsWith("ERROR:") || trimmed.Contains("ERROR:"))
+            {
+                string msg = ExtractMeaningfulMessage(trimmed, "ERROR:");
+                return (GameFrameworkLogLevel.Error, msg);
+            }
+
+            // Godot 引擎警告格式: "WARNING: Message"
+            if (trimmed.StartsWith("WARNING:") || trimmed.Contains("WARNING:"))
+            {
+                string msg = ExtractMeaningfulMessage(trimmed, "WARNING:");
+                return (GameFrameworkLogLevel.Warning, msg);
+            }
+
+            // Godot 脚本错误: "E 0:00:01.234   ..." 或 "  <C++ 错误>  ..."
+            if (trimmed.StartsWith("E ") || trimmed.StartsWith("E\t"))
+            {
+                return (GameFrameworkLogLevel.Error, trimmed);
+            }
+
+            // 堆栈/源码引用行：缩进的错误详情
+            if ((trimmed.StartsWith("<C++") || trimmed.StartsWith("<C#"))
+                && (trimmed.Contains("错误") || trimmed.Contains("Error") || trimmed.Contains("error")))
+            {
+                return (GameFrameworkLogLevel.Error, trimmed);
+            }
+
+            // Godot 调试输出: "  Message" 或普通 print
+            if (trimmed.Length > 2 && !trimmed.StartsWith("//"))
+            {
+                // 跳过引擎启动横幅/模块加载等纯信息行
+                if (trimmed.StartsWith("Godot Engine") ||
+                    trimmed.StartsWith("Module ") ||
+                    trimmed.StartsWith("  Module ") ||
+                    trimmed.StartsWith("OpenGL") ||
+                    trimmed.StartsWith("Vulkan") ||
+                    trimmed.StartsWith("D3D12"))
+                    return (GameFrameworkLogLevel.Debug, null); // 跳过
+
+                return (GameFrameworkLogLevel.Debug, trimmed);
+            }
+
+            return (GameFrameworkLogLevel.Debug, null); // 跳过不关心的行
+        }
+
+        /// <summary>
+        /// 从 Godot 错误/警告行中提取有意义的消息。
+        /// "ERROR: Condition "x" is true. ... at: func (file:line)" → 取第一句描述
+        /// </summary>
+        private static string ExtractMeaningfulMessage(string line, string prefix)
+        {
+            int idx = line.IndexOf(prefix, StringComparison.Ordinal);
+            if (idx < 0) return line;
+
+            string after = line.Substring(idx + prefix.Length).Trim();
+
+            // 截取 at: 之前的部分作为摘要
+            int atIdx = after.IndexOf("   at:", StringComparison.Ordinal);
+            if (atIdx > 0)
+                after = after.Substring(0, atIdx).Trim();
+
+            return $"[Godot] {after}";
         }
     }
 }

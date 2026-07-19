@@ -1013,7 +1013,7 @@ namespace GodotGameFramework.Editor
                 {
                     Name = info.Name,
                     Size = fileInfo.Exists ? fileInfo.Length : 0,
-                    Hash = fileInfo.Exists ? EasySave.ComputeSHA256(pckPath) : string.Empty,
+                    Hash = fileInfo.Exists ? NodeUtility.ComputeSHA256(pckPath) : string.Empty,
                     Url = res.Get(UpdateSettingRes.Parameters.RemoteUrl) + "/" + info.Name + ".pck",
                     Type = PackType.Resource,
                 };

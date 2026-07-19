@@ -21,13 +21,14 @@
 
 | 模式 | 枚举值 | 实现程度 |
 |------|:--:|------|
-| `ResourceMode.Package` | 1 | ✅ 单机模式。全部资源在主包内，`Godot.ResourceLoader` 直接加载；启动时**不做**任何版本比对与子包加载（`SetReadWritePath` 仅打印日志），`ProcedureUpdate` 直接跳过更新检测 |
+| `ResourceMode.Package` | 1 | ✅ 单机模式。全部资源在主包内，`Godot.ResourceLoader` 直接加载；`ProcedureUpdate` 跳过远端更新检测，但尝试通过 `TryLoadLocalSubpackagesAsync()` 加载安装目录 `subpackages/` 下的本地 `.pck` 子包（失败不阻塞启动） |
 | `ResourceMode.Updatable` | 2 | ✅ 热更模式。启动时 `DeserializeUpdatablePackVersion()` 读取 `user://GameFrameworkVersion.dat` 得到本地清单；子包 `.pck` 的下载/校验/`LoadResourcePack` 由 `ProcedureUpdate` 驱动（见 §3.3 与 `DownloadSystem.md` §5） |
 
 ### 能力清单
 
 - ✅ 同步加载：`LoadAsset<T>` / `LoadBinary`（byte[]）/ `LoadText`（string）
-- ✅ 异步加载：`LoadAssetAsync`（`Task<Godot.Resource>`，基于 `ResourceLoader.LoadThreadedRequest` 后台线程加载）
+- ✅ 异步加载资源：`LoadAssetAsync`（`Task<Godot.Resource>`，基于 `ResourceLoader.LoadThreadedRequest` 后台线程加载）
+- ✅ 异步加载二进制：`LoadBinaryAsync`（`Task<byte[]>`，基于 `Task.Run` 后台线程 IO + 每帧主线程轮询完成）
 - ✅ 存在性检查：`Exists` / `HasAsset`（区分 Godot 资源与 `.bytes` 二进制）
 - ✅ 子包版本清单（`PackVersionList`，JSON）+ 热更子包加载（`ProjectSettings.LoadResourcePack`）
 - ✅ 编辑器侧 AB 包工作流：`AssetBundle.tres` 标记 → ExportInspector 一键导出 `.pck` + 版本清单
@@ -85,7 +86,8 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 | `GodotGameFrameworkCore/Resource/PackVersionList.cs` | 版本清单 `PackVersionList` / `Pack` / `PackType` |
 | `GodotGameFrameworkCore/Resource/LoadAssetTask.cs` | 资源加载任务（`TaskBase` + `ReferencePool` 池化） |
 | `GodotGameFrameworkCore/Resource/LoadAssetAgent.cs` | 加载代理（`ITaskAgent<LoadAssetTask>`，每 Agent 承载一个 LoadThreadedRequest 槽位） |
-| `GodotGameFrameworkCore/Resource/LoadBinaryTask.cs` / `LoadBinaryAgent.cs` | ⚠️ 预留的异步二进制加载任务/代理（`ITaskAgent` 后台线程读文件），当前未接入 |
+| `GodotGameFrameworkCore/Resource/LoadBinaryTask.cs` | 异步二进制加载任务（`TaskBase` + `ReferencePool` 池化） |
+| `GodotGameFrameworkCore/Resource/LoadBinaryAgent.cs` | 异步二进制加载代理（`ITaskAgent<LoadBinaryTask>`，`Task.Run` 后台 `File.ReadAllBytes`，主线程每帧 `Update()` 轮询完成后回调） |
 | `GodotGameFrameworkCore/Resource/ResourceExtension.cs` | 空扩展类（历史便捷方法已移除） |
 
 ---
@@ -111,10 +113,20 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 ### 3.2 二进制加载
 
+同步通道：
+
 - `IResourceManager.LoadBinary`：**同步**实现——`FileAccess.Open` 整读 `GetBuffer` 后立即回调（回调签名保留异步形态，便于将来切换实现）。
 - `ResourceComponent.LoadBinary/LoadText`：更直接的同步便捷方法，文件不存在或异常返回 `null`（不抛异常）。
 - `GetBinaryLength`：返回文件字节数，不存在返回 `-1`。
-- `LoadBinaryTask` + `LoadBinaryAgent`（`Task.Run` 后台 `File.ReadAllBytes`）是为大二进制准备的异步链路，**尚未接线**——`ResourceManager` 中没有对应的 TaskPool。
+
+异步通道（✅ 2026-07 已接线）：
+
+- `ResourceManager` 维护独立 `TaskPool<LoadBinaryTask>`（与 Asset 的 `TaskPool<LoadAssetTask>` 分离），由 `Update()` 统一轮询。
+- Agent 并发数由 `ResourceComponent.BinaryAgentCount`（Inspector，0–10，默认 2）在 `OnInit` 时经 `SetLoadBinaryAgentCount` 注入——大文件 IO 不需要太多并发，2 个足够覆盖绝大多数场景。
+- `LoadBinaryAgent.Start()` 在后台线程池执行 `System.IO.File.ReadAllBytes`（避开 Godot `FileAccess` 的线程安全问题），完成后设置 `m_ResultData`/`m_Error`。
+- `LoadBinaryAgent.Update()` 被 `TaskPool` 的 `Update()` 在主线程每帧调用；检测到结果就绪时通过 `LoadBinaryCallbacks` 回调交付。
+- `ResourceComponent.LoadBinaryAsync(path)`（公共 API）用 `TaskCompletionSource<byte[]>` 把回调转成 `Task<byte[]>`，调用方直接 `await`。
+- 与 `LoadAssetAsync` 不同，`LoadBinaryAsync` **没有路径去重字典**——同一文件允许多次并发异步读取（适合多位置并发消费同一份配置数据的场景）。
 
 ### 3.3 子包加载流程
 
@@ -134,7 +146,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 > 注意：**版本清单固定存于 `user://`**（`EasySave.SaveInUser` / `ResourceManager` 只从 `m_ReadWritePath = user://` 读取），而 `.pck` 本体可能在游戏安装目录——两者路径策略不同，属有意设计。
 
-**Package 模式**：不加载任何子包。`ResourceManager` 中的 `SubPack = "subpackages"` 常量为预留；随主包分发的资源直接走 `res://`。编辑器侧 `addons/asset_bundle/export_plugin.gd` 会在**工程导出时**把标记为 AssetBundle 的目录从主包剥离，单独产出 `<导出目录>/subpackages/*.pck`——这些包需由热更流程（或未来的 Package 侧加载逻辑）载入。
+**Package 模式**：不检测远端更新，但启动时自动尝试加载安装目录下的本地子包——`ProcedureUpdate.TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir/GameFrameworkVersion.dat` 清单，逐包加载 `.pck`（与 Updatable 共用 `LoadDownloadedPacksAsync`，含大小校验 + SHA256 校验 + Config 优先排序）。失败**不阻塞启动**——子包缺失或清单无效仅记录日志后静默跳过。随主包分发的资源直接走 `res://`。编辑器侧 `addons/asset_bundle/export_plugin.gd` 会在**工程导出时**把标记为 AssetBundle 的目录从主包剥离，单独产出 `<导出目录>/subpackages/*.pck`。
 
 ### 3.4 版本清单（PackVersionList）
 
@@ -158,6 +170,16 @@ public struct Pack {
 ```
 
 清单文件名统一为 `ResourceManager.GameFrameworkVersionData`（`"GameFrameworkVersion.dat"`），内容为 JSON。
+
+### 3.5 版本清单校验加载（`LoadAndValidateVersionList`）
+
+`NodeUtility.LoadAndValidateVersionList(fileName)` 提供带严格校验的版本清单加载，`ProcedureUpdate` 在多处使用该方法替代普通的 JSON 反序列化：
+
+1. **JSON 结构检测**：空文件 / 截断（长度 < 2）/ 缺少花括号 → 返回 `null` 并记录具体原因。
+2. **`PackVersionList.Validate()`** 深度校验：（a）`Version` 非空；（b）`Packs` 非 null 非空；（c）每个 `Pack` 有效性检查（名称/大小/SHA256 均合法）；（d）**重复包名检测**——`HashSet<string>` 逐包登记，重名直接拒绝。
+3. 异常安全：`Newtonsoft.Json.JsonException` 和通用 `Exception` 分别捕获，均返回 `null` 不抛异常。
+
+与普通 `Utility.Json.ToObject<T>()` 的区别：`LoadAndValidateVersionList` **不信任磁盘数据**——它假定任何环节（写入中断、磁盘故障、传输截断）都可能导致损坏的 JSON 或字段缺失，因此逐层校验后才返回可用对象。
 
 ---
 

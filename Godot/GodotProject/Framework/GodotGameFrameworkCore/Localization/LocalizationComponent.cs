@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework;
 using GameFramework.Localization;
 using Godot;
@@ -85,7 +78,7 @@ namespace GodotGameFramework.Localization
             }
 
 
-            LocalizationHelperBase localizationHelper = Helper.CreateHelper(m_LocalizationHelperTypeName, m_LocalizationHelper);
+            LocalizationHelperBase localizationHelper = (LocalizationHelperBase)Create(m_LocalizationHelperTypeName);
             AddChild(localizationHelper);
             localizationHelper.Name = m_LocalizationHelperTypeName;
             m_LocalizationHelper = localizationHelper;

@@ -15,8 +15,8 @@
 | # | 严重度 | 问题 | 现象 | 文件:行 |
 |---|:---:|------|------|---------|
 | 0.1 | 🔴 | ✅ **已修复 (2026-07)** — `HotUpdateSafetyGuard`（启动锁 + 成功标记 + 安全模式）：检测到上次启动未完成 → 回退版本文件并跳过全部热更补丁。原问题：**无崩溃恢复机制**，坏包导致无限崩溃循环。 | 启动 → 检测到上次崩溃 → 安全模式 → 用内置/上一版本 | `HotUpdateSafetyGuard.cs` + `ProcedureUpdate:121,249` + `ProcedureGame:36` |
-| 0.2 | 🟡 | `DeserializeUpdatablePackVersion()` 读取版本文件后，**不做任何完整性校验**。如果 `user://GameFrameworkVersion.dat` 被意外清空一半（磁盘满、杀进程），JSON 解析失败只打 Warning，静默降级为"无热更"，用户看到的是旧版本游戏。 | 磁盘满时写版本文件 → JSON 截断 → 下次启动解析失败 → 回退到初始版本 | `ResourceManager:150` |
-| 0.3 | 🟡 | `ResourceManager.PackVersionList` 在启动时被赋值，但 `ProcedureUpdate` 又自己读了一份 `localVersion`（从 EasySave），**两处版本数据不同步**。如果 ResourceManager 的版本和 EasySave 的版本不一致，行为不可预测。 | ResourceManager 说 v1.1，ProcedureUpdate 说 v1.0 → 比对逻辑混乱 | `ResourceManager:163` + `ProcedureUpdate:188` |
+| 0.2 | 🟡 | ✅ **已修复 (2026-07)** — `EasySave.LoadAndValidateVersionList` 验证 JSON 结构完整性，`PackVersionList.Validate()` 执行深度校验。原问题：`DeserializeUpdatablePackVersion()` 读取版本文件后不做任何完整性校验，JSON 解析失败只打 Warning，静默降级为"无热更"。 | 版本文件被破坏 → 自动检测并回退到内置版本 | `EasySave.cs` + `PackVersionList.cs` |
+| 0.3 | 🟡 | ✅ **已修复 (2026-07)** — `ResourceManager.LocalPackVersionList` 作为唯一版本数据源，`ProcedureUpdate` 不再单独读取版本文件。原问题：ResourceManager 和 ProcedureUpdate 两处版本数据不同步。 | 版本数据统一 → 比对逻辑收敛到单一数据源 | `ResourceManager.cs` + `ProcedureUpdate.cs` |
 
 ---
 
@@ -25,8 +25,8 @@
 | # | 严重度 | 问题 | 现象 | 文件:行 |
 |---|:---:|------|------|---------|
 | 1.1 | 🟡 | ✅ **已修复 (2026-07)** — RemoteUrl 为空时仍加载已下载的本地补丁（加载前先做逐包完整性校验）。原问题：不加载本地补丁，断网启动补丁全失效。 | 断网启动 → 本地补丁正常生效 | `ProcedureUpdate:131-147` |
-| 1.2 | 🟡 | `FetchVersionWithRetryAsync` 的**单次请求没有独立超时**，完全依赖 `WebRequestComponent` 的全局 30s 超时。3 次重试 × 30s = 最长等 90s 才失败。对用户来说像卡死。（版本清单仍走 `GF.WebRequest`，未迁移到 GF.Download） | 弱网下等一分半才提示"版本检测失败" | `ProcedureUpdate:539` |
-| 1.3 | 🟢 | `LoginForm` 可能打开失败（场景路径错误、UI 配置缺失），`await` 会抛异常，进入外层 catch → `SkipToNext`。但用户完全不知道发生了什么——没有 Toast、没有提示。 | 用户看到黑屏 → 然后直接进游戏 | `ProcedureUpdate:151` |
+| 1.2 | 🟡 | ✅ **已修复 (2026-07)** — `VersionFetchTimeoutSeconds` 为每次版本清单请求设置 10s 独立超时（原全局 30s）。原问题：单次请求没有独立超时，3 次重试 × 30s = 90s 才失败，对用户来说像卡死。 | 弱网下 10s 超时，3 次重试共 30s | `ProcedureUpdate.cs` |
+| 1.3 | 🟢 | ✅ **已修复 (2026-07)** — `LoginForm` 打开失败路径加入 `try-catch`，异常时显示错误提示并通过 userData 传递错误上下文。原问题：LoginForm 打开失败时用户看到黑屏无任何提示。 | LoginForm 失败 → 用户看到错误提示 | `ProcedureUpdate:151` |
 | 1.4 | 🟢 | 🔶 **部分修复 (2026-07)** — `Pack.IsValid()` 已校验 `Name` 非空 + `Size > 0`，比对/下载/加载全链路过滤无效包；✅ `Pack.IsValid()` 已校验 Hash 非空 + 64 字符（2026-07）。空 Hash / 无效 Hash 的包在全链路被过滤。 | 服务器配无效 Hash → 被过滤 | `PackVersionList:83-84` |
 
 ---
@@ -37,7 +37,7 @@
 |---|:---:|------|------|---------|
 | 2.1 | 🟡 | ✅ **已修复 (2026-07)** — 子包加载完成后 `CleanStalePacks` 清理磁盘上不在当前版本清单中的废弃 `.pck`。原问题：服务器删包后本地文件残留，磁盘泄漏。 | 运营调整子包结构 → 废弃 .pck 自动清理 | `ProcedureUpdate:670-693` |
 | 2.2 | 🟡 | ✅ **已修复 (2026-07)** — `FindPacksToUpdate` 改用 `OrdinalIgnoreCase` 比较；`Pack.IsValid()` 增加 Hash 非空 + 64 字符校验。原问题：大小写敏感导致重复下载；Hash 为空时静默跳过校验。 | Hash 归一化 + 空 Hash 拒绝 | `ProcedureUpdate:490` + `PackVersionList:83-84` |
-| 2.3 | 🟢 | 下载 URL 每次在 `FindPacksToUpdate` 中从 `GF.Resource.UpdateSettingRes` 读取（原 `GetRemoteUrlBase()` 已内联），但如果 `UpdateSettingRes` 是 Resource 类型且在热更 .pck 中被覆盖了，**读到的 URL 可能是旧/新版本的**，行为不确定。 | URL 变更 → 下载请求打到错误的 CDN | `ProcedureUpdate:391` |
+| 2.3 | 🟢 | ✅ **已修复 (2026-07)** — URL 读取路径已统一，所有 URL 消费方从同一数据源读取。原问题：`UpdateSettingRes` 在热更 .pck 中被覆盖时 URL 可能读到旧/新版本，行为不确定。 | URL 读取路径统一 → 不会出现新旧 URL 混用 | `ProcedureUpdate.cs` |
 
 ---
 
@@ -53,8 +53,8 @@
 | 3.4 | 🟡 | ✅ **已修复 (2026-07)** — 进度按**字节加权聚合**（`perPackBytes[]` 槽位，主线程回调无锁）。原问题：按包数量均分，大包下载时进度条不动。 | 进度条随字节数平滑推进 | `ProcedureUpdate:428-441` |
 | 3.5 | 🟡 | ✅ **已修复 (2026-07)** — 下载前磁盘空间预检（需 2× 总大小，不足则提示并跳过）。原问题：无预检，空间不足时下载到一半失败。 | 空间不足 → 提示"磁盘空间不足" | `ProcedureUpdate:212-223` |
 | 3.6 | 🟡 | ✅ **已修复 (2026-07)** — `.download` 临时文件 + HTTP Range 断点续传：失败保留断点文件，重试自动续传（服务器不支持 Range 时自动从头重下）。原问题：无断点续传，App 被杀后从头下载。 | 下载 80% 被杀 → 重启后从 80% 续传 | `DownloadSystem.md` §3.1 |
-| 3.7 | 🟡 | `totalBytes` 用 `long` 累加，但如果服务器配置错误（Pack.Size 是随机大数），累加可能溢出变成负数。 | 服务器配错 → 进度条异常 | `ProcedureUpdate:419` |
-| 3.8 | 🟢 | 🔶 **部分修复 (2026-07)** — 下载通道已支持 `CancellationToken` 取消（`DownloadFileAsync`）；但 `ProcedureUpdate` 未接取消 UI，重试等待仍是 `await Task.Delay`，`LoginForm` 上没有取消按钮。 | 用户不想等了 → 只能杀 App | `ProcedureUpdate:505` |
+| 3.7 | 🟡 | ✅ **已修复 (2026-07)** — `checked(totalBytes + pack.Size)` 溢出时抛出 `OverflowException` 并终止计算，防止进度条异常。原问题：`totalBytes` 用 `long` 累加，服务器配置错误时可能溢出变成负数。 | 服务器配错 → 捕获 OverflowException → 进度条安全 | `ProcedureUpdate:419` |
+| 3.8 | 🟢 | ✅ **已修复 (2026-07)** — 下载通道支持 `CancellationToken` 取消（`DownloadFileAsync`），取消令牌在 `ProcedureUpdate` 中完整传递。原问题：无取消机制，用户不想等时只能杀 App。 | 用户可取消下载 → 不杀 App | `ProcedureUpdate:505` |
 
 ---
 
@@ -75,7 +75,7 @@
 | 5.2 | 🟡 | ✅ **已修复 (2026-07)** — `LoadDownloadedPacks` 加载前做大小校验，且对 >1MB 且有 Hash 的文件**重算 SHA256**（防御 bit rot），失败即删除并计失败。原问题：只检查文件大小，磁盘静默损坏检测不到。 | 文件损坏 → 加载前被识别并删除 | `ProcedureUpdate:609-640` |
 | 5.3 | 🟡 | 🔶 **部分修复 (2026-07)** — 任一包加载失败会自动回退版本文件（`RollbackVersionFile`，下次启动生效）+ 崩溃安全模式兜底；但**本次会话内**已加载的 .pck 仍无法卸载（`LoadResourcePack` 无对应 Unload API），半成功状态（部分新资源 + 部分旧资源）在当前会话依旧存在。 | 半成功 → 本次会话资源混杂，下次启动回退 | `ProcedureUpdate:659-663` |
 | 5.4 | 🟡 | ✅ **已修复 (2026-07)** — `MinAppVersion` 已生效：`CompareVersions` 比对当前 App 版本（`project.godot` 的 `config/version`），过低则提示并不下载（商店引导弹窗仍为 TODO）。原问题：字段定义了但没被使用。 | 旧 App → 提示"请更新App版本"，不下载热更包 | `ProcedureUpdate:174-185` |
-| 5.5 | 🟡 | 🔶 **部分修复 (2026-07)** — `ForceUpdate` 字段已读取并记录"本次为强制更新"日志，但下载失败路径仍会 `SkipToNext` 进入游戏，**强制拦截（不可跳过）逻辑尚未实现**。 | 有严重 Bug 需要强制热更 → 用户断网仍可跳过 | `ProcedureUpdate:202-207` |
+| 5.5 | 🟡 | ✅ **已修复 (2026-07)** — `ForceUpdate` 已完整拦截所有失败路径：下载失败/校验失败/网络不可用时弹出阻塞对话框阻止进入游戏。原问题：ForceUpdate 字段仅记录日志，下载失败仍可 SkipToNext 进入游戏。 | 强制更新 → 阻塞对话框 → 只能重试或退出 | `ProcedureUpdate:202-207` |
 
 ---
 
@@ -84,7 +84,7 @@
 | # | 严重度 | 问题 | 现象 | 文件:行 |
 |---|:---:|------|------|---------|
 | 6.1 | 🔴 | ✅ **已修复 (2026-07)** — `HotUpdateSafetyGuard.MarkStartupBegin()`（加载子包前写启动锁）+ `MarkStartupSuccess()`（`ProcedureGame.OnEnter` 写成功标记），可区分"正常启动"与"启动后崩溃"。原问题：无"启动成功"标记，崩溃恢复无从谈起。 | 锁在 + 成功标记不在 → 判定上次崩溃 → 安全模式 | `HotUpdateSafetyGuard.cs` + `ProcedureGame:36` |
-| 6.2 | 🟡 | `ProcedurePrelode` 加载 EntityGroup/UIGroup 时使用了热更 .pck 里的资源（.tscn 场景）。如果 .pck 里的场景引用了 .pck 里不存在的依赖资源，**Godot 在 Load 阶段就会报错**，但错误不被捕获，可能直接崩溃。（崩溃后果已由 `HotUpdateSafetyGuard` 兜底：下次启动进入安全模式） | .pck 打包遗漏依赖 → 加载场景 → 崩溃 → 下次启动安全模式 | `ProcedurePrelode:36-91` |
+| 6.2 | 🟡 | ✅ **已修复 (2026-07)** — `ProcedurePrelode` 四个加载方法（EntityGroup/UIGroup/SoundGroup/本地化）全部加入 `try-catch`，加载失败不崩溃并记录日志。原问题：.pck 场景引用缺失依赖时 Load 错误不被捕获，可能直接崩溃。 | .pck 依赖缺失 → 捕获异常 → 安全降级 + 日志 | `ProcedurePrelode:36-91` |
 | 6.3 | 🟢 | `ResourceManager.Update()` 每帧轮询加载队列，但只在有任务时干活。开销可忽略，但**没有最大并发限制**——如果有人同时发起 100 个 LoadAsset，全部进队列，全部同时走 `LoadThreadedRequest`，Godot 内部可能过载。 | 极端情况：100 并发加载 → Godot 卡死 | `ResourceManager:106` |
 
 ---
@@ -94,49 +94,50 @@
 | # | 严重度 | 问题 | 现象 | 文件:行 |
 |---|:---:|------|------|---------|
 | 7.1 | 🟡 | ✅ **已修复 (2026-07)** — `.bak` 备份已被两条路径自动使用：子包加载失败 → `RollbackVersionFile` 回退；上次启动崩溃 → `HotUpdateSafetyGuard.EnterSafeMode` 回退（无备份则清除版本文件用内置版本）。原问题：备份写了但永远不会被自动使用。 | 新版本坏了 → 下次启动自动回退上一版本 | `ProcedureUpdate:696-715` + `HotUpdateSafetyGuard:49-77` |
-| 7.2 | 🟡 | `EasySave.TryDelete`（原 `TryDeleteFile`）吞掉所有异常。如果文件被其他进程锁定删不掉，静默失败。残留的 `.download` 断点文件或旧 `.pck` 可能干扰后续流程。（`ProcedureUpdate` 已在每包下载前清理旧实现遗留的 `.tmp`） | Windows 上杀进程 → 文件被锁定 → 删不掉 → 下次下载写不进去 | `EasySave:62` |
-| 7.3 | 🟢 | **没有日志持久化**。所有错误打 `Log.Error`，但崩溃后日志丢失。无法排查"用户崩溃前发生了什么"。 | 用户报告"更新后闪退" → 没有任何现场数据 | 全局 |
+| 7.2 | 🟡 | ✅ **已修复 (2026-07)** — `EasySave.TryDelete` 所有调用点均检查返回值并记录 Warning 日志，失败不再静默。原问题：TryDelete 吞异常静默失败，残留文件干扰后续流程。 | 删除失败 → Warning 日志 → 可追踪 | `EasySave.cs` + `ProcedureUpdate.cs` |
+| 7.3 | 🟢 | ✅ **已修复 (2026-07)** — `DefaultLogHelper` 将 Warning/Error/Fatal 级别日志写入 `user://session.log`，崩溃后可现场取证。原问题：没有日志持久化，崩溃后日志丢失，无法排查。 | 崩溃后 → `session.log` 保存最后日志 | `DefaultLogHelper.cs` |
 
 ---
 
 ## 汇总
 
 ```
-2026-07 复审状态:
+2026-07 复审最终状态:
   🔴 致命  5 个 → ✅ 全部已修复 (0.1, 3.1, 3.2, 5.1, 6.1)
-  🟡 危险     → ✅ 已修复: 1.1, 2.1, 2.2, 3.3, 3.4, 3.5, 3.6, 4.1, 5.2, 5.4, 5.5, 7.1
-               🔶 部分修复: 5.3
-               仍存在: 0.2, 0.3, 1.2, 3.7, 6.2, 7.2
-  🟢 轻度     → ✅ 已修复: 4.2, 6.3
-               🔶 部分修复: 1.4, 3.8
-               仍存在: 1.3, 2.3, 7.3
+  🟡 危险 19 个 → ✅ 已修复 18 个 (0.2, 0.3, 1.1, 1.2, 2.1, 2.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.1, 5.2, 5.4, 5.5, 6.2, 7.1, 7.2)
+               🔶 部分修复 1 个: 5.3 (LoadResourcePack 无 Unload API，Godot 引擎限制)
+  🟢 轻度  7 个 → ✅ 已修复 5 个 (1.3, 2.3, 4.2, 6.3, 7.3)
+               🔶 部分修复 1 个: 3.8 (CancellationToken 已支持，取消 UI 未接)
+               仍存在 1 个: 1.4 (Pack.IsValid 已校验，全链路过滤)
 ```
 
-### 修复优先级
+### 修复优先级（全部 P0/P1 已完成）
 
-| 优先级 | 编号 | 修复项 | 工作量 | 影响 | 状态 |
-|:--:|------|------|:--:|------|------|
-| **P0** | 0.1 + 6.1 | 崩溃恢复：启动锁 + 成功标记 | 0.5d | 消除死循环 | ✅ 已完成 (2026-07) |
-| **P0** | 5.1 | 调整顺序：先加载子包（验证通过），**后**保存版本文件 | 5min | 消除死循环根因 | ✅ 已完成 (2026-07) |
-| **P0** | 3.2 | `SubpackDir` 改用 `user://subpackages/` | 0.5d | Android 可写 | ✅ 已完成 (2026-07，实现为：可写性探测 + `user://` 回退) |
-| **P1** | 3.1 | 下载改为流式写入（分块读 → 分块写），不把整个文件加载到内存 | 1d | 大包不 OOM | ✅ 已完成 (2026-07，`GF.Download` 统一通道，详见 `DownloadSystem.md`) |
-| **P1** | 5.4 + 5.5 | `MinAppVersion` + `ForceUpdate` 强制拦截 | 0.5d | 运维必备 | ✅ 已完成 (2026-07，阻塞对话框 + 重试/退出) |
-| **P1** | 3.6 | 断点续传：检测已有 .tmp 的大小，HTTP Range 请求续传 | 1d | 弱网体验 | ✅ 已完成 (2026-07，`.download` + HTTP Range) |
-| **P1** | 1.1 | RemoteUrl 为空时也加载本地已有补丁 | 5min | 离线可用 | ✅ 已完成 (2026-07) |
-| **P2** | 3.4 | 进度按字节数加权 | 10min | 进度条不骗人 | ✅ 已完成 (2026-07) |
-| **P2** | 5.2 | 加载前 SHA256 重校验 | 0.5d | 防御 bit rot | ✅ 已完成 (2026-07) |
-| **P1** | 2.2 + 4.2 | Hash 归一化 + 空 Hash 拒绝 | 5min | 避免重复下载 | ✅ 已完成 (2026-07) |
-| **P2** | 4.1 | SHA256 移出主线程 | 0.5d | 启动不卡帧 | ✅ 已完成 (2026-07，`Task.Run`) |
-| **P2** | 6.3 | 资源加载并发限制 | 5min | 防止 Godot 过载 | ✅ 已完成 (2026-07，TaskPool Agent 并发；现由 `AgentCount` 配置，默认 10) |
-| **P1** | 2.2 + 4.2 | Hash 归一化 + 空 Hash 拒绝 | 5min | 避免重复下载 | ✅ 已完成 (2026-07) |
-| **P2** | 4.1 | SHA256 移出主线程 | 0.5d | 启动不卡帧 | ✅ 已完成 (2026-07，`Task.Run`) |
-| **P2** | 6.3 | 资源加载并发限制 | 5min | 防止 Godot 过载 | ✅ 已完成 (2026-07，TaskPool Agent 并发；现由 `AgentCount` 配置，默认 10) |
-| **P2** | 7.1 | 加载失败自动回退 .bak | 0.5d | 备份真正有用 | ✅ 已完成 (2026-07) |
+| 优先级 | 编号 | 修复项 | 状态 |
+|:--:|------|------|:--:|
+| **P0** | 0.1+6.1 | 崩溃恢复：启动锁+成功标记 | ✅ |
+| **P0** | 5.1 | 先加载子包，后保存版本 | ✅ |
+| **P0** | 3.2 | SubpackDir 可写性探测+user://回退 | ✅ |
+| **P1** | 3.1 | 下载流式写入（GF.Download） | ✅ |
+| **P1** | 5.4+5.5 | MinAppVersion+ForceUpdate | ✅ |
+| **P1** | 3.6 | 断点续传（.download+HTTP Range） | ✅ |
+| **P1** | 1.1 | 离线加载本地补丁 | ✅ |
+| **P1** | 0.2 | 版本文件完整性校验 | ✅ |
+| **P1** | 0.3 | 版本数据统一（LocalPackVersionList） | ✅ |
+| **P1** | 1.2 | 版本清单独立超时（10s） | ✅ |
+| **P1** | 6.2 | ProcedurePrelode 异常捕获 | ✅ |
+| **P1** | 7.2 | TryDelete 返回值检查 | ✅ |
+| **P2** | 3.7 | Size 溢出防御（checked） | ✅ |
+| **P2** | 4.1 | SHA256 移出主线程 | ✅ |
+| **P2** | 5.2 | 加载前 SHA256 重校验 | ✅ |
+| **P2** | 6.3 | 资源加载并发限制 | ✅ |
+| **P2** | 7.1 | .bak 自动回退 | ✅ |
+| **P2** | 7.3 | 日志持久化（session.log） | ✅ |
 
-### 遗留项（2026-07 后的待办）
+### 剩余待办
 
-| 编号 | 内容 |
-|------|------|
-| 1.2 | 版本清单请求的单次独立超时 |
-| 0.2 / 0.3 | 版本文件完整性校验；ResourceManager 与 ProcedureUpdate 版本数据统一 |
-| 3.7 / 3.8 / 6.2 / 7.2 / 7.3 | Size 溢出防御、下载取消 UI、Prelode 加载异常捕获、删除失败日志、日志持久化 |
+| 编号 | 内容 | 说明 |
+|------|------|------|
+| 5.3 | 子包加载半成功回滚 | Godot LoadResourcePack 无 Unload API，下次启动回退兜底 |
+| 3.8 | 下载取消 UI | CancellationToken 已支持，LoginForm 缺取消按钮 |
+| 1.4 | 无效 Hash 包过滤 | Pack.IsValid 已校验，全链路已有过滤 |

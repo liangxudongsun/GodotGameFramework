@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework;
 using GameFramework.ObjectPool;
 using GameFramework.Resource;
@@ -188,7 +181,7 @@ namespace GodotGameFramework.UI
             m_UIManager.InstanceExpireTime = m_InstanceExpireTime;
             m_UIManager.InstancePriority = m_InstancePriority;
 
-            UIFormHelperBase uiFormHelper = Helper.CreateHelper(m_UIFormHelperTypeName, m_CustomUIFormHelper);
+            UIFormHelperBase uiFormHelper = (UIFormHelperBase)Create(m_UIFormHelperTypeName);
             if (uiFormHelper == null)
             {
                 Log.Error("Can not create UI form helper.");

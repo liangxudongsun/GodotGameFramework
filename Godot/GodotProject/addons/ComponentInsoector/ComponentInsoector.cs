@@ -16,6 +16,7 @@ namespace GodotGameFramework.Editor
 		LocalizationComponentInspectorPlugin m_LocalizationComponent;
 		DownloadComponentInspectorPlugin m_DownloadComponent;
 		ScriptGenerateInspector m_ScriptGenerateInspector;
+		NodePoolInspectorPlugin m_NodePoolInspector;
 		public override void _EnterTree()
 		{
 			m_ProcedureComponent = new ProcedureComponentInspectorPlugin();
@@ -28,6 +29,7 @@ namespace GodotGameFramework.Editor
 			m_LocalizationComponent = new LocalizationComponentInspectorPlugin();
 			m_DownloadComponent = new DownloadComponentInspectorPlugin();
 			m_ScriptGenerateInspector = new ScriptGenerateInspector();
+			m_NodePoolInspector = new NodePoolInspectorPlugin();
 			AddInspectorPlugin(m_BaseComponent);
 			AddInspectorPlugin(m_ProcedureComponent);
 			AddInspectorPlugin(m_SceneComponent);
@@ -38,6 +40,7 @@ namespace GodotGameFramework.Editor
 			AddInspectorPlugin(m_LocalizationComponent);
 			AddInspectorPlugin(m_DownloadComponent);
 			AddInspectorPlugin(m_ScriptGenerateInspector);
+			AddInspectorPlugin(m_NodePoolInspector);
 		}
 
 		public override void _ExitTree()
@@ -52,6 +55,7 @@ namespace GodotGameFramework.Editor
 			RemoveInspectorPlugin(m_LocalizationComponent);
 			RemoveInspectorPlugin(m_DownloadComponent);
 			RemoveInspectorPlugin(m_ScriptGenerateInspector);
+			RemoveInspectorPlugin(m_NodePoolInspector);
 			m_ProcedureComponent.Free();
 			m_BaseComponent.Free();
 			m_SceneComponent.Free();
@@ -62,6 +66,7 @@ namespace GodotGameFramework.Editor
 			m_LocalizationComponent.Free();
 			m_DownloadComponent.Free();
 			m_ScriptGenerateInspector.Free();
+			m_NodePoolInspector.Free();
 		}
 	}
 }

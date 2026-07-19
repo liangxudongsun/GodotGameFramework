@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework;
 using GameFramework.Fsm;
 using System;
@@ -14,28 +7,6 @@ namespace GodotGameFramework
 {
     /// <summary>
     /// 有限状态机组件。
-    ///
-    /// 直接透传核心层的 IFsmManager，提供有限状态机的创建、销毁和查询功能。
-    /// FSM（Finite State Machine）是框架中流程管理（Procedure）的基础。
-    ///
-    /// 使用方式：
-    /// <code>
-    /// // 获取组件
-    /// FsmComponent fsmComp = GF.Fsm;
-    ///
-    /// // 创建状态机
-    /// IFsm&lt;MyOwner&gt; fsm = fsmComp.CreateFsm(owner,
-    ///     new StateIdle(),
-    ///     new StateRunning()
-    /// );
-    ///
-    /// // 检查状态机是否存在
-    /// bool exists = fsmComp.HasFsm&lt;MyOwner&gt;();
-    ///
-    /// // 销毁状态机
-    /// fsmComp.DestroyFsm&lt;MyOwner&gt;();
-    /// </code>
-    ///
     /// </summary>
     public sealed partial class FsmComponent : GameFrameworkComponent
     {

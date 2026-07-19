@@ -11,10 +11,8 @@ using System;
 
 namespace GodotGameFramework.Sound
 {
-    public abstract partial class SoundAgentHelperBase : GodotComponent, ISoundAgentHelper
+    public abstract partial class SoundAgentHelperBase : AudioStreamPlayer, ISoundAgentHelper
     {
-        public abstract bool IsPlaying { get; }
-
         public abstract float Length { get; }
 
         public abstract float Time { get; set; }
@@ -28,14 +26,11 @@ namespace GodotGameFramework.Sound
         public abstract float SpatialBlend { get; set; }
         public abstract float MaxDistance { get; set; }
         public abstract float DopplerLevel { get; set; }
-
-        public abstract AudioStreamPlayer AudioStreamPlayer { get; set; }
+        bool ISoundAgentHelper.IsPlaying => this.Playing;
         public abstract event EventHandler<ResetSoundAgentEventArgs> ResetSoundAgent;
 
         public abstract void Pause(float fadeOutSeconds);
-
-        public abstract void Play(float fadeInSeconds);
-
+        new public abstract void Play(float fadeInSeconds);
         public abstract void Reset();
 
         public abstract void Resume(float fadeInSeconds);
@@ -43,7 +38,5 @@ namespace GodotGameFramework.Sound
         public abstract bool SetSoundAsset(object soundAsset);
 
         public abstract void Stop(float fadeOutSeconds);
-        public abstract void SetAudioStreamPlayer(AudioStreamPlayer audioStreamPlayer);
-
     }
 }

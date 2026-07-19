@@ -7,6 +7,11 @@ namespace GodotGameFrameworkCore.SingletonSystem
     {
         private event Action<double> UpdateEvent;
         private event Action<double> FixedUpdateEvent;
+        public override void OnInit()
+        {
+            base.OnInit();
+            SingletonSystem.SetUpdateDriver(this);
+        }
 
         public override void OnUpdate(double delta)
         {

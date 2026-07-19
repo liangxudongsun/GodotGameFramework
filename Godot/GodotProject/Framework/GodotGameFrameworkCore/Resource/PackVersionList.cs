@@ -47,6 +47,52 @@ namespace GameFramework.Resource
         /// <summary>检查版本清单是否包含任何有效的包数据。</summary>
         public bool IsValid() =>
             !string.IsNullOrEmpty(Version) && Packs != null && Packs.Length > 0;
+
+        /// <summary>
+        /// 深度校验版本清单完整性。比 IsValid() 更严格：
+        /// 检查版本号格式、无重复包名、每个 Pack 数据合法。
+        /// </summary>
+        /// <param name="error">校验失败时的具体原因。</param>
+        /// <returns>true 表示清单数据完整可信。</returns>
+        public bool Validate(out string error)
+        {
+            if (string.IsNullOrEmpty(Version))
+            {
+                error = "Version 为空";
+                return false;
+            }
+
+            if (Packs == null)
+            {
+                error = "Packs 为 null";
+                return false;
+            }
+
+            if (Packs.Length == 0)
+            {
+                error = "Packs 为空数组";
+                return false;
+            }
+
+            var names = new System.Collections.Generic.HashSet<string>();
+            for (int i = 0; i < Packs.Length; i++)
+            {
+                var pack = Packs[i];
+                if (!pack.IsValid())
+                {
+                    error = $"Packs[{i}] 无效: Name={pack.Name ?? "null"}, Size={pack.Size}, Hash={pack.Hash ?? "null"}";
+                    return false;
+                }
+                if (!names.Add(pack.Name))
+                {
+                    error = $"Packs 中存在重复包名: {pack.Name}";
+                    return false;
+                }
+            }
+
+            error = null;
+            return true;
+        }
     }
 
     /// <summary>

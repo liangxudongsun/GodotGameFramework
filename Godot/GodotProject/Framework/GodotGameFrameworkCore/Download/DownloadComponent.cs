@@ -183,7 +183,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri);
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, tag);
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, int priority)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, priority);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, priority);
         }
 
         /// <summary>
@@ -219,7 +219,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, object userData)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, userData);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, userData);
         }
 
         /// <summary>
@@ -232,7 +232,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag, int priority)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag, priority);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, tag, priority);
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag, object userData)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag, userData);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, tag, userData);
         }
 
         /// <summary>
@@ -258,7 +258,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, int priority, object userData)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, priority, userData);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, priority, userData);
         }
 
         /// <summary>
@@ -272,7 +272,7 @@ namespace GodotGameFramework.Download
         /// <returns>新增下载任务的序列编号。</returns>
         public int AddDownload(string downloadPath, string downloadUri, string tag, int priority, object userData)
         {
-            return m_DownloadManager.AddDownload(EasySave.GlobalizeDownloadPath(downloadPath), downloadUri, tag, priority, userData);
+            return m_DownloadManager.AddDownload(NodeUtility.GlobalizeDownloadPath(downloadPath), downloadUri, tag, priority, userData);
         }
 
         /// <summary>
@@ -411,7 +411,7 @@ namespace GodotGameFramework.Download
                 if (!string.IsNullOrEmpty(op.ExpectedHash))
                 {
                     // 大文件哈希放线程池，避免卡主线程
-                    string actualHash = await Task.Run(() => EasySave.ComputeSHA256(downloadPath));
+                    string actualHash = await Task.Run(() => NodeUtility.ComputeSHA256(downloadPath));
                     if (!string.Equals(actualHash, op.ExpectedHash, StringComparison.OrdinalIgnoreCase))
                     {
                         Log.Warning("[DownloadComponent] SHA256 校验失败: '{0}'", downloadPath);

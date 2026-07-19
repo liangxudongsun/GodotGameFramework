@@ -21,6 +21,12 @@ namespace GodotGameFrameworkCore.SingletonSystem
                         node = new T();
                         node.Name = instName;
                         m_Instance = (T)node;
+
+                        // 延迟加入场景树根节点，避免在 _EnterTree 回调链中 AddChild 报错
+                        // "Parent node is busy setting up children"
+                        SceneTree tree = Engine.GetMainLoop() as SceneTree;
+                        tree?.Root?.CallDeferred(Node.MethodName.AddChild, node);
+
                         m_Instance.Active();
                     }
                     SingletonSystem.Retain(node, m_Instance);

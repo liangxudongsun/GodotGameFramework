@@ -18,7 +18,7 @@
 
 - ✅ **FPS 悬浮图标**：可拖拽；文本按控制台日志级别变色（有 Warning → 黄、有 Error/Fatal → 红）；点击展开全窗口
 - ✅ **全功能调试窗口**：标题栏拖拽、`0.5x ~ 4x` 缩放、多级页签（根页签末尾附 `Close` 收起）
-- ✅ **Console**：捕获框架全部日志（跨线程安全）、五级过滤（Debug/Info/Warning/Error/Fatal 各带计数）、Lock Scroll、行选中查看堆栈、复制到剪贴板、行数上限裁剪
+- ✅ **Console**：双源日志捕获（框架日志 + Godot 引擎原生输出）、跨线程安全、五级过滤（Debug/Info/Warning/Error/Fatal 各带计数）、Lock Scroll、行选中查看堆栈、复制到剪贴板、行数上限裁剪
 - ✅ **Information** 页签组：System / Environment / Screen / Graphics / Input / Path / Scene / Time 八个信息窗口
 - ✅ **Profiler** 页签组：内存与对象概况（Godot 监控项 + .NET GC）、对象池逐池详情（含释放按钮）、引用池计数表（含严格检查开关）
 - ✅ **Other** 页签组：Settings（缩放/布局重置/控制台行数）、Operations（GC / 释放对象池 / `GameEntry.Shutdown` 三态）
@@ -44,9 +44,19 @@ DebuggerComponent.OnUpdate（每帧）
 DebuggerManager.Update（模块轮询，ActiveWindow 时）
     └─ 窗口树选中链 OnUpdate（如控制台泵日志队列）
 
-日志流：Log.Xxx → GameFrameworkLog → DefaultLogHelper
-    ├─ GD.Print / PushWarning / PushError（原有输出）
-    └─ LogMessageReceived 事件（Error/Fatal 附堆栈）→ ConsoleWindow 跨线程暂存队列 → 主线程泵入 LogNode（池化）
+日志流（双源）：
+
+    框架日志源：
+    Log.Xxx → GameFrameworkLog → DefaultLogHelper
+        ├─ GD.Print / PushWarning / PushError（原有输出）
+        └─ LogMessageReceived 事件（Error/Fatal 附堆栈）→ ConsoleWindow 跨线程暂存队列
+
+    Godot 引擎原生源：
+    GD.PrintErr / C++ 引擎错误 → Godot 文件日志（user://logs/godot.log）
+        └─ ConsoleWindow.PollGodotLog() 每帧尾部轮询新行 → ParseGodotLogLine() 解析级别
+             → LogNode.Create() → 同一暂存队列
+
+    合并 → 主线程泵入 LogNode 正式队列（池化）→ 统一展示
 ```
 
 ### 文件清单
@@ -105,8 +115,39 @@ Other/Operations
 
 ### 3.3 控制台与日志捕获
 
+控制台窗口采用**双源捕获**架构，将框架日志和 Godot 引擎原生输出合并为统一的日志流展示。
+
+#### 源一：框架日志（`LogMessageReceived` 事件）
+
 - `DefaultLogHelper.Log` 在写 GD 输出前触发静态事件 `LogMessageReceived(level, message, stackTrace)`；堆栈仅 Error/Fatal 级别捕获（`StackTrace(2, true)`）
-- 日志可能来自任意线程：事件处理只把 `LogNode.Create(...)`（`ReferencePool` 池化，线程安全）压入 `lock` 保护的暂存队列，主线程在 `OnUpdate/OnDraw` 泵入正式队列
+- 日志可能来自任意线程：事件处理只把 `LogNode.Create(...)`（`ReferencePool` 池化，线程安全）压入 `lock` 保护的暂存队列 `m_PendingLogNodes`
+
+#### 源二：Godot 引擎原生输出（文件尾部轮询）
+
+- `Initialize()` 时调用 `EnableGodotFileLogging()`：
+  - 创建 `user://logs/godot.log` 文件，记录当前文件大小为起始位置（跳过已有历史日志）
+  - 设置 `debug/file_logging/enable_file_logging = true` 启用 Godot 内建文件日志
+  - 设置 `debug/file_logging/log_path = "user://logs/godot.log"`
+  - 设置 `debug/file_logging/flush_stdout_on_print = true` 确保立即刷盘，尾部轮询能及时读到新行
+- 每帧 `OnUpdate()` 调用 `PollGodotLog()`：
+  - 以 `FileShare.ReadWrite` 打开日志文件（兼容 Godot 引擎同时写入）
+  - 从上次记录位置 `m_GodotLogPos` 读取新增行
+  - 调用 `ParseGodotLogLine()` 解析每行的日志级别
+- `ParseGodotLogLine()` 识别以下行前缀模式：
+  | 前缀模式 | 映射级别 |
+  |----------|----------|
+  | `ERROR:` | `GameFrameworkLogLevel.Error` |
+  | `WARNING:` | `GameFrameworkLogLevel.Warning` |
+  | `E ` 或 `E\t`（脚本错误） | `GameFrameworkLogLevel.Error` |
+  | `<C++ 错误>` / `<C# 错误>` | `GameFrameworkLogLevel.Error` |
+  | 普通输出（非引擎横幅/模块加载等噪声） | `GameFrameworkLogLevel.Debug` |
+  - `ExtractMeaningfulMessage()` 从 Godot 错误行中截取 `at:` 之前的摘要描述，并加 `[Godot]` 前缀
+  - 引擎引导噪声（`Godot Engine` 版本横幅、模块加载、D3D12/Vulkan/OpenGL 初始化行）被跳过
+
+#### 合并与展示
+
+- 两个源写入**同一个** `lock` 保护的暂存队列 `m_PendingLogNodes`
+- 主线程在 `OnUpdate` 和 `OnDraw` 中调用 `Pump()` 将暂存队列转入正式队列 `m_LogNodes`
 - 超出 `MaxLine`（默认 100，Settings 窗口可调 50–1000）从队首裁剪并 `ReferencePool.Release`
 - 行点击 → 选中态高亮 + 底部详情（完整消息 + 堆栈 + `Copy` 复制到系统剪贴板）；选中期间暂停自动滚动
 - 过滤开关与 Lock Scroll 经 `GF.Setting` 持久化（键 `Debugger.Console.*`）
@@ -190,7 +231,7 @@ GF.Debugger.RegisterDebuggerWindow("Game/Cheat", new CheatWindow());
 检查 `_ActiveWindowType`（导出模板包中 `OnlyOpenInEditor` 不会激活）与场景中 Debugger 节点是否存在；`AlwaysClose` 下可用 `GF.Debugger.ActiveWindow = true` 手动打开。
 
 **Q：控制台为什么收不到 `GD.Print` 的输出？**
-控制台只捕获**框架日志**（`Log.Debug/Info/Warning/Error/Fatal` → `DefaultLogHelper.LogMessageReceived`）。直接调 `GD.Print` 的内容不经过框架日志管线。
+控制台**双源捕获**：框架日志（`Log.Debug/Info/Warning/Error/Fatal` → `DefaultLogHelper.LogMessageReceived`）直接入队；Godot 引擎原生输出（`GD.Print`、`GD.PrintErr`、C++ 引擎错误/警告）通过 Godot 文件日志的尾部轮询（`PollGodotLog()`）捕获。两层覆盖下，绝大多数引擎输出都能在控制台中看到。注意：`GD.Print` 输出经文件日志捕获后以 `Debug` 级别呈现（需开启 Debug 过滤才能看到）。
 
 **Q：Reference Pool 页签里的 "Enable Strict Check" 是什么？**
 即 `ReferencePool.EnableStrictCheck` 的运行时开关（与场景 `ReferencePool` 节点的策略同一个底层开关），用于抓双重 `Release` —— 参见 `ObjectPoolSystem.md` 与 `EventSystem.md` 的池化回收约定。
@@ -208,5 +249,5 @@ BBCode 内容必须经 `DebuggerDraw.Esc` 转义；自定义窗口用 `Label/Dra
 - 窗口尺寸固定 `760×520`（仅整体缩放，无拖拽改尺寸/最大化）
 - 内容区为纯文本渲染：表格列宽由 RichTextLabel 自动分配，无法逐列精确控宽
 - 未适配触摸多点操作（拖拽/点击按鼠标事件处理，触屏单点可用）
-- Godot 引擎侧错误（非框架 `Log` 输出）不进入控制台
+- Godot 引擎侧错误/警告/脚本错误已通过文件尾部轮询捕获（`PollGodotLog`），但解析依赖行前缀模式（`ERROR:` / `WARNING:` / `E ` 等），非标准格式的引擎输出可能被漏掉或误判为 Debug 级别
 - `UpdatableWhilePlaying` 等运行期逐资源内存归属分析无 Unity Profiler 等价 API，Profiler/Summary 以 `Performance` 监控项 + .NET GC 计数为准

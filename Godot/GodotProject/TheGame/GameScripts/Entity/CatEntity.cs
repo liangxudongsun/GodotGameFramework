@@ -38,17 +38,22 @@ public partial class CatEntity : ActorEntity
 		if (isNewInstance)
 		{
 			m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
-
-			m_AimShape = new CircleShape2D();
-			m_AimShape.Radius = m_Config.CheckRange;
-			m_Check = PhysicsCheck2D.Create(
-			this,
-			m_AimShape,
-			collisionMask: 1,     // 检测默认碰撞层
-			maxResults: 16,
-			collideWithBodies: true,
-			collideWithAreas: false);
 		}
+
+		// 无论新实例还是池复用，都要重建 PhysicsCheck2D（旧的已在上次 _ExitTree 中释放）
+		if (m_Check != null)
+		{
+			ReferencePool.Release(m_Check);
+		}
+		m_AimShape = new CircleShape2D();
+		m_AimShape.Radius = m_Config.CheckRange;
+		m_Check = PhysicsCheck2D.Create(
+		this,
+		m_AimShape,
+		collisionMask: 1,
+		maxResults: 16,
+		collideWithBodies: true,
+		collideWithAreas: false);
 		Team = EntityTeam.Player;
 	}
 

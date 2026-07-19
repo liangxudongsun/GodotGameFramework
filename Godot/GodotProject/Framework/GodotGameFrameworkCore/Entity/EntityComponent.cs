@@ -59,7 +59,7 @@ namespace GodotGameFramework.Entity
 
             m_EntityManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
             m_EntityManager.SetObjectPoolManager(GameFrameworkEntry.GetModule<IObjectPoolManager>());
-            m_EntityHelper = Helper.CreateHelper(m_EntityHelperTypeName, m_EntityHelper);
+            m_EntityHelper = (EntityHelperBase)Create(m_EntityHelperTypeName);
             if (m_EntityHelper == null) { Log.Fatal("Can not create entity helper."); return; }
             m_EntityHelper.Name = m_EntityHelperTypeName;
             m_EntityManager.SetEntityHelper(m_EntityHelper);

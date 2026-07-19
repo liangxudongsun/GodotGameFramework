@@ -3,7 +3,7 @@ using Godot;
 using System;
 namespace GodotGameFramework.Download;
 
-public abstract partial class DownloadAgentHelperBase : Node, IDownloadAgentHelper
+public abstract partial class DownloadAgentHelperBase : GodotComponent, IDownloadAgentHelper
 {
     public abstract event EventHandler<DownloadAgentHelperUpdateBytesEventArgs> DownloadAgentHelperUpdateBytes;
     public abstract event EventHandler<DownloadAgentHelperUpdateLengthEventArgs> DownloadAgentHelperUpdateLength;
