@@ -71,6 +71,7 @@ public class ProcedurePrelode : ProcedureBase
             Log.Fatal("[ProcedurePrelode] 加载声音组失败（.pck 可能缺失依赖资源）: {0}", ex);
         }
 
+        GF.Archive.LoadAsync();
         if (IsLoadAll())
         {
             ChangeState<ProcedureGame>(procedureOwner);

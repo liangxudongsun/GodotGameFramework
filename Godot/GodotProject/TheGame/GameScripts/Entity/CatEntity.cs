@@ -74,7 +74,12 @@ public partial class CatEntity : ActorEntity
 
 
 		KeybordMove();
-		m_LastAtkTime += elapseSeconds;
+
+	}
+	public override void _PhysicsProcess(double delta)
+	{
+		base._PhysicsProcess(delta);
+		m_LastAtkTime += (float)delta;
 		if (m_LastAtkTime >= m_Config.AtkSpeed)
 		{
 			m_LastAtkTime = 0;
@@ -83,6 +88,7 @@ public partial class CatEntity : ActorEntity
 			SpawnGanTan();
 		}
 	}
+
 
 
 	/// <summary>

@@ -9,7 +9,7 @@ namespace GodotGameFramework.Debugger;
 public sealed partial class DebuggerComponent
 {
     /// <summary>
-    /// 控制台调试器窗口（对齐 UGF ConsoleWindow）。
+    /// 控制台调试器窗口
     /// 捕获框架日志，支持级别过滤、锁定滚动、行选中查看堆栈与复制。
     /// </summary>
     public sealed class ConsoleWindow : IDebuggerWindow
@@ -121,7 +121,6 @@ public sealed partial class DebuggerComponent
 
             m_Component ??= GameEntry.GetComponent<DebuggerComponent>();
             LoadSettings();
-            DefaultLogHelper.LogMessageReceived += OnLogMessageReceived;
 
             // 启用 Godot 文件日志以捕获引擎原生输出（GD.PrintErr / C++ 错误等）
             EnableGodotFileLogging();
@@ -129,7 +128,6 @@ public sealed partial class DebuggerComponent
 
         public void Shutdown()
         {
-            DefaultLogHelper.LogMessageReceived -= OnLogMessageReceived;
             Clear();
         }
 
@@ -239,15 +237,6 @@ public sealed partial class DebuggerComponent
             }
         }
 
-        private void OnLogMessageReceived(GameFrameworkLogLevel level, string message, string stackTrack)
-        {
-            // 日志可能来自任意线程，先入暂存队列，主线程再消费
-            LogNode logNode = LogNode.Create(level, message, stackTrack);
-            lock (m_PendingLock)
-            {
-                m_PendingLogNodes.Enqueue(logNode);
-            }
-        }
 
         private void Pump()
         {
@@ -503,12 +492,12 @@ public sealed partial class DebuggerComponent
                     trimmed.StartsWith("OpenGL") ||
                     trimmed.StartsWith("Vulkan") ||
                     trimmed.StartsWith("D3D12"))
-                    return (GameFrameworkLogLevel.Debug, null); // 跳过
+                    return (GameFrameworkLogLevel.Info, null); // 跳过
 
-                return (GameFrameworkLogLevel.Debug, trimmed);
+                return (GameFrameworkLogLevel.Info, trimmed);
             }
 
-            return (GameFrameworkLogLevel.Debug, null); // 跳过不关心的行
+            return (GameFrameworkLogLevel.Info, null); // 跳过不关心的行
         }
 
         /// <summary>

@@ -9,6 +9,7 @@ using GodotGameFramework.Setting;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using GodotGameFramework.Web;
+using GodotGameFrameworkCore.Archive;
 
 namespace GodotGameFramework
 {
@@ -31,6 +32,7 @@ namespace GodotGameFramework
         private static WebRequestComponent m_WebRequest;
         private static DownloadComponent m_Download;
         private static DebuggerComponent m_Debugger;
+        private static ArchiveSystem<ArchiveCatalogue, ArchiveData> m_Archive;
         public static EventComponent Event
         {
             get
@@ -218,6 +220,17 @@ namespace GodotGameFramework
                 return m_Debugger;
             }
         }
+        public static ArchiveSystem<ArchiveCatalogue, ArchiveData> Archive
+        {
+            get
+            {
+                if (m_Archive == null)
+                {
+                    m_Archive = new();
+                }
+                return m_Archive;
+            }
+        }
 
         /// <summary>
         /// 清除所有组件缓存。场景重载（Restart）后调用，避免指向旧场景已销毁的节点。
@@ -241,6 +254,7 @@ namespace GodotGameFramework
             m_WebRequest = null;
             m_Download = null;
             m_Debugger = null;
+            m_Archive = null;
         }
     }
 }

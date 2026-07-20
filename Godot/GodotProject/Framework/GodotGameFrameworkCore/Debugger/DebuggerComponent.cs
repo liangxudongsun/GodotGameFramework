@@ -34,12 +34,6 @@ public enum DebuggerActiveWindowType : byte
 
 /// <summary>
 /// 调试器组件。
-///
-/// 提供与 UGF 显示一致的运行时调试器：
-/// - FPS 悬浮图标（可拖拽，按控制台日志级别变色，点击展开全窗口）
-/// - 全功能调试窗口（可拖拽 / 缩放，Console、Information、Profiler、Other 多级页签）
-///
-/// 各调试器窗口以 IMGUI 风格每帧向 <see cref="DebuggerDraw"/> 上下文写入 BBCode，
 /// 由本组件渲染到 RichTextLabel，并把链接点击路由回窗口回调。
 /// </summary>
 public sealed partial class DebuggerComponent : GameFrameworkComponent
@@ -281,7 +275,7 @@ public sealed partial class DebuggerComponent : GameFrameworkComponent
         }
     }
 
-    #region 注册 API（对齐 UGF DebuggerComponent）
+    #region 注册 API
 
     /// <summary>
     /// 注册调试器窗口。

@@ -29,12 +29,6 @@ namespace GodotGameFramework
     /// </summary>
     public class DefaultLogHelper : GameFrameworkLog.ILogHelper
     {
-        /// <summary>
-        /// 日志记录事件（level, message, stackTrace）。
-        /// 供调试器控制台等订阅；stackTrace 仅在 Error / Fatal 级别时捕获。
-        /// </summary>
-        public static event Action<GameFrameworkLogLevel, string, string> LogMessageReceived;
-
         /// <summary>会话日志路径（持久化，崩溃后可读取）。</summary>
         private static readonly string SessionLogPath =
             System.IO.Path.Combine(ProjectSettings.GlobalizePath("user://"), "session.log");
@@ -82,16 +76,6 @@ namespace GodotGameFramework
         /// <param name="message">日志内容</param>
         public void Log(GameFrameworkLogLevel level, object message)
         {
-            string msgStr = message?.ToString() ?? "<null>";
-
-            if (LogMessageReceived != null)
-            {
-                string stackTrack = level >= GameFrameworkLogLevel.Error
-                    ? new System.Diagnostics.StackTrace(2, true).ToString()
-                    : string.Empty;
-                LogMessageReceived.Invoke(level, msgStr, stackTrack);
-            }
-
             switch (level)
             {
                 case GameFrameworkLogLevel.Debug:
@@ -106,25 +90,21 @@ namespace GodotGameFramework
                 case GameFrameworkLogLevel.Warning:
                     GD.Print($"[WARNING] {message}");
                     GD.PushWarning(message.ToString());
-                    PersistToSessionLog($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [WARNING] {msgStr}");
                     break;
 
                 case GameFrameworkLogLevel.Error:
                     GD.Print($"[ERROR] {message}");
                     GD.PushError(message.ToString());
-                    PersistToSessionLog($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ERROR] {msgStr}");
                     break;
 
                 case GameFrameworkLogLevel.Fatal:
                     GD.Print($"[FATAL] {message}");
                     GD.PushError($"[FATAL] {message}");
-                    PersistToSessionLog($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FATAL] {msgStr}");
                     break;
 
                 default:
                     GD.Print($"[UNKNOWN LOG LEVEL] {message}");
                     GD.PushError($"[UNKNOWN LOG LEVEL] {message}");
-                    PersistToSessionLog($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [UNKNOWN] {msgStr}");
                     break;
             }
         }

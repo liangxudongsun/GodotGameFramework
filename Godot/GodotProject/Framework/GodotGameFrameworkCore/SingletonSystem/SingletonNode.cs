@@ -19,8 +19,8 @@ namespace GodotGameFrameworkCore.SingletonSystem
                     if (node == null)
                     {
                         node = new T();
-                        node.Name = instName;
                         m_Instance = (T)node;
+                        m_Instance.Name = instName;
 
                         // 延迟加入场景树根节点，避免在 _EnterTree 回调链中 AddChild 报错
                         // "Parent node is busy setting up children"

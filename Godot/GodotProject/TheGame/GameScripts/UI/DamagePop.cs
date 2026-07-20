@@ -1,10 +1,13 @@
 using Godot;
+using GodotGameFramework.DoTween;
 using GodotGameFramework.NodePool;
 using System;
 using System.Threading.Tasks;
 
+
 public partial class DamagePop : Label, IPoolable
 {
+	private Tween m_Tween;
 	public void OnGet()
 	{
 
@@ -12,16 +15,26 @@ public partial class DamagePop : Label, IPoolable
 
 	public void OnRelease()
 	{
-
+		if (m_Tween != null)
+		{
+			m_Tween.Kill();
+			m_Tween = null;
+		}
 	}
 
-	public async void SetText(Vector2 pos, int damage)
+	public void SetText(Vector2 pos, int damage)
 	{
 		GlobalPosition = pos;
 		Text = damage.ToString();
-		AddToGroup("DamagePop");
-		await Task.Delay(500);
-		NodePool.Release(this);
+		if (m_Tween == null)
+		{
+			m_Tween = this.DoScale(0.5f, 0.5f);
+			m_Tween.Finished += () =>
+			{
+				Scale = new Vector2(1, 1);
+				NodePool.Release(this);
+			};
+		}
 	}
 
 }
