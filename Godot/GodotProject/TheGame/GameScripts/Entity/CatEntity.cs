@@ -25,11 +25,11 @@ public struct ActorData
 public partial class CatEntity : ActorEntity
 {
 	[Export]
-	private Sprite2D m_CatSprite;
+	private AnimatedSprite2D m_Anim;
 	private bool m_IsMoving;
-	private Tween m_ScaleChange;
 	float m_LastAtkTime;
 	private CircleShape2D m_AimShape;
+	private Node2D m_ShotPos;
 
 
 	public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
@@ -38,9 +38,8 @@ public partial class CatEntity : ActorEntity
 		if (isNewInstance)
 		{
 			m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
+			m_ShotPos = GetNode<Node2D>("ShotPos");
 		}
-
-		// 无论新实例还是池复用，都要重建 PhysicsCheck2D（旧的已在上次 _ExitTree 中释放）
 		if (m_Check != null)
 		{
 			ReferencePool.Release(m_Check);
@@ -60,33 +59,26 @@ public partial class CatEntity : ActorEntity
 	public override void OnShow(object userData)
 	{
 		base.OnShow(userData);
-		m_ScaleChange = CreateTween();
-		m_ScaleChange.SetLoops();
-		m_ScaleChange.TweenProperty(this, Node2D.PropertyName.Scale.ToString(), new Vector2(1.1f, 1.1f), 0.5f)
-		.SetEase(Tween.EaseType.InOut);
-		m_ScaleChange.TweenProperty(this, Node2D.PropertyName.Scale.ToString(), Vector2.One, 0.5f)
-			.SetEase(Tween.EaseType.InOut);
+		m_Anim.Play("Idle");
 	}
-
 	public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
 	{
 		base.OnUpdate(elapseSeconds, realElapseSeconds);
-
-
 		KeybordMove();
+		m_LastAtkTime += realElapseSeconds;
 
-	}
-	public override void _PhysicsProcess(double delta)
-	{
-		base._PhysicsProcess(delta);
-		m_LastAtkTime += (float)delta;
-		if (m_LastAtkTime >= m_Config.AtkSpeed)
+		if (m_LastAtkTime >= 1 / m_Config.AtkSpeed)
 		{
 			m_LastAtkTime = 0;
 			if (!m_Check.IsColliding())
 				return;
 			SpawnGanTan();
 		}
+	}
+	public override void _PhysicsProcess(double delta)
+	{
+		base._PhysicsProcess(delta);
+
 	}
 
 
@@ -118,7 +110,7 @@ public partial class CatEntity : ActorEntity
 
 		if (entity != null)
 		{
-			entity.Position = Position;
+			entity.GlobalPosition = m_ShotPos.GlobalPosition;
 			GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Shoot);
 		}
 	}
@@ -129,8 +121,16 @@ public partial class CatEntity : ActorEntity
 		float ver = Input.GetAxis("ui_up", "ui_down");
 		Velocity = new Vector2(hor, ver) * m_Config.Speed;
 		MoveAndSlide();
-		m_IsMoving = hor != 0 || ver != 0;
-		if (hor != 0) m_CatSprite.FlipH = hor < 0;
+
+		bool isMoving = hor != 0 || ver != 0;
+		if (hor != 0) m_Anim.FlipH = hor < 0;
+
+		// 仅在移动状态发生变化时切换动画
+		if (isMoving != m_IsMoving)
+		{
+			m_IsMoving = isMoving;
+			m_Anim.Play(m_IsMoving ? "Walk" : "Idle");
+		}
 	}
 
 

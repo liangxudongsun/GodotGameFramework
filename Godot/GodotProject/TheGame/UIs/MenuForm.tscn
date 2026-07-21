@@ -2,7 +2,6 @@
 
 [ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_5smej"]
 [ext_resource type="Script" uid="uid://m1s35hw3uogn" path="res://TheGame/GameScripts/GameProto/UIGe/MenuForm.cs" id="1_62wwx"]
-[ext_resource type="Texture2D" uid="uid://8ys10qfv7yvm" path="res://TheGame/Sprites/paper.png" id="4_5smej"]
 
 [node name="MenuForm" type="Control" unique_id=321045376 node_paths=PackedStringArray("m_Title", "m_Subtitle", "m_Rules", "m_StartButton", "m_SettingButton")]
 layout_mode = 3
@@ -19,17 +18,14 @@ m_Rules = NodePath("VBox/m_Rules")
 m_StartButton = NodePath("VBox/m_StartButton")
 m_SettingButton = NodePath("m_SettingButton")
 
-[node name="BG" type="NinePatchRect" parent="." unique_id=1385127101]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1914378606]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("4_5smej")
-region_rect = Rect2(38.772766, 43.663315, 630.2156, 318.68042)
-axis_stretch_horizontal = 2
-axis_stretch_vertical = 2
+color = Color(0, 0, 0, 0.56078434)
 
 [node name="VBox" type="VBoxContainer" parent="." unique_id=949498410]
 layout_mode = 1
@@ -98,10 +94,10 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -191.0
+offset_left = -121.0
 offset_top = 21.0
 offset_right = -34.0
-offset_bottom = 92.0
+offset_bottom = 65.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 25
 text = "设置"

@@ -1,25 +1,62 @@
 [gd_scene format=3 uid="uid://chld578oe1cwt"]
 
-[ext_resource type="Texture2D" uid="uid://bq3u1gc1t7hag" path="res://TheGame/Sprites/map1.png" id="1_r3kxp"]
+[ext_resource type="Texture2D" uid="uid://ce4v8hoo0674y" path="res://TheGame/Sprites/Stage/back_grass_darkest.png" id="1_r3kxp"]
 
 [sub_resource type="SegmentShape2D" id="SegmentShape2D_r3kxp"]
-a = Vector2(-3440, -2584)
-b = Vector2(-3392, 2616)
+a = Vector2(-1092, -1410)
+b = Vector2(-1090, 1602)
 
 [sub_resource type="SegmentShape2D" id="SegmentShape2D_ul7p2"]
-a = Vector2(5824, -2720)
-b = Vector2(-3552, -2624)
+a = Vector2(1521, -1509)
+b = Vector2(-1497, -1506)
 
 [sub_resource type="SegmentShape2D" id="SegmentShape2D_j10l7"]
-a = Vector2(-3712, 2464)
-b = Vector2(5768, 2432)
+a = Vector2(-1483, 1505)
+b = Vector2(1519, 1494)
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_wvhbo"]
+a = Vector2(1530, 1502)
+b = Vector2(1520, -1491)
 
 [sub_resource type="Curve" id="Curve_r3kxp"]
 
-[node name="Node2D" type="Node2D" unique_id=1705836904]
+[node name="Node2D" type="Node2D" unique_id=511784158]
+metadata/_edit_vertical_guides_ = [-638.0]
+metadata/_edit_horizontal_guides_ = [-26569.0]
 
 [node name="Map1" type="Sprite2D" parent="." unique_id=607431773]
-scale = Vector2(7, 7)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map2" type="Sprite2D" parent="." unique_id=563957912]
+position = Vector2(1018, 0)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map3" type="Sprite2D" parent="." unique_id=1750014138]
+position = Vector2(1018, 1010)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map4" type="Sprite2D" parent="." unique_id=498285061]
+position = Vector2(9, 1010)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map5" type="Sprite2D" parent="." unique_id=1007302216]
+position = Vector2(-1012, 1010)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map6" type="Sprite2D" parent="." unique_id=786417111]
+position = Vector2(-1012, 4)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map7" type="Sprite2D" parent="." unique_id=1809516896]
+position = Vector2(-1012, -1010)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map8" type="Sprite2D" parent="." unique_id=23176579]
+position = Vector2(11, -1017)
+texture = ExtResource("1_r3kxp")
+
+[node name="Map9" type="Sprite2D" parent="." unique_id=202987637]
+position = Vector2(1020, -1017)
 texture = ExtResource("1_r3kxp")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=980049824]
@@ -34,11 +71,14 @@ shape = SubResource("SegmentShape2D_ul7p2")
 [node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D" unique_id=776971214]
 shape = SubResource("SegmentShape2D_j10l7")
 
+[node name="CollisionShape2D4" type="CollisionShape2D" parent="StaticBody2D" unique_id=824156055]
+shape = SubResource("SegmentShape2D_wvhbo")
+
 [node name="SpawnPoint" type="Node2D" parent="." unique_id=752150889]
-position = Vector2(944, 504)
+position = Vector2(-1, -7)
 
 [node name="Line2D" type="Line2D" parent="." unique_id=569973098]
-position = Vector2(104, 304)
-points = PackedVector2Array(-3632, -1872, 1880, -2168, 4120, -2008, 4304, -984, 3136, -280, -104, -480, -2312, -704, -4088, -424, -4480, 424, -3552, 1056, -792, 1208, 2024, 800, 4336, 576)
+position = Vector2(-1216, -1200)
+points = PackedVector2Array(-32, -23, 1253.9868, -7.154175, 2565, 9, 2522.1575, 1255.1018, 2565, 2411, -56, 2394, -81, 1157)
 width_curve = SubResource("Curve_r3kxp")
 default_color = Color(1, 0.6180314, 1, 1)

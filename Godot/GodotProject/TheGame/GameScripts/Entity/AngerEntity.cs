@@ -16,12 +16,11 @@ public partial class AngerEntity : ActorEntity
     [Export]
     private HSlider m_HSlider;
     [Export]
-    private float m_MoveSpeed = 80f;
-    [Export]
     private int m_AttackDamage = 15;
 
     private float m_AttackTimer = 0f;
     private ActorEntity m_TargetPlayer = null;
+    private AnimatedSprite2D m_Anim;
 
     public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
     {
@@ -29,6 +28,7 @@ public partial class AngerEntity : ActorEntity
         if (isNewInstance)
         {
             m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
+            m_Anim = this.GetChild<AnimatedSprite2D>();
         }
         Team = EntityTeam.Enemy;
         m_HSlider.MaxValue = m_ActorData.MaxHp;
@@ -41,6 +41,7 @@ public partial class AngerEntity : ActorEntity
 
         m_AttackTimer = 0f;
         m_HSlider.Value = m_ActorData.Hp;
+        m_Anim.Play("Idle");
     }
     public void SetTarget(ActorEntity target)
     {
@@ -74,7 +75,7 @@ public partial class AngerEntity : ActorEntity
         {
             // 在攻击范围外 — 向玩家靠近
             Vector2 dir = (m_TargetPlayer.GlobalPosition - GlobalPosition).Normalized();
-            Velocity = dir * m_MoveSpeed;
+            Velocity = dir * m_Config.Speed;
             FaceDirection(dir);
             MoveAndSlide();
         }
@@ -84,10 +85,9 @@ public partial class AngerEntity : ActorEntity
     {
         if (Mathf.Abs(dir.X) > 0.01f)
         {
-            var sprite = GetNode<Sprite2D>("Sprite2D");
-            if (sprite != null)
+            if (m_Anim != null)
             {
-                sprite.FlipH = dir.X < 0;
+                m_Anim.FlipH = dir.X < 0;
             }
         }
     }

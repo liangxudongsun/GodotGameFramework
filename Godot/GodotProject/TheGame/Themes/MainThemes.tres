@@ -2,6 +2,8 @@
 
 [ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/Fonts/simhei.ttf" id="1_qqd2a"]
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_fo24u"]
+
 [sub_resource type="DPITexture" id="DPITexture_qqd2a"]
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><circle cx=\"8\" cy=\"8\" r=\"7\" fill=\"#fefefe\" fill-opacity=\".75\"/></svg>
 "
@@ -49,6 +51,8 @@ corner_detail = 6
 [resource]
 default_font = ExtResource("1_qqd2a")
 default_font_size = 16
+Button/fonts/font = ExtResource("1_qqd2a")
+Button/styles/normal = SubResource("StyleBoxTexture_fo24u")
 HSlider/constants/center_grabber = 0
 HSlider/constants/grabber_offset = 0
 HSlider/constants/tick_offset = 0

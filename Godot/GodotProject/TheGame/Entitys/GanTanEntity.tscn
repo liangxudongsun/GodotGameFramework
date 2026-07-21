@@ -1,21 +1,20 @@
 [gd_scene format=3 uid="uid://yx6imnabf3y3"]
 
 [ext_resource type="Script" uid="uid://bg522jnadl2rn" path="res://TheGame/GameScripts/GameProto/EntityGe/GanTanEntity.cs" id="1_kqipa"]
-[ext_resource type="Texture2D" uid="uid://b71iq6o3f47nx" path="res://TheGame/Sprites/fuhao.png" id="2_ps62e"]
+[ext_resource type="Texture2D" uid="uid://covrq6gcjqp3" path="res://TheGame/Sprites/VFX/vfx_wand_projectile.png" id="2_kqipa"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_44wmx"]
-size = Vector2(20, 75)
+[sub_resource type="CircleShape2D" id="CircleShape2D_2wv0k"]
+radius = 5.92
 
 [node name="GanTanEntity" type="Area2D" unique_id=66283502]
 script = ExtResource("1_kqipa")
 
 [node name="Fuhao" type="Sprite2D" parent="." unique_id=1144455434]
-rotation = 1.5707964
-texture = ExtResource("2_ps62e")
-region_enabled = true
-region_rect = Rect2(1141, 41, 19, 77)
+scale = Vector2(0.08, 0.08)
+texture = ExtResource("2_kqipa")
+region_rect = Rect2(5, 4, 244, 232)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=790920554]
 position = Vector2(0, -0.5)
 rotation = 1.5707964
-shape = SubResource("RectangleShape2D_44wmx")
+shape = SubResource("CircleShape2D_2wv0k")
