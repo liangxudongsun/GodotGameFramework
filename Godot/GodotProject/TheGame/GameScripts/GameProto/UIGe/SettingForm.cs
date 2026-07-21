@@ -9,7 +9,7 @@ namespace GameLogic
 	/// <summary>
 	/// 界面,生成时会被覆盖，请勿手动修改
 	/// </summary>
-	public partial class MenuForm : Control, IUIForm
+	public partial class SettingForm : Control, IUIForm
 	{
 		#region 框架属性
 		/// <summary>
@@ -82,15 +82,7 @@ namespace GameLogic
 		#endregion
 
 		[Export]
-		private Label m_Title;
-		[Export]
-		private Label m_Subtitle;
-		[Export]
-		private Label m_Rules;
-		[Export]
-		private Button m_StartButton;
-		[Export]
-		private Button m_SettingButton;
+		private Button m_CloseButton;
 
 	}
 }

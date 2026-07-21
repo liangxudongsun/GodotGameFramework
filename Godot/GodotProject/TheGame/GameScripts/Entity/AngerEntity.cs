@@ -126,11 +126,12 @@ public partial class AngerEntity : ActorEntity
         m_HSlider.Value = m_ActorData.Hp;
     }
 
-    protected override void Die()
+    protected override async void Die()
     {
         base.Die();
-        GF.Setting.SetInt("Score", GF.Setting.GetInt("Score", 0) + 100);
-        GF.Setting.Save();
+        GF.Archive.CurrentData.Score += 100;
+        GF.Event.Fire(this, ScoreChangedEventArgs.Create(100));
+        await GF.Archive.OverWriteAsync();
     }
 
 

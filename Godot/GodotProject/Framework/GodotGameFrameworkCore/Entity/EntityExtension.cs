@@ -62,9 +62,6 @@ namespace GodotGameFramework.Entity
             }
 
             int ser = Interlocked.Increment(ref s_NextEntityId);
-            // 注意：userData 必须原样透传。纯层 EntityManager 会把它直接交给 entity.OnShow(userData)，
-            // 本端口没有 UGF Runtime.Entity 那样的解包层，包装成 ShowEntityInfo 会导致
-            // 实体 OnShow 里的 `userData is Xxx` 判断静默失败（且池化包装对象无人归还）。
             IEntity entity = await entityComponent.ShowEntityAsync(ser, cfg.AssetPath, cfg.EntityGroupName, userData);
             return entity as T;
         }

@@ -44,11 +44,11 @@ namespace GodotGameFramework.UI
                     return null;
                 }
 
-
-                uiForm.Name = "UIForm_" + uiForm.GetType().Name;
-
-                // 将 UIForm 添加到 UI 组容器下
-                groupContainer.AddChild(uiForm);
+                if (uiForm.GetParent() != groupContainer)
+                {
+                    uiForm.Name = "UIForm_" + uiForm.GetType().Name;
+                    groupContainer.AddChild(uiForm);
+                }
 
                 return uIForm;
             }

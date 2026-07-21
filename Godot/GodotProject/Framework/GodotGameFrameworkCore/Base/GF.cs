@@ -32,7 +32,7 @@ namespace GodotGameFramework
         private static WebRequestComponent m_WebRequest;
         private static DownloadComponent m_Download;
         private static DebuggerComponent m_Debugger;
-        private static ArchiveSystem<ArchiveCatalogue, ArchiveData> m_Archive;
+        private static ArchiveSystem<GameCatalogue, GameData> m_Archive;
         public static EventComponent Event
         {
             get
@@ -220,7 +220,7 @@ namespace GodotGameFramework
                 return m_Debugger;
             }
         }
-        public static ArchiveSystem<ArchiveCatalogue, ArchiveData> Archive
+        public static ArchiveSystem<GameCatalogue, GameData> Archive
         {
             get
             {
