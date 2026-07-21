@@ -15,7 +15,7 @@ public interface IActor
 	void Heal(int heal);
 	void Hurt(int entityId, int damage);
 }
-
+[System.Serializable]
 public struct ActorData
 {
 	public int Hp; //生命值
