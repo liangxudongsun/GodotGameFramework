@@ -140,6 +140,8 @@ NodePoolInspectorPlugin (EditorInspectorPlugin)
 
 ## 6. 使用示例
 
+### DamagePop（伤害数字）
+
 ```csharp
 // 获取 DamagePop 并挂到 actor 下
 var d = NodePool.Get<DamagePop>(
@@ -149,6 +151,34 @@ d?.SetText(actor.GlobalPosition, 20);
 
 // 归还（通常在 DamagePop 动画结束后调用）
 NodePool.Release(d);  // 或 NodePool.Release(nodeObject)
+```
+
+### DropItem（拾取物）
+
+```csharp
+// 从池中获取 DropItem，移动到目标位置后自动归还
+var drop = NodePool.Get<DropItem>(scenePath, parent: GetTree().CurrentScene);
+drop?.MoveTo(targetPosition, onFinish: () => {
+    // 拾取物到达后业务回调（如加积分）
+});
+
+// DropItem 内部：GTween DOMove 动画结束后自动 NodePool.Release(this)
+public void MoveTo(Vector2 position, Action finish)
+{
+    m_Tween = this.DOMove(position, 0.5f);       // GTween 扩展方法
+    m_Tween.Finished += () =>
+    {
+        finish?.Invoke();
+        NodePool.Release(this);                   // 动画结束自动回池
+    };
+}
+
+// OnRelease 中 Kill Tween、清空引用，防止下次复用残留状态
+public void OnRelease()
+{
+    m_Tween?.Kill();
+    m_Tween = null;
+}
 ```
 
 ---

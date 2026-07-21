@@ -49,7 +49,7 @@ GodotProject/
       Lib/LubanLib/                 ← Luban runtime (ByteBuf, BeanBase, StringUtil)
       SingletonSystem/              ← SingletonNode<T> pattern
       Templet/                      ← Script generation templates (UIForm/Entity, Ge/Logic)
-      Utility/                      ← PhysicsCheck2D, NodeExtension, DefaultLogHelper
+      Utility/                      ← PhysicsCheck2D, NodeExtension, DefaultLogHelper, GTween, LayerMask
   TheGame/                          ← Active game project
     GameScripts/
       Entity/                       ← ActorEntity, CatEntity, AngerEntity, GanTanEntity (Logic halves)
@@ -183,6 +183,38 @@ Godot Component (e.g., EntityComponent)
 
 `Utility/PhysicsCheck2D : IReference` — wraps `PhysicsDirectSpaceState2D.IntersectShape` with object pooling (`ReferencePool`). Auto-excludes the target node, supports sorted results by distance, and debug drawing. Usage: `PhysicsCheck2D.Create(targetNode, shape, ...)`.
 
+### GTween (DOTween-style Extensions)
+
+`Utility/GTween.cs` — `Node2D` / `Control` extension methods for `Godot.Tween`, mimicking DOTween API:
+
+| Method | Target | Description |
+|--------|--------|-------------|
+| `DoScale(Vector2/float, duration)` | `Node2D`, `Control` | Scale to target with Expo.Out easing |
+| `DOPunchScale(Vector2/float, duration)` | `Node2D`, `Control` | Punch scale: grow → shrink back with Cubic.InOut |
+| `DOLocalMove(Vector2, duration)` | `Node2D` | Move local position with Expo.Out |
+| `DOMove(Vector2, duration)` | `Node2D` | Move global position with Expo.Out |
+| `DORotate(float, duration)` | `Node2D` | Rotate with Back.Out easing |
+| `DOColor(Color, duration)` | `Node2D` | Modulate color with InOut easing |
+| `Delay(float, callback?)` | `Node` | Delayed callback via `TweenInterval` + `TweenCallback` |
+
+Namespace: `GodotGameFramework.DoTween`. Use via `this.DoScale(...)` / `this.DOMove(...)` extension calls.
+
+### LayerMask
+
+`Utility/LayerMask : SingletonNode<LayerMask>` — static utility mapping Godot physics layer names ↔ indices ↔ bit masks. Reads `layer_names/2d_physics/layer_{i}` and `layer_names/3d_physics/layer_{i}` from `ProjectSettings`.
+
+| Method | Description |
+|--------|-------------|
+| `NameToLayer2D/3D(string)` | Layer name → index (0 if not found) |
+| `LayerToName2D/3D(int)` | Index → layer name (empty if not found) |
+| `LayerToMask2D/3D(int)` | Index → uint bit mask (0 if out of range [1,32]) |
+| `LayerToMask2D/3D(string)` | Name → uint bit mask (0 if not found) |
+| `LayerToMask2D/3D(params string[])` | Combine multiple names into single mask |
+
+```csharp
+uint mask = LayerMask.LayerToMask2D("Player", "Enemy", "Wall");
+```
+
 ### Event System
 
 Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClickedEventArgs`, `ScoreChangedEventArgs`, `TestPhaseChangedEventArgs`. Fire via `GF.Event.Fire(this, e)`.
@@ -192,6 +224,19 @@ Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClic
 ### ReferencePool / Object Pool
 
 `IReference` interface + `ReferencePool.Acquire<T>()`/`Release()` for lightweight object reuse. `ObjectPoolComponent` wraps `ObjectPoolManager` for pooled Godot objects. `ReferencePoolComponent` (scene node `ReferencePool`) applies a strict-check policy (`ReferenceStrictCheckType`, default `AlwaysEnable`) — double-`Release` throws instead of silently corrupting the pool.
+
+### NodePool
+
+`TheGame/GameScripts/ObjectPool/NodePool.cs` — `SingletonNode<NodePool>`, a general-purpose node instance pool built on `GF.ObjectPool`. Objects implement `IPoolable` (`OnGet`/`OnRelease`), config-driven via `NodePoolConfigRes.tres`, lazy-instantiate on first `Get`, and auto-recycle orphan nodes. Details: `docs/ObjectPoolSystem.md` §7, `docs/NodePoolSystem.md`.
+
+```csharp
+// 获取 → 使用 → 自动归还
+var d = NodePool.Get<DamagePop>(ScenePath, parent);
+d?.SetText(pos, 20);
+// DamagePop 内部延迟后调用 NodePool.Release(this)
+```
+
+Pooled types: `DamagePop` (floating damage numbers), `DropItem` (collectibles with GTween DOMove animation).
 
 ### Debugger
 

@@ -1,7 +1,7 @@
 # 框架核心 (Framework Core)
 
 > 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Base/`、`Framework/GodotGameFrameworkCore/Base/`、`SingletonSystem/`、`Variable/`、`Utility/`、`addons/TopMenu/`
-> 本文档描述 GGF 的核心骨架：模块/组件双层驱动、启动序列、生命周期、GF 门面、引用池、日志系统与通用工具。
+> 本文档描述 GGF 的核心骨架：模块/组件双层驱动、启动序列、生命周期、GF 门面、引用池、日志系统与通用工具（PhysicsCheck2D、GTween、LayerMask、NodeExtension）。
 
 ---
 
@@ -102,7 +102,7 @@ BaseComponent.OnPreDestroy()（节点销毁通知）
 | `GodotGameFrameworkCore/SingletonSystem/*` | `SingletonNode<T>`、`SingletonSystem` 注册表、`UpdateDriver` |
 | `GodotGameFrameworkCore/Variable/VarInt32 / VarSingle / VarString / VarBoolean` | 池化变量的隐式转换封装 |
 | `GodotGameFrameworkCore/Utility/DefaultLogHelper.cs` | `ILogHelper` 实现：桥接 `GD.Print / PushWarning / PushError` |
-| `GodotGameFrameworkCore/Utility/DefaultTextHelper.cs`、`Helper.cs`、`NodeExtension.cs`、`NodeUtility.cs`、`PhysicsCheck2D.cs` | 文本格式化、辅助器反射创建、Node 扩展、2D 物理检测 |
+| `GodotGameFrameworkCore/Utility/DefaultTextHelper.cs`、`Helper.cs`、`NodeExtension.cs`、`NodeUtility.cs`、`PhysicsCheck2D.cs`、`GTween.cs`、`LayerMask.cs` | 文本格式化、辅助器反射创建、Node 扩展、2D 物理检测、DOTween 风格 Tween 扩展、物理层名↔索引↔位掩码映射 |
 | `addons/TopMenu/GameFrameworkTopMenu.cs` | 编辑器菜单：日志级别切换（改写 csproj）、打开 res://、user:// 目录 |
 
 ---
@@ -257,6 +257,63 @@ ReferencePool.Release(check);         // 用完归还
 ### 3.10 NodeExtension
 
 `Node` 扩展方法：`GetOrAddChild<T>(name)`、`GetChild<T>()`、`GetChildren<T>()`、`GetChildByName<T>(name)`、`FindChildOfType<T>()`（递归）、`FindChildrenOfType<T>()`（递归）、`RemoveAllChildren()`、`GetParent<T>()`。
+
+### 3.11 GTween（DOTween 风格 Tween 扩展）
+
+`Utility/GTween.cs` — `Node2D` / `Control` 的扩展方法，封装 `Godot.Tween`，提供类似 DOTween 的链式动画 API。命名空间 `GodotGameFramework.DoTween`。
+
+| 方法 | 适用类型 | 说明 |
+|------|----------|------|
+| `DoScale(target, duration)` | `Node2D`, `Control` | 缩放到目标值，默认 Expo.Out 缓动 |
+| `DOPunchScale(punch, duration)` | `Node2D`, `Control` | 脉冲缩放：放大再缩回原值，Cubic.InOut |
+| `DOLocalMove(target, duration)` | `Node2D` | 局部坐标移动，Expo.Out |
+| `DOMove(target, duration)` | `Node2D` | 全局坐标移动，Expo.Out |
+| `DORotate(angle, duration)` | `Node2D` | 旋转到目标角度，Back.Out |
+| `DOColor(color, duration)` | `Node2D` | 调制颜色过渡，InOut |
+| `Delay(delay, callback?)` | `Node` | 延迟执行回调（`TweenInterval` + `TweenCallback`） |
+
+```csharp
+// 使用示例
+this.DoScale(1.2f, 0.5f);           // 缩放到 1.2 倍
+this.DOPunchScale(1.5f, 0.3f);      // 脉冲放大
+this.DOMove(new Vector2(100, 200));  // 移动到全局坐标
+```
+
+所有方法返回 `Tween` 对象，支持 `.Finished` 事件和 `.Kill()` 中断。`DropItem` 实体中使用 `DOMove` + `Finished` 回调实现拾取动画。
+
+### 3.12 LayerMask（物理层工具）
+
+`Utility/LayerMask : SingletonNode<LayerMask>` — 静态工具类，将 Godot 项目设置中的 `layer_names/2d_physics/layer_{i}` 和 `layer_names/3d_physics/layer_{i}` 映射为运行时可用字典，提供层名 ↔ 索引 ↔ 位掩码双向转换。
+
+```csharp
+// 层名 → 索引
+int layer = LayerMask.NameToLayer2D("Player");     // e.g. 1
+string name = LayerMask.LayerToName2D(1);           // "Player"
+
+// 索引 → 位掩码（1-32 范围检查，越界返回 0）
+uint mask = LayerMask.LayerToMask2D(1);             // 0b0001
+
+// 层名 → 位掩码
+uint mask = LayerMask.LayerToMask2D("Player");      // 0b0001
+
+// 组合掩码（最常用）
+uint mask = LayerMask.LayerToMask2D("Player", "Enemy", "Wall");
+// 或 3D 版本
+uint mask3D = LayerMask.LayerToMask3D("Player", "Ground");
+```
+
+| 方法 | 参数 | 说明 |
+|------|------|------|
+| `NameToLayer2D(string)` / `NameToLayer3D(string)` | 层名 | 返回索引（1-32），找不到返回 0 |
+| `LayerToName2D(int)` / `LayerToName3D(int)` | 索引 | 返回层名，找不到返回 `""` |
+| `LayerToMask2D(int/string)` / `LayerToMask3D(int/string)` | 索引或层名 | 返回 `uint` 位掩码，越界/找不到返回 0 |
+| `LayerToMask2D(params string[])` / `LayerToMask3D(params string[])` | 多个层名 | 组合位掩码 |
+
+设计要点：
+- 继承 `SingletonNode<LayerMask>` 保证全局唯一实例，`OnLoad` 中初始化
+- `m__Initialized` 标志防止重复遍历
+- 2D 和 3D 层在同一循环中并行读取（`layer_names/2d_physics` 和 `layer_names/3d_physics`）
+- 索引范围 [1, 32]，越界安全返回 0（避免 C# 移位计数截断导致静默错误）
 
 ---
 

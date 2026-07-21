@@ -7,7 +7,7 @@
 
 | 文档 | 内容 |
 |------|------|
-| [FrameworkCore.md](FrameworkCore.md) | 双层架构、启动/关闭序列、GodotComponent 生命周期、GF 门面、ReferencePool、日志系统、SingletonNode、PhysicsCheck2D |
+| [FrameworkCore.md](FrameworkCore.md) | 双层架构、启动/关闭序列、GodotComponent 生命周期、GF 门面、ReferencePool、日志系统、SingletonNode、PhysicsCheck2D、GTween、LayerMask、NodeExtension |
 | [EventSystem.md](EventSystem.md) | EventPool 机制、EventId 约定、Fire vs FireNow、订阅退订、池化回收禁忌 |
 | [FsmSystem.md](FsmSystem.md) | IFsm/FsmState 泛型设计、状态生命周期、SetData/GetData、销毁与池化 |
 | [ProcedureSystem.md](ProcedureSystem.md) | 流程 = 顶层 FSM、启动链路、TheGame 流程链 Launch→Update→Prelode→Game、新增流程教程 |

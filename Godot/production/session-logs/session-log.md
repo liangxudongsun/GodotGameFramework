@@ -3085,3 +3085,18 @@ Godot/GodotProject/project.godot
 Godot/production/session-logs/session-log.md
 ---
 
+## Session End: 20260722_013022
+### Commits
+e783b9f 加入层级工具类，示例更新
+5f25a2c 资源整理
+ee6a87e Merge branch 'main' of https://github.com/immortal5205/GodotGameFramework
+a6ac3ab 1
+515d7cd 修复ui显示bug
+### Uncommitted Changes
+Godot/CLAUDE.md
+Godot/docs/FrameworkCore.md
+Godot/docs/NodePoolSystem.md
+Godot/docs/ObjectPoolSystem.md
+Godot/docs/README.md
+---
+

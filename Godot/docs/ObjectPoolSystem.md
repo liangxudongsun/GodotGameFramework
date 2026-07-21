@@ -480,6 +480,7 @@ AddInspectorPlugin(m_NodePoolInspector);
 |--------|------|------|------|
 | `GanTanEntity.Logic.cs` | `NodePool.Get<DamagePop>(UIs_DamagePop, actor)` | `NodePool.Release(this)`（在 `DamagePop.SetText` 内延迟 500ms 后自动归还） | 弹跳伤害数字：子弹击中时从池取 Label 实例、设置位置和文字、500ms 后自动回池 |
 | `DamagePop.cs` | 被 `Get` 创建/复用 | `NodePool.Release(this)` | 实现 `IPoolable`，`OnGet` 和 `OnRelease` 暂为空（预留扩展点）。当前 `SetText` 中用 `await Task.Delay(500)` 定时归还（注意：此处 `Task.Delay` 在 Godot 中非标准用法，应改用 `ToSignal(GetTree().CreateTimer(...), Timer.SignalName.Timeout)` 以保证帧同步） |
+| `DropItem.cs` | `NodePool.Get<DropItem>(...)`（未在共享代码中直接调用，由外部系统触发） | `NodePool.Release(this)`（在 `MoveTo` 的 GTween `Finished` 回调中归还） | `Node2D : IPoolable`，拾取物实体：`MoveTo(targetPos, callback)` 使用 `GTween.DOMove` 播放飞向目标的动画，动画结束后自动归还池。`OnRelease` 中 `Kill` Tween 防止干扰 |
 
 ### 7.8 文件清单
 
@@ -493,6 +494,7 @@ AddInspectorPlugin(m_NodePoolInspector);
 | `TheGame/Resources/NodePoolConfigRes.tres` | 配置资源实例，由编辑器扫描生成 |
 | `addons/ComponentInsoector/NodePoolInspectorPlugin.cs` | 编辑器 Inspector 插件：扫描 IPoolable 场景、UI 按钮（Scan/Clear） |
 | `TheGame/GameScripts/UI/DamagePop.cs` | 使用示例：`Label : IPoolable`，500ms 后自动回池 |
+| `TheGame/GameScripts/Entity/DropItem.cs` | 使用示例：`Node2D : IPoolable`，GTween DOMove 动画结束后自动回池 |
 | `TheGame/GameScripts/Entity/GanTanEntity.Logic.cs` | 使用示例：子弹命中时 `NodePool.Get<DamagePop>(...)` |
 | `TheGame/GameScripts/Procedure/ProcedureLaunch.cs` | 启动入口：`NodePool.Instance.Active()` 初始化池 |
 
