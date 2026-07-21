@@ -75,10 +75,9 @@ shape = SubResource("SegmentShape2D_j10l7")
 shape = SubResource("SegmentShape2D_wvhbo")
 
 [node name="SpawnPoint" type="Node2D" parent="." unique_id=752150889]
-position = Vector2(-1, -7)
+position = Vector2(708, -764)
 
 [node name="Line2D" type="Line2D" parent="." unique_id=569973098]
-position = Vector2(-1216, -1200)
-points = PackedVector2Array(-32, -23, 1253.9868, -7.154175, 2565, 9, 2522.1575, 1255.1018, 2565, 2411, -56, 2394, -81, 1157)
+points = PackedVector2Array(-1272, -1325, -589.3137, -1334.8229, -21, -1343, 712.1116, -1332.2977, 1212, -1325, 1185.529, -570.28516, 1167, -42, 1159.727, 617.60046, 1154, 1137, 514.49316, 1162.7091, -40, 1185, -804.1227, 1185.0001, -1288, 1185, -1316.5798, 508.7948, -1341, -69, -1347, -695)
 width_curve = SubResource("Curve_r3kxp")
 default_color = Color(1, 0.6180314, 1, 1)

@@ -1,3 +1,4 @@
+using GameConfig;
 using GameConfig.Constant;
 using GameConfig.Entity;
 using GameFramework.Event;
@@ -11,10 +12,11 @@ using System;
 namespace GameLogic
 {
 	/// <summary>
-	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖，可安全编写业务逻辑）。
+	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
 	public partial class MainForm : IStringKey
 	{
+		private CatEntity m_Cat;
 		/// <summary>
 		/// 初始化界面。
 		/// </summary>
@@ -34,21 +36,45 @@ namespace GameLogic
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetValue());
 			#endregion
-
 			Node2D scene = (Node2D)await GF.Scene.LoadSceneAsync(ResourcesCollectionConstant.Scenes_Map);
 			Node2D spawnPoint = scene.GetNode<Node2D>("SpawnPoint");
 			Line2D line2D = scene.GetNode<Line2D>("Line2D");
-			CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
-			cat.Position = spawnPoint.Position;
+			m_Cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
+			m_Cat.GlobalPosition = spawnPoint.GlobalPosition;
 			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Fight);
+
+			if (isNewInstance)
+			{
+				#region 界面逻辑
+				m_SettingButton.Pressed += OnSettingButtonPressed;
+				m_Cat.HpChanged += OnCatHpChanged;
+				#endregion
+			}
+
+
 
 			for (int i = 0; i < line2D.Points.Length; i++)
 			{
 				var point = line2D.Points[i];
 				var enemy = await GF.Entity.ShowEntityAsync<AngerEntity>(EntityId.Anger);
-				enemy.Position = point;
-				enemy.SetTarget(cat);
+				enemy.GlobalPosition = point;
+				enemy.SetTarget(m_Cat);
 			}
+
+			m_HpHSlider.MaxValue = m_Cat.ActorData.MaxHp;
+			m_HpHSlider.Value = m_Cat.ActorData.Hp;
+			m_HpLabel.Text = $"{GF.Localization.GetString("MainForm.Hp")}{m_Cat.ActorData.Hp.ToString()}/{m_Cat.ActorData.MaxHp.ToString()}";
+		}
+
+		private void OnCatHpChanged(float obj)
+		{
+			m_HpHSlider.Value = obj;
+			m_HpLabel.Text = $"{GF.Localization.GetString("MainForm.Hp")}{m_Cat.ActorData.Hp.ToString()}/{m_Cat.ActorData.MaxHp.ToString()}";
+		}
+
+		private void OnSettingButtonPressed()
+		{
+			GF.UI.OpenUIForm(UIFormId.SettingForm);
 		}
 
 		/// <summary>

@@ -22,16 +22,21 @@ public partial class DamagePop : Label, IPoolable
 		}
 	}
 
-	public void SetText(Vector2 pos, int damage)
+	public void SetText(Vector2 pos, int damage, Color color = default)
 	{
 		GlobalPosition = pos;
 		Text = damage.ToString();
+		if (color != default)
+		{
+			Modulate = color;
+		}
 		if (m_Tween == null)
 		{
 			m_Tween = this.DoScale(0.5f, 0.5f);
 			m_Tween.Finished += () =>
 			{
 				Scale = new Vector2(1, 1);
+				Modulate = Colors.White;
 				NodePool.Release(this);
 			};
 		}

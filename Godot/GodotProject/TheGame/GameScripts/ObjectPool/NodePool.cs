@@ -245,8 +245,12 @@ public partial class NodePool : SingletonNode<NodePool>
         if (target is CanvasItem ci) ci.Visible = false;
         else if (target is Node3D n3d) n3d.Visible = false;
 
-        // 归还到容器下
-        container.AddChild(target);
+        if (target.GetParent() != container)
+        {
+            // 归还到容器下
+            container.AddChild(target);
+        }
+
 
         // Unspawn
         var pool = GF.ObjectPool.GetObjectPool<NodeObject>(container.PoolName);
@@ -290,11 +294,13 @@ public partial class NodePool : SingletonNode<NodePool>
 
         if (node is CanvasItem ci) ci.Visible = false;
         else if (node is Node3D n3d) n3d.Visible = false;
-        if (node.GetParent() != null && node.GetParent() != container)
+        if (node.GetParent() != null)
         {
             node.GetParent().RemoveChild(node);
         }
-        container.AddChild(node);
+
+        if (node.GetParent() != container)
+            container.AddChild(node);
         s_NodeToContainer.Remove(id);
     }
 

@@ -1,3 +1,4 @@
+using GameConfig.Constant;
 using GameConfig.Entity;
 using GameFramework;
 using GameFramework.Entity;
@@ -5,6 +6,7 @@ using GameLogic;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.NodePool;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,8 +33,8 @@ public partial class AngerEntity : ActorEntity
             m_Anim = this.GetChild<AnimatedSprite2D>();
         }
         Team = EntityTeam.Enemy;
-        m_HSlider.MaxValue = m_ActorData.MaxHp;
-        m_HSlider.Value = m_ActorData.Hp;
+        m_HSlider.MaxValue = ActorData.MaxHp;
+        m_HSlider.Value = ActorData.Hp;
     }
 
     public override void OnShow(object userData)
@@ -40,7 +42,7 @@ public partial class AngerEntity : ActorEntity
         base.OnShow(userData);
 
         m_AttackTimer = 0f;
-        m_HSlider.Value = m_ActorData.Hp;
+        m_HSlider.Value = ActorData.Hp;
         m_Anim.Play("Idle");
     }
     public void SetTarget(ActorEntity target)
@@ -123,12 +125,18 @@ public partial class AngerEntity : ActorEntity
     public override void Hurt(int entityId, int damage)
     {
         base.Hurt(entityId, damage);
-        m_HSlider.Value = m_ActorData.Hp;
+        m_HSlider.Value = ActorData.Hp;
     }
 
     protected override async void Die()
     {
         base.Die();
+        var dr = NodePool.Get<DropItem>(ResourcesCollectionConstant.Entitys_Drop);
+        dr.GlobalPosition = GlobalPosition;
+        dr.MoveTo(m_TargetPlayer.GlobalPosition, () =>
+        {
+            m_TargetPlayer.Heal(10);
+        });
         GF.Archive.CurrentData.Score += 100;
         GF.Event.Fire(this, ScoreChangedEventArgs.Create(100));
         await GF.Archive.OverWriteAsync();

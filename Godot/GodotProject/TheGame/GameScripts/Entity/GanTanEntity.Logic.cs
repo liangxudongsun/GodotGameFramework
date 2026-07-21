@@ -173,9 +173,6 @@ namespace GameLogic
 					m_IsDead = true;
 					actor.Hurt(Id, 20);
 					GF.Entity.HideEntity(this);
-					GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Dead);
-					var d = NodePool.Get<DamagePop>(ResourcesCollectionConstant.UIs_DamagePop, actor);
-					d?.SetText(actor.GlobalPosition, 20);
 				}
 				else if (!m_IsPlayerBullet && actor.Team == EntityTeam.Player)
 				{
@@ -183,7 +180,6 @@ namespace GameLogic
 					m_IsDead = true;
 					actor.Hurt(Id, 15);
 					GF.Entity.HideEntity(this);
-					GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Dead);
 				}
 			}
 		}

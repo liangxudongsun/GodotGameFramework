@@ -114,12 +114,20 @@ namespace GodotGameFramework.DoTween
         /// <summary>
         /// 移动到目标位置
         /// </summary>
-        public static Tween DOMove(this Node2D node, Vector2 targetPos, float duration = 1f)
+        public static Tween DOLocalMove(this Node2D node, Vector2 targetPos, float duration = 1f)
         {
             var tween = node.CreateTween();
             tween.SetTrans(Tween.TransitionType.Expo);
             tween.SetEase(Tween.EaseType.Out);
             tween.TweenProperty(node, PropPosition, targetPos, duration);
+            return tween;
+        }
+        public static Tween DOMove(this Node2D node, Vector2 targetPos, float duration = 1f)
+        {
+            var tween = node.CreateTween();
+            tween.SetTrans(Tween.TransitionType.Expo);
+            tween.SetEase(Tween.EaseType.Out);
+            tween.TweenProperty(node, $"{Node2D.PropertyName.GlobalPosition}", targetPos, duration);
             return tween;
         }
 

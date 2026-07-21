@@ -83,12 +83,14 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_44wmx"]
 size = Vector2(38, 71)
 
-[node name="CatEntity" type="CharacterBody2D" unique_id=851013628 node_paths=PackedStringArray("m_Anim")]
-collision_layer = 3
-collision_mask = 3
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6yxfh"]
+size = Vector2(34, 70)
+
+[node name="CatEntity" type="CharacterBody2D" unique_id=851013628 node_paths=PackedStringArray("m_Anim", "m_HitBox")]
 motion_mode = 1
 script = ExtResource("1_ure82")
 m_Anim = NodePath("AnimatedSprite2D")
+m_HitBox = NodePath("m_HitBox")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=363067084]
 position = Vector2(0, -34)
@@ -115,3 +117,12 @@ editor_draw_drag_margin = true
 
 [node name="ShotPos" type="Node2D" parent="." unique_id=658802002]
 position = Vector2(4, -18)
+
+[node name="m_HitBox" type="Area2D" parent="." unique_id=552843449]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="m_HitBox" unique_id=1331388105]
+position = Vector2(-1, -35)
+shape = SubResource("RectangleShape2D_6yxfh")
+debug_color = Color(0.9952368, 0, 0.21657002, 0.41960785)

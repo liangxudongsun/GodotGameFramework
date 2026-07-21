@@ -1,8 +1,12 @@
+using System;
 using GameConfig.Character;
+using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Entity;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.NodePool;
+using GodotGameFramework.Sound;
 
 
 /// <summary>
@@ -37,8 +41,8 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     /// </summary>
     public IEntityGroup EntityGroup { get; private set; }
     #endregion
-    protected ActorData m_ActorData;
-    public bool IsDead => m_ActorData.Hp <= 0;
+    public ActorData ActorData;
+    public bool IsDead => ActorData.Hp <= 0;
     protected CharacterConfig m_Config;
     protected PhysicsCheck2D m_Check;
 
@@ -46,6 +50,8 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     /// 实体所属阵营
     /// </summary>
     public EntityTeam Team { get; set; } = EntityTeam.Player;
+
+    public Action<float> HpChanged;
     /// <summary>
     /// 实体初始化。
     /// </summary>
@@ -63,15 +69,15 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
 
         if (isNewInstance)
         {
-            m_ActorData = new ActorData()
+            ActorData = new ActorData()
             {
                 MaxHp = 100,
                 Hp = 100
             };
         }
 
-        m_ActorData.MaxHp = 100;
-        m_ActorData.Hp = m_ActorData.MaxHp;
+        ActorData.MaxHp = 100;
+        ActorData.Hp = ActorData.MaxHp;
     }
 
     /// <summary>
@@ -157,10 +163,14 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     /// <param name="damage">伤害值</param>
     public virtual void Hurt(int entityId, int damage)
     {
-        m_ActorData.Hp -= damage;
-        Log.Debug("{0} 受到 {1} 点伤害，剩余 HP: {2}", Name, damage, m_ActorData.Hp);
+        ActorData.Hp -= damage;
+        HpChanged?.Invoke(ActorData.Hp);
+        GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Dead);
+        var d = NodePool.Get<DamagePop>(ResourcesCollectionConstant.UIs_DamagePop, this);
+        d?.SetText(GlobalPosition, 20, Colors.Red);
+        Log.Debug("{0} 受到 {1} 点伤害，剩余 HP: {2}", Name, damage, ActorData.Hp);
 
-        if (m_ActorData.Hp <= 0)
+        if (ActorData.Hp <= 0)
         {
             Die();
         }
@@ -171,10 +181,11 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     /// </summary>
     public void Heal(int heal)
     {
-        m_ActorData.Hp += heal;
-        if (m_ActorData.Hp > m_ActorData.MaxHp)
+        ActorData.Hp += heal;
+        HpChanged?.Invoke(ActorData.Hp);
+        if (ActorData.Hp > ActorData.MaxHp)
         {
-            m_ActorData.Hp = m_ActorData.MaxHp;
+            ActorData.Hp = ActorData.MaxHp;
         }
     }
     public override void _Draw()

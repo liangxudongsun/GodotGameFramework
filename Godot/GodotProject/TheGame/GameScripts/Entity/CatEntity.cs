@@ -7,7 +7,9 @@ using GameLogic;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
+using System;
 using System.Linq;
 
 public interface IActor
@@ -26,10 +28,13 @@ public partial class CatEntity : ActorEntity
 {
 	[Export]
 	private AnimatedSprite2D m_Anim;
+	[Export]
+	private Area2D m_HitBox;
 	private bool m_IsMoving;
 	float m_LastAtkTime;
 	private CircleShape2D m_AimShape;
 	private Node2D m_ShotPos;
+
 
 
 	public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
@@ -39,6 +44,7 @@ public partial class CatEntity : ActorEntity
 		{
 			m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 			m_ShotPos = GetNode<Node2D>("ShotPos");
+			m_HitBox.BodyEntered += OnBodyEntered;
 		}
 		if (m_Check != null)
 		{
@@ -49,7 +55,7 @@ public partial class CatEntity : ActorEntity
 		m_Check = PhysicsCheck2D.Create(
 		this,
 		m_AimShape,
-		collisionMask: 1,
+		collisionMask: LayerMask.LayerToMask2D("Enemy"),
 		maxResults: 16,
 		collideWithBodies: true,
 		collideWithAreas: false);
@@ -132,8 +138,16 @@ public partial class CatEntity : ActorEntity
 			m_Anim.Play(m_IsMoving ? "Walk" : "Idle");
 		}
 	}
-
-
+	private void OnBodyEntered(Node2D body)
+	{
+		if (body is ActorEntity actor && !actor.IsDead)
+		{
+			if (actor.Team == EntityTeam.Enemy)
+			{
+				Hurt(actor.Id, 20);
+			}
+		}
+	}
 
 
 

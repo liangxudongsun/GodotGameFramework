@@ -63,6 +63,7 @@ namespace GameLogic
 			#region 框架逻辑
 			Visible = true;
 			#endregion
+			GF.Base.PauseGame();
 		}
 
 		/// <summary>
@@ -73,6 +74,7 @@ namespace GameLogic
 			#region 框架逻辑
 			Visible = false;
 			#endregion
+			GF.Base.ResumeGame();
 		}
 
 		/// <summary>

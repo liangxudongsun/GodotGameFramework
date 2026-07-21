@@ -2,6 +2,25 @@
 
 [ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_5smej"]
 [ext_resource type="Script" uid="uid://m1s35hw3uogn" path="res://TheGame/GameScripts/GameProto/UIGe/MenuForm.cs" id="1_62wwx"]
+[ext_resource type="Texture2D" uid="uid://sb4yykpbox28" path="res://TheGame/Sprites/UI/ui_button_gray.png" id="3_5smej"]
+[ext_resource type="Texture2D" uid="uid://8gkkeuqfht0k" path="res://TheGame/Sprites/UI/ui_button_brown.png" id="4_62wwx"]
+[ext_resource type="Texture2D" uid="uid://bkoqp1b34dkts" path="res://TheGame/Sprites/UI/ui_settings.png" id="5_62wwx"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ew8e7"]
+texture = ExtResource("3_5smej")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_62wwx"]
+texture = ExtResource("4_62wwx")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5smej"]
+texture = ExtResource("4_62wwx")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_fo24u"]
+texture = ExtResource("5_62wwx")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0m4r4"]
+texture = ExtResource("5_62wwx")
+modulate_color = Color(0.38928655, 0.38928664, 0.38928658, 1)
 
 [node name="MenuForm" type="Control" unique_id=321045376 node_paths=PackedStringArray("m_Title", "m_Subtitle", "m_Rules", "m_StartButton", "m_SettingButton")]
 layout_mode = 3
@@ -54,6 +73,7 @@ custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
 [node name="m_Subtitle" type="Label" parent="VBox" unique_id=1573278784]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 53
 text = "戈多游戏框架Demo"
@@ -79,10 +99,18 @@ custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
 [node name="m_StartButton" type="Button" parent="VBox" unique_id=456603222]
-custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 70
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0.7602647, 0.41217855, 1, 1)
+theme_override_colors/font_hover_color = Color(5.0055983e-06, 0.8105563, 0.95869476, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 53
+theme_override_styles/normal = SubResource("StyleBoxTexture_ew8e7")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_62wwx")
+theme_override_styles/hover = SubResource("StyleBoxTexture_5smej")
 text = "开始"
 
 [node name="Spacer5" type="Control" parent="VBox" unique_id=337166193]
@@ -94,11 +122,18 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -121.0
-offset_top = 21.0
-offset_right = -34.0
-offset_bottom = 65.0
+offset_left = -62.0
+offset_top = 14.0
+offset_right = -22.0
+offset_bottom = 49.0
 grow_horizontal = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 25
-text = "设置"
+theme_override_styles/normal = SubResource("StyleBoxTexture_fo24u")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_0m4r4")
+theme_override_styles/hover = SubResource("StyleBoxTexture_0m4r4")
 icon_alignment = 1

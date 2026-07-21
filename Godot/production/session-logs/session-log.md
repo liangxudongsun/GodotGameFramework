@@ -3002,3 +3002,86 @@ Godot/GodotProject/TheGame/GameScripts/Entity/AngerEntity.cs
 Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
 ---
 
+## Session End: 20260722_001108
+### Commits
+5f25a2c 资源整理
+ee6a87e Merge branch 'main' of https://github.com/immortal5205/GodotGameFramework
+a6ac3ab 1
+515d7cd 修复ui显示bug
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/EntityLogicTemplet.txt
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/UIFormLogicTemplet.txt
+Godot/GodotProject/TheGame/Entitys/AngerEntity.tscn
+Godot/GodotProject/TheGame/Entitys/CatEntity.tscn
+Godot/GodotProject/TheGame/GameScripts/Entity/ActorEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/AngerEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs.uid
+Godot/GodotProject/TheGame/GameScripts/UI/SettingForm.Logic.cs
+Godot/GodotProject/TheGame/Scenes/Map.tscn
+Godot/GodotProject/TheGame/Themes/MainThemes.tres
+Godot/GodotProject/TheGame/UIs/MainForm.tscn
+Godot/GodotProject/TheGame/UIs/MenuForm.tscn
+Godot/GodotProject/TheGame/UIs/SettingForm.tscn
+Godot/GodotProject/project.godot
+---
+
+## Session End: 20260722_001253
+### Commits
+5f25a2c 资源整理
+ee6a87e Merge branch 'main' of https://github.com/immortal5205/GodotGameFramework
+a6ac3ab 1
+515d7cd 修复ui显示bug
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/EntityLogicTemplet.txt
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/UIFormLogicTemplet.txt
+Godot/GodotProject/TheGame/Entitys/AngerEntity.tscn
+Godot/GodotProject/TheGame/Entitys/CatEntity.tscn
+Godot/GodotProject/TheGame/GameScripts/Entity/ActorEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/AngerEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs.uid
+Godot/GodotProject/TheGame/GameScripts/UI/SettingForm.Logic.cs
+Godot/GodotProject/TheGame/Scenes/Map.tscn
+Godot/GodotProject/TheGame/Themes/MainThemes.tres
+Godot/GodotProject/TheGame/UIs/MainForm.tscn
+Godot/GodotProject/TheGame/UIs/MenuForm.tscn
+Godot/GodotProject/TheGame/UIs/SettingForm.tscn
+Godot/GodotProject/project.godot
+Godot/production/session-logs/session-log.md
+---
+
+## Session End: 20260722_001416
+### Commits
+5f25a2c 资源整理
+ee6a87e Merge branch 'main' of https://github.com/immortal5205/GodotGameFramework
+a6ac3ab 1
+515d7cd 修复ui显示bug
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/EntityLogicTemplet.txt
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/UIFormLogicTemplet.txt
+Godot/GodotProject/TheGame/Entitys/AngerEntity.tscn
+Godot/GodotProject/TheGame/Entitys/CatEntity.tscn
+Godot/GodotProject/TheGame/GameScripts/Entity/ActorEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/AngerEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.cs.uid
+Godot/GodotProject/TheGame/GameScripts/UI/SettingForm.Logic.cs
+Godot/GodotProject/TheGame/Scenes/Map.tscn
+Godot/GodotProject/TheGame/Themes/MainThemes.tres
+Godot/GodotProject/TheGame/UIs/MainForm.tscn
+Godot/GodotProject/TheGame/UIs/MenuForm.tscn
+Godot/GodotProject/TheGame/UIs/SettingForm.tscn
+Godot/GodotProject/project.godot
+Godot/production/session-logs/session-log.md
+---
+

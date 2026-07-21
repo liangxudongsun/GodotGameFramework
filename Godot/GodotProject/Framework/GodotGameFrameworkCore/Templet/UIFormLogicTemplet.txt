@@ -28,6 +28,12 @@ namespace _NAMESPACE_
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetValue());
 			#endregion
+			if(isNewInstance)
+			{
+				#region 界面逻辑
+				
+				#endregion
+			}
 		}
 
 		/// <summary>

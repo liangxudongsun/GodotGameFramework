@@ -26,6 +26,12 @@ namespace _NAMESPACE_
 			Name = GameFramework.Utility.Text.Format("Entity_{0}_{1}", entityId, entityAssetName);
 			EntityGroup = entityGroup;
 			#endregion
+			if(isNewInstance)
+			{
+				#region 界面逻辑
+				
+				#endregion
+			}
 		}
 
 		/// <summary>

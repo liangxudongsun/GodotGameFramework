@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace GameLogic
 {
 	/// <summary>
-	/// 界面
+	/// 界面,生成时会被覆盖，请勿手动修改
 	/// </summary>
 	public partial class MainForm : Control, IUIForm
 	{
@@ -32,8 +32,8 @@ namespace GameLogic
 		/// </summary>
 		private int m_DepthInUIGroup;
 
-		/// <summary
-		/// >是否暂停被覆盖的界面。
+		/// <summary>
+		/// 是否暂停被覆盖的界面。
 		/// </summary>
 		private bool m_PauseCoveredUIForm;
 
@@ -82,9 +82,15 @@ namespace GameLogic
 		#endregion
 
 		[Export]
-		public Label m_ScoreLabel;
+		private Label m_ScoreLabel;
 		[Export]
-		public Label m_TimerLabel;
+		private Label m_TimerLabel;
+		[Export]
+		private Button m_SettingButton;
+		[Export]
+		private Label m_HpLabel;
+		[Export]
+		private HSlider m_HpHSlider;
 
 	}
 }

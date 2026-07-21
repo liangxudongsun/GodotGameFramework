@@ -56,28 +56,7 @@ horizontal_alignment = 1
 [node name="Spacer1" type="Control" parent="Panel/Margin/VBox" unique_id=275526843]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
-
-[node name="ScoreLabel" type="Label" parent="Panel/Margin/VBox" unique_id=2003743552]
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Score: 0"
-horizontal_alignment = 1
-
-[node name="HighScoreLabel" type="Label" parent="Panel/Margin/VBox" unique_id=392620619]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Best: 0"
-horizontal_alignment = 1
-
-[node name="NewRecordLabel" type="Label" parent="Panel/Margin/VBox" unique_id=676696284]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "*** New Record! ***"
-horizontal_alignment = 1
-
-[node name="Spacer2" type="Control" parent="Panel/Margin/VBox" unique_id=1005964840]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
+size_flags_vertical = 3
 
 [node name="Prompt" type="Label" parent="Panel/Margin/VBox" unique_id=364085333]
 layout_mode = 2
