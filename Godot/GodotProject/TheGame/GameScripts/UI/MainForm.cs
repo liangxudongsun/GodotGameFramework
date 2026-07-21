@@ -1,5 +1,6 @@
 using GameConfig.Constant;
 using GameConfig.Entity;
+using GameFramework.Event;
 using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
@@ -23,7 +24,7 @@ namespace GameLogic
 		/// <param name="pauseCoveredUIForm">是否暂停被覆盖的界面。</param>
 		/// <param name="isNewInstance">是否是新实例。</param>
 		/// <param name="userData">用户自定义数据。</param>
-		public virtual async void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
+		public async void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
 		{
 			#region 框架逻辑
 			m_SerialId = serialId;
@@ -54,7 +55,7 @@ namespace GameLogic
 		/// 界面回收。
 		///
 		/// </summary>
-		public virtual void OnRecycle()
+		public void OnRecycle()
 		{
 			m_SerialId = 0;
 			m_DepthInUIGroup = 0;
@@ -65,23 +66,28 @@ namespace GameLogic
 		/// <summary>
 		/// 界面打开。
 		/// </summary>
-		public virtual void OnOpen(object userData)
+		public void OnOpen(object userData)
 		{
 			Visible = true;
+			m_ScoreLabel.Text = $"{GF.Localization.GetString("MainForm.Score")}{GF.Archive.CurrentData.Score.ToString()}";
+			GF.Event.Subscribe(ScoreChangedEventArgs.EventId, OnScoreChanged);
 		}
 
 		/// <summary>
 		/// 界面关闭。
 		/// </summary>
-		public virtual void OnClose(bool isShutdown, object userData)
+		public void OnClose(bool isShutdown, object userData)
 		{
 			Visible = false;
+			GF.Event.Unsubscribe(ScoreChangedEventArgs.EventId, OnScoreChanged);
 		}
+
+
 
 		/// <summary>
 		/// 界面暂停。
 		/// </summary>
-		public virtual void OnPause()
+		public void OnPause()
 		{
 
 		}
@@ -89,7 +95,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面暂停恢复。
 		/// </summary>
-		public virtual void OnResume()
+		public void OnResume()
 		{
 
 		}
@@ -97,7 +103,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面遮挡。
 		/// </summary>
-		public virtual void OnCover()
+		public void OnCover()
 		{
 
 		}
@@ -105,7 +111,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面遮挡恢复。
 		/// </summary>
-		public virtual void OnReveal()
+		public void OnReveal()
 		{
 
 		}
@@ -113,7 +119,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面重新获得焦点。
 		/// </summary>
-		public virtual void OnRefocus(object userData)
+		public void OnRefocus(object userData)
 		{
 
 		}
@@ -121,7 +127,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面轮询。
 		/// </summary>
-		public virtual void OnUpdate(float elapseSeconds, float realElapseSeconds)
+		public void OnUpdate(float elapseSeconds, float realElapseSeconds)
 		{
 
 		}
@@ -129,7 +135,7 @@ namespace GameLogic
 		/// <summary>
 		/// 界面深度改变。
 		/// </summary>
-		public virtual void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
+		public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
 		{
 			m_DepthInUIGroup = depthInUIGroup;
 		}
@@ -138,6 +144,10 @@ namespace GameLogic
 		{
 			m_ScoreLabel.Text = GF.Localization.GetString("MainForm.Score");
 			m_TimerLabel.Text = GF.Localization.GetString("MainForm.Timer");
+		}
+		private void OnScoreChanged(object sender, GameEventArgs e)
+		{
+			m_ScoreLabel.Text = $"{GF.Localization.GetString("MainForm.Score")}{GF.Archive.CurrentData.Score.ToString()}";
 		}
 	}
 }

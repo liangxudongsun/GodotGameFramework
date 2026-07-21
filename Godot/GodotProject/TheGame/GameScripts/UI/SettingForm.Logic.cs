@@ -1,17 +1,14 @@
-using GameConfig;
-using GameConfig.Constant;
 using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
-using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
 namespace GameLogic
 {
 	/// <summary>
-	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖，可安全编写业务逻辑）。
+	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
-	public partial class MenuForm : IStringKey
+	public partial class SettingForm
 	{
 		/// <summary>
 		/// 初始化界面。
@@ -24,39 +21,38 @@ namespace GameLogic
 		/// <param name="userData">用户自定义数据。</param>
 		public void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
 		{
+			#region 框架逻辑
 			m_SerialId = serialId;
 			m_UIFormAssetName = uiFormAssetName;
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetValue());
+			#endregion
+
 			if (isNewInstance)
 			{
-				m_SettingButton.Pressed += OnSettingButtonPressed;
-				m_StartButton.Pressed += OnStartButtonPressed;
+				m_CloseButton.Pressed += OnCloseButtonPressed;
 			}
 		}
-		private void OnStartButtonPressed()
+
+		private void OnCloseButtonPressed()
 		{
 			GF.UI.CloseUIForm(this);
-			GF.UI.OpenUIForm(UIFormId.MainForm);
 		}
 
-
-		private void OnSettingButtonPressed()
-		{
-			GF.UI.OpenUIForm(UIFormId.SettingForm);
-		}
 		/// <summary>
 		/// 界面回收。
 		///
 		/// </summary>
 		public void OnRecycle()
 		{
+			#region 框架逻辑
 			m_SerialId = 0;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = true;
 			Visible = false;
+			#endregion
 		}
 
 		/// <summary>
@@ -64,8 +60,9 @@ namespace GameLogic
 		/// </summary>
 		public void OnOpen(object userData)
 		{
+			#region 框架逻辑
 			Visible = true;
-			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Menu);
+			#endregion
 		}
 
 		/// <summary>
@@ -73,7 +70,9 @@ namespace GameLogic
 		/// </summary>
 		public void OnClose(bool isShutdown, object userData)
 		{
+			#region 框架逻辑
 			Visible = false;
+			#endregion
 		}
 
 		/// <summary>
@@ -129,14 +128,9 @@ namespace GameLogic
 		/// </summary>
 		public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
 		{
+			#region 框架逻辑
 			m_DepthInUIGroup = depthInUIGroup;
-		}
-
-		public void SetValue()
-		{
-			m_Title.Text = GF.Localization.GetString("BulletShoot");
-			m_Subtitle.Text = GF.Localization.GetString("Demo");
-			// m_StartButton.Text = GF.Localization.GetString("Start");
+			#endregion
 		}
 	}
 }

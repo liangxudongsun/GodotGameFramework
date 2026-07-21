@@ -130,6 +130,7 @@ public partial class AngerEntity : ActorEntity
     {
         base.Die();
         GF.Archive.CurrentData.Score += 100;
+        GF.Event.Fire(this, ScoreChangedEventArgs.Create(100));
         await GF.Archive.OverWriteAsync();
     }
 

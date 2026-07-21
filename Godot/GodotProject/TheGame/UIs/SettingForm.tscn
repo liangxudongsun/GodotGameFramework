@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://cxk5si2bumjh2"]
+
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_bo7kd"]
+[ext_resource type="Script" uid="uid://cxkmx8m0u72rx" path="res://TheGame/GameScripts/GameProto/UIGe/SettingForm.cs" id="1_h3k5r"]
+[ext_resource type="Texture2D" uid="uid://8ys10qfv7yvm" path="res://TheGame/Sprites/paper.png" id="1_u4laf"]
+[ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/Fonts/simhei.ttf" id="2_h3k5r"]
+
+[node name="SettingForm" type="Control" unique_id=1915523127 node_paths=PackedStringArray("m_CloseButton")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_bo7kd")
+script = ExtResource("1_h3k5r")
+m_CloseButton = NodePath("Content/m_CloseButton")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1653091560]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1897483, 0.1897483, 0.1897483, 0.41300002)
+
+[node name="Content" type="NinePatchRect" parent="." unique_id=2109696623]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -430.0
+offset_top = -226.0
+offset_right = 430.0
+offset_bottom = 226.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_u4laf")
+region_rect = Rect2(38.772766, 419.4357, 630.2156, 324.39664)
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="Label" type="Label" parent="Content" unique_id=2144709885]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -73.0
+offset_right = 73.0
+offset_bottom = 74.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_h3k5r")
+theme_override_font_sizes/font_size = 73
+text = "设置"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Content" unique_id=1876448322]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -47.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SP2" type="Control" parent="Content/HBoxContainer" unique_id=945584056]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.12
+
+[node name="Label" type="Label" parent="Content/HBoxContainer" unique_id=1342561575]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9436567, 5.7756904e-07, 0.5662272, 1)
+text = "声音"
+
+[node name="SP1" type="Control" parent="Content/HBoxContainer" unique_id=346551705]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.0
+
+[node name="HSlider" type="HSlider" parent="Content/HBoxContainer" unique_id=734270589]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 2.03
+value = 12.0
+scrollable = false
+
+[node name="m_CloseButton" type="Button" parent="Content" unique_id=1710254862]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -8.0
+offset_bottom = 8.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 50
+text = "关闭"

@@ -1,10 +1,3 @@
-//------------------------------------------------------------
-// Game Framework
-// Copyright © 2013-2021 Jiang Yin. All rights reserved.
-// Homepage: https://gameframework.cn/
-// Feedback: mailto:ellan@gameframework.cn
-//------------------------------------------------------------
-
 using GameFramework.Entity;
 using Godot;
 
@@ -12,20 +5,11 @@ namespace GodotGameFramework.Entity
 {
     /// <summary>
     /// 默认实体辅助器。
-    /// InstantiateEntity：从 PackedScene 实例化 Node。
-    /// CreateEntity：创建 Entity(Node) 包装器，添加到实体组容器，设置 EntityLogic。
-    /// ReleaseEntity：通过 QueueFree 释放节点。
     /// </summary>
     public partial class DefaultEntityHelper : EntityHelperBase
     {
         /// <summary>
         /// 实例化实体。
-        ///
-        /// 从给定的 PackedScene 资源实例化一个 Node。
-        /// 这个 Node 是用户在编辑器中设计的场景实例，
-        /// 之后会被添加为 Entity(Node) 的子节点。
-        /// </summary>
-        /// <param name="entityAsset">实体资源（期望为 PackedScene）。</param>
         /// <returns>实例化后的 Node，如果资源类型不匹配返回 null。</returns>
         public override object InstantiateEntity(object entityAsset)
         {

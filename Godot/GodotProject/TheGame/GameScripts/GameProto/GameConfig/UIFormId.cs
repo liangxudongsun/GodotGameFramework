@@ -21,6 +21,10 @@ namespace GameConfig
         /// 游戏界面
         /// </summary>
         MainForm = 1,
+        /// <summary>
+        /// 设置界面
+        /// </summary>
+        SettingForm = 2,
     }
 
 } 
