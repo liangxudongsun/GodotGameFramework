@@ -1,0 +1,110 @@
+using GameFramework.UI;
+using Godot;
+using GodotGameFramework.UI;
+using System;
+using GameFramework.Entity;
+namespace GameLogic
+{
+	/// <summary>
+	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
+	/// </summary>
+	public partial class LightningBall
+	{
+		/// <summary>
+		/// 实体初始化。
+		/// </summary>
+		/// <param name="entityId">实体编号。</param>
+		/// <param name="entityAssetName">实体资源名称。</param>
+		/// <param name="entityGroup">实体所属的实体组。</param>
+		/// <param name="isNewInstance">是否是新实例。</param>
+		/// <param name="userData">用户自定义数据。</param>
+		public void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
+		{
+			#region 框架逻辑
+			Id = entityId;
+			EntityAssetName = entityAssetName;
+			Name = GameFramework.Utility.Text.Format("Entity_{0}_{1}", entityId, entityAssetName);
+			EntityGroup = entityGroup;
+			#endregion
+			if (isNewInstance)
+			{
+				#region 界面逻辑
+				BodyEntered += OnBodyEntered;
+				#endregion
+			}
+		}
+
+		/// <summary>
+		/// 实体回收。
+		/// Entity 节点不销毁，等待对象池复用或池释放。
+		/// </summary>
+		public void OnRecycle()
+		{
+			Id = 0;
+			EntityAssetName = null;
+			Name = "Entity (Recycled)";
+			Visible = false;
+		}
+
+		/// <summary>
+		/// 实体显示。
+		/// </summary>
+		public void OnShow(object userData)
+		{
+			Visible = true;
+		}
+
+		/// <summary>
+		/// 实体隐藏。
+		/// </summary>
+		public void OnHide(bool isShutdown, object userData)
+		{
+			Visible = false;
+		}
+
+		/// <summary>
+		/// 实体附加子实体。
+		/// </summary>
+		public void OnAttached(IEntity childEntity, object userData)
+		{
+
+		}
+
+		/// <summary>
+		/// 实体解除子实体。
+		/// </summary>
+		public void OnDetached(IEntity childEntity, object userData)
+		{
+
+		}
+
+		/// <summary>
+		/// 实体被附加到父实体。
+		/// </summary>
+		public void OnAttachTo(IEntity parentEntity, object userData)
+		{
+
+		}
+
+		/// <summary>
+		/// 实体从父实体解除。
+		/// </summary>
+		public void OnDetachFrom(IEntity parentEntity, object userData)
+		{
+
+		}
+
+		/// <summary>
+		/// 实体轮询。
+		/// 每帧调用，用于处理实体逻辑。
+		/// </summary>
+		public void OnUpdate(float elapseSeconds, float realElapseSeconds)
+		{
+
+		}
+		private void OnBodyEntered(Node body)
+		{
+
+		}
+	}
+}

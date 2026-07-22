@@ -5,6 +5,7 @@ using GameFramework;
 using GameFramework.Entity;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Entity;
 using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
 
@@ -164,6 +165,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     public virtual void Hurt(int entityId, int damage)
     {
         ActorData.Hp -= damage;
+        ActorData.Hp = Mathf.Max(0, ActorData.Hp);
         HpChanged?.Invoke(ActorData.Hp);
         GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Dead);
         var d = NodePool.Get<DamagePop>(ResourcesCollectionConstant.UIs_DamagePop, this);
@@ -182,6 +184,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     public void Heal(int heal)
     {
         ActorData.Hp += heal;
+        ActorData.Hp = Mathf.Min(ActorData.Hp, ActorData.MaxHp);
         HpChanged?.Invoke(ActorData.Hp);
         if (ActorData.Hp > ActorData.MaxHp)
         {
@@ -202,7 +205,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     /// </summary>
     protected virtual void Die()
     {
-        GF.Entity.HideEntity(this);
+        GF.Entity.HideEntitySafe(this);
     }
     public override void _ExitTree()
     {

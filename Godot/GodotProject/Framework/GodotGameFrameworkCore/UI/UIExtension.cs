@@ -62,11 +62,11 @@ namespace GodotGameFramework.UI
         }
         public static int OpenUIForm(this UIComponent uiComponent, UIFormId formId, object userData = null)
         {
-            if (GF.DataTable?.GetTables().TbUIFormConfig?.DataList == null)
+            if (ConfigSystem.Instance.Tables.TbUIFormConfig?.DataList == null)
             {
                 throw new Exception("UIFormConfig data table is not available.");
             }
-            UIFormConfig formConfig = GF.DataTable.GetTables().TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
+            UIFormConfig formConfig = ConfigSystem.Instance.Tables.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
             if (formConfig == null)
             {
                 throw new Exception($"找不到UIFormId:{formId}的配置");
@@ -83,11 +83,11 @@ namespace GodotGameFramework.UI
         /// <returns></returns>
         public static async Task<T> OpenUIFormAsync<T>(this UIComponent uiComponent, UIFormId formId, object userData = null) where T : class, IUIForm
         {
-            if (GF.DataTable?.GetTables().TbUIFormConfig?.DataList == null)
+            if (ConfigSystem.Instance.Tables.TbUIFormConfig?.DataList == null)
             {
                 throw new Exception("UIFormConfig data table is not available.");
             }
-            UIFormConfig formConfig = GF.DataTable.GetTables().TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
+            UIFormConfig formConfig = ConfigSystem.Instance.Tables.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
             if (formConfig == null)
             {
                 throw new Exception($"找不到UIFormId:{formId}的配置");
@@ -123,7 +123,7 @@ namespace GodotGameFramework.UI
         }
         public static bool HasUIForm(this UIComponent uiComponent, UIFormId formId)
         {
-            UIFormConfig formConfig = GF.DataTable.GetTables().TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
+            UIFormConfig formConfig = ConfigSystem.Instance.Tables.TbUIFormConfig.DataList.FirstOrDefault(x => x.UIFormId == formId);
             IUIForm[] uiForms = uiComponent.GetUIForms(formConfig.AssetPath);
             return uiForms.Length > 0;
         }

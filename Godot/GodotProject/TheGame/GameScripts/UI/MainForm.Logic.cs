@@ -16,7 +16,9 @@ namespace GameLogic
 	/// </summary>
 	public partial class MainForm : IStringKey
 	{
-		private CatEntity m_Cat;
+		private CatEntity m_Cat => LevelManager.Instance.Cat;
+		private float m_Interal = 0;
+		private float m_Timer = 0;
 		/// <summary>
 		/// 初始化界面。
 		/// </summary>
@@ -36,11 +38,8 @@ namespace GameLogic
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetValue());
 			#endregion
-			Node2D scene = (Node2D)await GF.Scene.LoadSceneAsync(ResourcesCollectionConstant.Scenes_Map);
-			Node2D spawnPoint = scene.GetNode<Node2D>("SpawnPoint");
-			Line2D line2D = scene.GetNode<Line2D>("Line2D");
-			m_Cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
-			m_Cat.GlobalPosition = spawnPoint.GlobalPosition;
+			await LevelManager.Instance.StartLevel("1-1");
+			m_LevelLabel.Text = $"{LevelManager.Instance.Level}-{LevelManager.Instance.WaveIndex + 1}";
 			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Fight);
 
 			if (isNewInstance)
@@ -51,15 +50,6 @@ namespace GameLogic
 				#endregion
 			}
 
-
-
-			for (int i = 0; i < line2D.Points.Length; i++)
-			{
-				var point = line2D.Points[i];
-				var enemy = await GF.Entity.ShowEntityAsync<AngerEntity>(EntityId.Anger);
-				enemy.GlobalPosition = point;
-				enemy.SetTarget(m_Cat);
-			}
 
 			m_HpHSlider.MaxValue = m_Cat.ActorData.MaxHp;
 			m_HpHSlider.Value = m_Cat.ActorData.Hp;
@@ -155,7 +145,22 @@ namespace GameLogic
 		/// </summary>
 		public void OnUpdate(float elapseSeconds, float realElapseSeconds)
 		{
+			m_Interal += elapseSeconds;
+			if (m_Interal >= 1 && LevelManager.Instance.Timer > m_Timer)
+			{
+				m_Interal = 0;
+				m_Timer++;
+				float time = LevelManager.Instance.Timer - m_Timer;
+				m_TimerLabel.Text = $"{GF.Localization.GetString("MainForm.Timer")}{time}";
+			}
 
+			if (m_Timer >= LevelManager.Instance.Timer)
+			{
+				LevelManager.Instance.NextWave();
+				m_LevelLabel.Text = $"{LevelManager.Instance.Level}-{LevelManager.Instance.WaveIndex + 1}";
+				m_Timer = 0;
+
+			}
 		}
 
 		/// <summary>
@@ -169,7 +174,7 @@ namespace GameLogic
 		public void SetValue()
 		{
 			m_ScoreLabel.Text = GF.Localization.GetString("MainForm.Score");
-			m_TimerLabel.Text = GF.Localization.GetString("MainForm.Timer");
+			m_TimerLabel.Text = $"{GF.Localization.GetString("MainForm.Timer")}{LevelManager.Instance.Timer}";
 		}
 		private void OnScoreChanged(object sender, GameEventArgs e)
 		{

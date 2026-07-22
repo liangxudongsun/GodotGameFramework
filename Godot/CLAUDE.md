@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download, Debugger.
+**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download, Debugger, Archive.
 
-> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Debugger / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download + hot-update design & audit). See `docs/README.md` for the index. Prefer those docs over this file for system details.
+> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Debugger / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download / Archive + hot-update design & audit). See `docs/README.md` for the index. Prefer those docs over this file for system details.
 
 - **Godot .NET SDK**: `Godot.NET.Sdk/4.7.0` (NuGet)
 - **Build**: `cd GodotProject && dotnet build`
@@ -29,9 +29,9 @@ GodotProject/
       Fsm/                          ← State machine system
       Procedure/                    ← Procedure (game state) manager
       Entity/ UI/ Sound/ Scene/     ← Manager interfaces + logic (no Godot types)
-      DataNode/ DataTable/ ObjectPool/
+      DataNode/ ObjectPool/
       Resource/                     ← IResourceManager interface
-      Config/ Debugger/ Download/   ← Config, debugger windows, download manager
+      Debugger/ Download/           ← Debugger windows, download manager
       Event/ Localization/          ← Event manager, localization system
       Network/ WebRequest/          ← Network channels, HTTP requests
       Properties/ Utility/          ← Assembly info, text/compression utilities
@@ -41,9 +41,10 @@ GodotProject/
       Resource/                     ← ResourceComponent, ResourceManager, PackVersionList, load tasks
       Download/ WebRequest/         ← DownloadComponent (queue+resume+verify), WebRequestComponent (Godot HttpRequest)
       HotUpdate/                    ← HotUpdateSafetyGuard (crash-safe hot update)
-      DataTable/ DataNode/ Setting/ Localization/
+      DataNode/ Setting/ Localization/
       Event/ Fsm/ Procedure/ ObjectPool/          ← ObjectPool 含 ReferencePoolComponent（引用池严格检查策略）
       Debugger/                     ← UGF 风格运行时调试器（FPS 图标 + Console/Information/Profiler/Other 页签）
+      Archive/                      ← ArchiveSystem<T,U> 通用存档系统（Catalogue + Data 分离）
       Config/ Variable/             ← GameFolderConstant, VarInt32/VarString/VarBoolean/VarSingle
       Json/                         ← Newtonsoft.Json helper (local .dll reference) + EasySave
       Lib/LubanLib/                 ← Luban runtime (ByteBuf, BeanBase, StringUtil)
@@ -56,9 +57,13 @@ GodotProject/
       UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm, LogInForm
       Procedure/                    ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
       Event/                        ← BlockClickedEventArgs, ScoreChangedEventArgs, TestPhaseChangedEventArgs
-      Resources/                    ← EntityGroup, SoundGroup, UIGroup definitions
+      Resources/                    ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig definitions
+      Archive/                      ← GameCatalogue, GameData (ArchiveCatalogue/ArchiveData extensions)
+      Manager/                      ← LevelManager (SingletonNode, wave system)
+      ObjectPool/                   ← NodePool, NodeObject, PoolContainer
       GameProto/GameConfig/         ← Luban-generated C# (EntityConfig, TbEntityConfig, EntityId, etc.)
       GameProto/EntityGe/           ← Generated entity Ge halves
+      GameProto/UIGe/               ← Generated UI form Ge halves
   addons/                           ← Editor plugins
     ComponentInsoector/             ← Custom Godot Inspector for framework components
     ExportInspector/                ← AssetBundle visual export management panel (C# EditorPlugin)
@@ -88,13 +93,13 @@ Main scene: `Framework/GameFramework.tscn` (uid `bggentry001`), set as `run/main
 ```
 GameFramework (GameEntry : GodotComponent)
 ├── Base / Event / Resource / Debugger
-├── DataTable / Procedure / Scene / Fsm
+├── Procedure / Scene / Fsm
 ├── DataNode / ObjectPool / ReferencePool / Setting
 ├── Entity / UI / Sound / Localization
 ├── WebRequest / Download
 ```
 
-Each component type can only register one instance. Component list mirrors the `GF.cs` static facade.
+Each component type can only register one instance. Component list mirrors the `GF.cs` static facade (16 `GameFrameworkComponent` + `GF.Archive` as a `new()`-lazy singleton).
 
 ### Startup Sequence
 
@@ -117,13 +122,13 @@ OnInit()       → OnEnter()  → OnUpdate(delta) / OnFixedUpdate(delta) → OnE
 `GodotGameFrameworkCore/Base/GF.cs` provides lazy-cached static access to all components:
 
 ```csharp
-GF.Base / GF.Event / GF.Fsm / GF.Procedure
-GF.Resource / GF.Entity / GF.UI / GF.Sound / GF.Scene
-GF.DataTable / GF.DataNode / GF.ObjectPool
-GF.Localization / GF.Setting / GF.WebRequest / GF.Download / GF.Debugger
+GF.Base / GF.Event / GF.Fsm / GF.Procedure / GF.ObjectPool / GF.DataNode
+GF.Resource / GF.Entity / GF.UI / GF.Sound / GF.Localization
+GF.Setting / GF.Scene / GF.WebRequest / GF.Download / GF.Debugger
+GF.Archive   // 共 16 个组件 + 1 个存档管理器
 ```
 
-Each property calls `GameEntry.GetComponent<T>()` and caches the result.
+Each property calls `GameEntry.GetComponent<T>()` and caches the result. `GF.Archive` is an exception: it's an `ArchiveSystem<GameCatalogue, GameData>` lazily created via `new()` rather than looked up from the component registry.
 
 ## Key Patterns
 
@@ -301,9 +306,9 @@ Generated code: `TheGame/GameScripts/GameProto/GameConfig/` (e.g., `EntityConfig
 
 Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` resolves the scene path.
 
-## Source Generators (Tools/)
+## Source Generators (Tools/) — Removed
 
-`Tools/GameEventSourceGenerator/` at the repo root is a **Unity/TEngine legacy** C# Source Generator project (`GameEventAnalyzer/` + `SourceGenerator/`). It generates `UnityEngine`/`TEngine` code, is **not referenced** by `GodotProject.csproj`, and is unrelated to GGF's current event system.
+The `Tools/GameEventSourceGenerator/` Unity/TEngine Roslyn Source Generator project has been **removed** (2026-07). It was never referenced by `GodotProject.csproj` and was unrelated to GGF's event system.
 
 ## Editor Plugins (`addons/`)
 
@@ -399,4 +404,4 @@ dotnet build                              # Daily development build
 
 - **MCP**: CodeGraph (`@colbymchenry/codegraph`) in `.mcp.json` — provides code intelligence via SQLite knowledge graph of all symbols/edges/files
 - **Hooks**: SessionStart, PreToolUse (Bash validation), PostToolUse (Write/Edit validation), Notification, PreCompact/PostCompact, Stop, SubagentStart/SubagentStop
-- **Agent definitions**: `.claude/agents/` — specialized agents (godot-csharp-specialist, godot-specialist, gameplay-programmer, etc.) for targeted sub-tasks
+- **Agent definitions**: `.claude/agents/` — specialized agents (godot-csharp-specialist, godot-specialist, gameplay-programmer, etc.) for targeted sub-tasks. Engine-specific agents (unity-*, ue-*, unreal-*) have been removed (2026-07).

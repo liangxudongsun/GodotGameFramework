@@ -11,7 +11,6 @@
 [ext_resource type="Resource" uid="uid://bcd8sxd8oxjqv" path="res://TheGame/Resources/UpdateSettingRes.tres" id="5_y55im"]
 [ext_resource type="Script" uid="uid://cw66xi63rpn0" path="res://Framework/GodotGameFrameworkCore/Debugger/DebuggerComponent.cs" id="6_kt8od"]
 [ext_resource type="Script" uid="uid://cbq1w80o80jck" path="res://Framework/GodotGameFrameworkCore/Setting/SettingComponent.cs" id="6_set"]
-[ext_resource type="Script" uid="uid://b1rixcpdvl3ij" path="res://Framework/GodotGameFrameworkCore/DataTable/DataTableComponent.cs" id="8_dt"]
 [ext_resource type="Script" uid="uid://bohum5g5jh5j" path="res://Framework/GodotGameFrameworkCore/DataNode/DataNodeComponent.cs" id="9_dn"]
 [ext_resource type="Script" uid="uid://dlo8s74qn554q" path="res://Framework/GodotGameFrameworkCore/ObjectPool/ObjectPoolComponent.cs" id="10_op"]
 [ext_resource type="Script" uid="uid://wi0iwoylkik" path="res://Framework/GodotGameFrameworkCore/Resource/ResourceComponent.cs" id="11_res"]
@@ -41,9 +40,6 @@ _UpdateSettingRes = ExtResource("5_y55im")
 [node name="Debugger" type="Node" parent="." unique_id=443209794]
 script = ExtResource("6_kt8od")
 _ActiveWindowType = 0
-
-[node name="DataTable" type="Node" parent="." unique_id=447100413]
-script = ExtResource("8_dt")
 
 [node name="Procedure" type="Node" parent="." unique_id=1553213140]
 script = ExtResource("5_qii40")

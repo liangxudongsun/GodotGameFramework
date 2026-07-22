@@ -22,8 +22,6 @@ buses/default_bus_layout="uid://yynf8xejw6q4"
 [autoload]
 
 UpdateDriver="*uid://d1724h61rw1bg"
-NodePool="*uid://p0d68mo8iboy"
-LayerMask="*uid://cfy6da6jp1t2v"
 
 [display]
 

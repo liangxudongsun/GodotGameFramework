@@ -86,6 +86,8 @@ namespace GameLogic
 		[Export]
 		private Label m_TimerLabel;
 		[Export]
+		private Label m_LevelLabel;
+		[Export]
 		private Button m_SettingButton;
 		[Export]
 		private Label m_HpLabel;

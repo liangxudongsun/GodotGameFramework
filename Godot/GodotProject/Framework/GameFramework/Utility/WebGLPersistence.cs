@@ -8,7 +8,7 @@ namespace GameFramework
     /// </summary>
     public static class WebGLPersistence
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if BROWSER
         [DllImport("__Internal")]
         private static extern void GF_SyncFs(string path);
 
@@ -25,7 +25,7 @@ namespace GameFramework
         /// </summary>
         public static void Initialize()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if BROWSER
             try
             {
                 GF_InitFsSync();
@@ -45,7 +45,7 @@ namespace GameFramework
         {
             get
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if BROWSER
                 try
                 {
                     return GF_IsFsSyncReady() != 0;
@@ -66,7 +66,7 @@ namespace GameFramework
         /// </summary>
         public static void Sync(string path = null)
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if BROWSER
             try
             {
                 GF_SyncFs(path);

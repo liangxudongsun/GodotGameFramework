@@ -42,7 +42,7 @@ public partial class CatEntity : ActorEntity
 		base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
 		if (isNewInstance)
 		{
-			m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
+			m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 			m_ShotPos = GetNode<Node2D>("ShotPos");
 			m_HitBox.BodyEntered += OnBodyEntered;
 		}

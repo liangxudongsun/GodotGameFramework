@@ -286,7 +286,7 @@ CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
 
 ## 5. Luban 配置驱动
 
-`Configs/GameConfig/Datas/界面UI.xlsx` → 生成 `GameConfig.UIFormId` 枚举（`MenuForm=0`, `MainForm=1`）与 `GameConfig.UI.UIFormConfig`（含 `UIFormId`、`AssetPath`、`UIGroupName`）。`UIExtension.OpenUIForm(UIFormId)` 在 `GF.DataTable.GetTables().TbUIFormConfig.DataList` 中查找配置，找不到抛异常。新增界面 = 配表 → 跑 Luban 生成 → 生成脚本（§6）→ 直接用枚举打开。
+`Configs/GameConfig/Datas/界面UI.xlsx` → 生成 `GameConfig.UIFormId` 枚举（`MenuForm=0`, `MainForm=1`）与 `GameConfig.UI.UIFormConfig`（含 `UIFormId`、`AssetPath`、`UIGroupName`）。`UIExtension.OpenUIForm(UIFormId)` 在 `ConfigSystem.Instance.Tables.TbUIFormConfig.DataList` 中查找配置，找不到抛异常。新增界面 = 配表 → 跑 Luban 生成 → 生成脚本（§6）→ 直接用枚举打开。
 
 ---
 

@@ -33,7 +33,7 @@ GGF 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 Godot 4 + 
 
 ```
 GameFramework (GameEntry : GodotComponent)          ← 根节点
-├── Base / Event / Resource / DataTable
+├── Base / Event / Resource
 ├── Procedure / Scene / Fsm
 ├── DataNode / ObjectPool / Setting
 ├── Entity / UI / Sound / Localization
@@ -102,7 +102,7 @@ BaseComponent.OnPreDestroy()（节点销毁通知）
 | `GodotGameFrameworkCore/SingletonSystem/*` | `SingletonNode<T>`、`SingletonSystem` 注册表、`UpdateDriver` |
 | `GodotGameFrameworkCore/Variable/VarInt32 / VarSingle / VarString / VarBoolean` | 池化变量的隐式转换封装 |
 | `GodotGameFrameworkCore/Utility/DefaultLogHelper.cs` | `ILogHelper` 实现：桥接 `GD.Print / PushWarning / PushError` |
-| `GodotGameFrameworkCore/Utility/DefaultTextHelper.cs`、`Helper.cs`、`NodeExtension.cs`、`NodeUtility.cs`、`PhysicsCheck2D.cs`、`GTween.cs`、`LayerMask.cs` | 文本格式化、辅助器反射创建、Node 扩展、2D 物理检测、DOTween 风格 Tween 扩展、物理层名↔索引↔位掩码映射 |
+| `GodotGameFrameworkCore/Utility/DefaultTextHelper.cs`、`NodeExtension.cs`、`NodeUtility.cs`、`PhysicsCheck2D.cs`、`GTween.cs`、`LayerMask.cs` | 文本格式化、Node 扩展、2D 物理检测、DOTween 风格 Tween 扩展、物理层名↔索引↔位掩码映射 |
 | `addons/TopMenu/GameFrameworkTopMenu.cs` | 编辑器菜单：日志级别切换（改写 csproj）、打开 res://、user:// 目录 |
 
 ---
@@ -146,8 +146,8 @@ BaseComponent.OnPreDestroy()（节点销毁通知）
 
 ```csharp
 GF.Base  GF.Event  GF.Fsm  GF.Procedure  GF.ObjectPool  GF.DataNode
-GF.Resource  GF.Entity  GF.UI  GF.Sound  GF.DataTable  GF.Localization
-GF.Setting  GF.Scene  GF.WebRequest  GF.Download  GF.Debugger   // 共 17 个
+GF.Resource  GF.Entity  GF.UI  GF.Sound  GF.Localization
+GF.Setting  GF.Scene  GF.WebRequest  GF.Download  GF.Debugger   // 共 16 个
 ```
 
 > ✅（2026-07）`ShutdownType.Restart` 时 `GameEntry.OnInit` 自动调用 `GF.ClearCache()` 清除所有静态缓存，不再存在指向旧实例的问题。

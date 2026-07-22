@@ -24,7 +24,6 @@ namespace GodotGameFramework
         private static EntityComponent m_Entity;
         private static UIComponent m_UI;
         private static SoundComponent m_Sound;
-        private static DataTableComponent m_DataTable;
         private static LocalizationComponent m_Localization;
         private static SettingComponent m_Setting;
         private static BaseComponent m_Base;
@@ -132,17 +131,6 @@ namespace GodotGameFramework
                 return m_Sound;
             }
         }
-        public static DataTableComponent DataTable
-        {
-            get
-            {
-                if (m_DataTable == null)
-                {
-                    m_DataTable = GameEntry.GetComponent<DataTableComponent>();
-                }
-                return m_DataTable;
-            }
-        }
         public static LocalizationComponent Localization
         {
             get
@@ -246,7 +234,6 @@ namespace GodotGameFramework
             m_Entity = null;
             m_UI = null;
             m_Sound = null;
-            m_DataTable = null;
             m_Localization = null;
             m_Setting = null;
             m_Base = null;

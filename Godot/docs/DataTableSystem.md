@@ -21,7 +21,7 @@
 ### 能力清单
 
 - ✅ Excel 配置 → Luban 一键生成强类型 C# 代码 + 二进制数据
-- ✅ 强类型访问：`GF.DataTable.GetTables().TbEntityConfig.Get(id)`，字段全部 `readonly`
+- ✅ 强类型访问：`ConfigSystem.Instance.Tables.TbEntityConfig.Get(id)`，字段全部 `readonly`
 - ✅ 懒加载：首次访问 `Tables` 时才读取所有 `.bytes` 文件
 - ✅ 表间引用解析（Luban `ResolveRef`）
 - ✅ 枚举生成（如 `EntityId.Cat`），配置驱动实体/UI 创建
@@ -48,7 +48,7 @@ Configs/GameConfig/Datas/*.xlsx（策划编辑）
 
 ```
 调用方（EntityExtension / UIExtension / 业务代码）
-    │  GF.DataTable.GetTables().TbXxx...
+    │  ConfigSystem.Instance.Tables.TbXxx...
     ▼
 DataTableComponent (Godot 桥接层，场景节点 "DataTable")
     │  OnInit: GetModule<IDataTableManager>() + SetResourcesComponent(GF.Resource)
@@ -154,7 +154,7 @@ if not defined AI_MODE pause      ← CI/脚本环境设置 AI_MODE 可跳过暂
 
 - `DataTableComponent.OnInit()`（组件注册时）：获取 `IDataTableManager` 模块，调用 `SetResourcesComponent(GF.Resource)` 注入资源组件。**此时不读任何文件。**
 - 首次调用 `GetTables()`（即访问 `DataTableManager.Tables` 属性）→ `Load()` → `new Tables(LoadByteBuf)` → 一次性同步读入所有表的 `.bytes` 并反序列化。
-- **没有任何流程（Procedure）显式预加载数据表**：`ProcedureLaunch` 只校验 `GF.DataTable != null`；真正触发加载的是首个业务访问（如 `ProcedurePrelode` 之后 `EntityExtension.ShowEntity` 内部查 `TbEntityConfig`）。
+- **没有任何流程（Procedure）显式预加载数据表**：`ProcedureLaunch` 只触发 `ConfigSystem.Instance.Load()`；真正触发加载的是首个业务访问（如 `ProcedurePrelode` 之后 `EntityExtension.ShowEntity` 内部查 `TbEntityConfig`）。
 - `LoadByteBuf` 读不到文件会 `throw Exception`（快速失败），`Shutdown()` 只重置 `_init` 标记。
 
 ### 4.2 生成代码结构（以 EntityConfig 为例）
@@ -194,15 +194,15 @@ public enum EntityId { Cat = 0, GanTan = 1, Anger = 2 }
 
 ```csharp
 // 主键访问
-EntityConfig cfg = GF.DataTable.GetTables().TbEntityConfig.Get(1);
-EntityConfig cfgOrNull = GF.DataTable.GetTables().TbEntityConfig.GetOrDefault(999);
+EntityConfig cfg = ConfigSystem.Instance.Tables.TbEntityConfig.Get(1);
+EntityConfig cfgOrNull = ConfigSystem.Instance.Tables.TbEntityConfig.GetOrDefault(999);
 
 // 条件查找（框架内 EntityExtension 的实际写法）
-EntityConfig cfg = GF.DataTable.GetTables().TbEntityConfig.DataList
+EntityConfig cfg = ConfigSystem.Instance.Tables.TbEntityConfig.DataList
     .FirstOrDefault(x => x.EntityId == entityId);
 
 // 游戏侧（CatEntity 的实际写法）
-m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList
+m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList
     .FirstOrDefault(x => x.EntityId == EntityId.Cat);
 ```
 
@@ -219,7 +219,7 @@ m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList
    - C# 代码落至 `TheGame/GameScripts/GameProto/GameConfig/`
    - `.bytes` 数据落至 `TheGame/DataTables/GameConfigs/`
 5. **编译**：`cd GodotProject && dotnet build`（新文件首次生成后建议再执行 `--build-solutions` 刷新解决方案）。
-6. **使用**：`GF.DataTable.GetTables().TbItemConfig.Get(id)`。`Tables.cs` 中的新表属性和加载调用由 Luban 自动补齐，无需手写注册代码。
+6. **使用**：`ConfigSystem.Instance.Tables.TbItemConfig.Get(id)`。`Tables.cs` 中的新表属性和加载调用由 Luban 自动补齐，无需手写注册代码。
 
 热更说明：`.bytes` 属于 `PackType.Config` 类型资源，可打入 Config 子包；`ProcedureUpdate.LoadDownloadedPacks` 会**先加载 Config 包再加载 Resource 包**，保证场景实例化时新配置已生效。注意：由于 `Tables` 是懒加载 + 一次性加载，子包必须在**首次访问 `GetTables()` 之前**完成 `LoadResourcePack`（当前流程顺序 ProcedureUpdate → ProcedurePrelode → 业务访问，天然满足）。
 

@@ -25,6 +25,10 @@ namespace GameConfig.Entity
         /// 愤怒
         /// </summary>
         Anger = 2,
+        /// <summary>
+        /// 闪电球
+        /// </summary>
+        LightningBall = 3,
     }
 
 } 

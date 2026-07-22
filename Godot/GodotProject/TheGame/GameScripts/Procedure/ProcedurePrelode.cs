@@ -31,7 +31,7 @@ public class ProcedurePrelode : ProcedureBase
     /// 进入流程。
     /// 执行所有初始化工作后立即切换到菜单流程。
     /// </summary>
-    protected internal override void OnEnter(ProcedureOwner procedureOwner)
+    protected internal async override void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
 
@@ -71,7 +71,7 @@ public class ProcedurePrelode : ProcedureBase
             Log.Fatal("[ProcedurePrelode] 加载声音组失败（.pck 可能缺失依赖资源）: {0}", ex);
         }
 
-        GF.Archive.LoadAsync();
+        await GF.Archive.LoadAsync();
         if (IsLoadAll())
         {
             ChangeState<ProcedureGame>(procedureOwner);

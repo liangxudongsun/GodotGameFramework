@@ -29,7 +29,7 @@ public partial class AngerEntity : ActorEntity
         base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
         if (isNewInstance)
         {
-            m_Config = GF.DataTable.GetTables().TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
+            m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
             m_Anim = this.GetChild<AnimatedSprite2D>();
         }
         Team = EntityTeam.Enemy;
@@ -70,7 +70,7 @@ public partial class AngerEntity : ActorEntity
             if (m_AttackTimer >= m_Config.AtkSpeed)
             {
                 m_AttackTimer = 0f;
-                _ = ShootAtPlayer();
+                // _ = ShootAtPlayer();
             }
         }
         else
@@ -98,26 +98,26 @@ public partial class AngerEntity : ActorEntity
     /// <summary>
     /// 朝玩家方向发射子弹
     /// </summary>
-    private async Task ShootAtPlayer()
-    {
-        if (m_TargetPlayer == null || !IsInstanceValid(m_TargetPlayer))
-            return;
+    // private async Task ShootAtPlayer()
+    // {
+    //     if (m_TargetPlayer == null || !IsInstanceValid(m_TargetPlayer))
+    //         return;
 
-        Vector2 dir = (m_TargetPlayer.GlobalPosition - GlobalPosition).Normalized();
+    //     Vector2 dir = (m_TargetPlayer.GlobalPosition - GlobalPosition).Normalized();
 
-        BulletData bulletData = new BulletData
-        {
-            Direction = dir,
-            IsPlayerBullet = false,
-            Speed = 250f,
-        };
+    //     BulletData bulletData = new BulletData
+    //     {
+    //         Direction = dir,
+    //         IsPlayerBullet = false,
+    //         Speed = 250f,
+    //     };
 
-        var bullet = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan, bulletData);
-        if (bullet != null)
-        {
-            bullet.Position = GlobalPosition;
-        }
-    }
+    //     var bullet = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan, bulletData);
+    //     if (bullet != null)
+    //     {
+    //         bullet.Position = GlobalPosition;
+    //     }
+    // }
 
     /// <summary>
     /// 受伤时更新血条

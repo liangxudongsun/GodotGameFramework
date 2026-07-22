@@ -18,7 +18,7 @@ using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedure
 public class ProcedureLaunch : ProcedureBase
 {
     private static readonly ConcurrentDictionary<string, bool> m_Components = new ConcurrentDictionary<string, bool>();
-    private static readonly string[] m_NeedComponents = { "Base", "Event", "Fsm", "Setting", "DataNode", "Resource", "Entity", "UI", "Sound", "Localization", "DataTable", "WebRequest", "Download" };
+    private static readonly string[] m_NeedComponents = { "Base", "Event", "Fsm", "Setting", "DataNode", "Resource", "Entity", "UI", "Sound", "Localization", "WebRequest", "Download" };
     /// <summary>
     /// 状态初始化。
     /// </summary>
@@ -51,10 +51,10 @@ public class ProcedureLaunch : ProcedureBase
         m_Components.TryUpdate(m_NeedComponents[7], GF.UI != null, false);
         m_Components.TryUpdate(m_NeedComponents[8], GF.Sound != null, false);
         m_Components.TryUpdate(m_NeedComponents[9], GF.Localization != null, false);
-        m_Components.TryUpdate(m_NeedComponents[10], GF.DataTable != null, false);
-        m_Components.TryUpdate(m_NeedComponents[11], GF.WebRequest != null, false);
-        m_Components.TryUpdate(m_NeedComponents[12], GF.Download != null, false);
+        m_Components.TryUpdate(m_NeedComponents[10], GF.WebRequest != null, false);
+        m_Components.TryUpdate(m_NeedComponents[11], GF.Download != null, false);
         NodePool.Instance.Active(); // 启动节点池
+        LayerMask.Instance.Active(); // 启动层级工具
         if (m_Components.All(x => x.Value))
         {
             Log.Info($"[LaunchProcedure] 框架组件验证通过");

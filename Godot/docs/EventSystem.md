@@ -231,11 +231,9 @@ GF.Event.Unsubscribe(ScoreChangedEventArgs.EventId, OnScoreChanged);
 
 ---
 
-## 6. GameEventSourceGenerator（Tools/）
+## 6. GameEventSourceGenerator（已移除）
 
-仓库根 `Tools/GameEventSourceGenerator/` 包含一套 Roslyn 源生成器 + 分析器（`SourceGenerator/EventInterfaceGenerator.cs`、`GameEventAnalyzer/`）：扫描带 `[EventInterface]` 特性的接口，生成 `XXX_Event` / `XXX_Gen` 事件派发类与 `GameEventHelper.Init()`。
-
-**现状：与 GGF 事件系统无关、未接入。** 生成代码引用 `UnityEngine` / `TEngine` 命名空间及 `GameEvent.EventMgr`（TEngine 的事件管理器），是 Unity/TEngine 时代的遗留工具；当前 Godot 工程中没有任何 `[EventInterface]` 用法，`GodotProject.csproj` 也未引用该生成器。如需在 GGF 中复用，需要把 `Definition.cs` 与代码模板改造为 GGF 的 `GF.Event`/`GameEventArgs` 体系。
+原仓库根 `Tools/GameEventSourceGenerator/` 是一套 TEngine/Unity Roslyn 源生成器 + 分析器，生成 `UnityEngine` 命名空间的代码，与 GGF 事件系统无关且从未接入。**该工具目录已移除（2026-07）。**
 
 ---
 

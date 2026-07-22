@@ -162,7 +162,9 @@ pool.ReleaseAllUnused();
 pool.Capacity = 32;  pool.ExpireTime = 120f;  pool.AutoReleaseInterval = 60f;  pool.Priority = 1;
 ```
 
-### 4.2 自定义池化对象（参考 `TheGame/GameScripts/ObjectPool/TestPoolObject.cs`）
+### 4.2 自定义池化对象
+
+参考 `TheGame/GameScripts/ObjectPool/NodeObject.cs`（NodePool 的 `ObjectBase` 子类）：
 
 ```csharp
 public class MyPoolObject : ObjectBase
@@ -202,7 +204,6 @@ pool.Unspawn(obj.Target);          // → OnUnspawn
 | `EntityManager.EntityGroup`（纯 C# 层） | `Entity Instance Pool ({组名})`，对象 `EntityInstanceObject` | SingleSpawn | **每个实体组一个池**，参数来自 `EntityGroupRes`（ReleaseInterval/Capacity/ExpireTime/Priority）。对象 Name = 场景路径；`Release` 时经 `IEntityHelper.ReleaseEntity` → `QueueFree()`。详见 `EntitySystem.md` §3.2 |
 | `UIManager`（纯 C# 层） | `UI Instance Pool`，对象为 UIManager 私有嵌套 `UIFormInstanceObject` | SingleSpawn | 全局一个 UI 实例池，`CloseUIForm` 后界面实例回池，`OpenUIForm` 复用。详见 `UISystem.md` |
 | `GodotGameFrameworkCore/UI/UIFormInstanceObject.cs` `UIItemInstanceObject.cs` | — | — | Godot 层公开版包装（`UIItemInstanceObject.OnSpawn/OnUnspawn` 自带节点显隐与位置重置）。`UIItemInstanceObject` 面向 UIItem（列表项等）复用场景，**当前尚无运行时调用方**，作为模板保留 |
-| `TheGame/GameScripts/ObjectPool/TestPoolObject.cs` | — | — | 独立参考示例，未在游戏流程中加载 |
 
 > 注意与 **TaskPool**（`DownloadManager`/资源加载中的任务调度器）区分：TaskPool 是"任务队列 + 代理"，其任务对象走 ReferencePool，与本模块无关。
 
@@ -504,4 +505,5 @@ AddInspectorPlugin(m_NodePoolInspector);
 
 - [ ] `UIItemInstanceObject` 的 UIItem 复用链路接入实际调用方（当前为预留模板）
 - [ ] 调试面板：`GetAllObjectInfos()` / `ObjectInfo` 已具备数据能力，缺编辑器/运行时可视化
+- [x] `LoadBinaryTask` / `LoadBinaryAgent` 异步二进制加载通道（✅ 2026-07 完成，见 `ResourceSystem.md` §3.2）
 - [ ] `GF.ObjectPool.Release()` 挂接内存告警（Godot 无 Unity `lowMemory` 回调，需自行监控）
