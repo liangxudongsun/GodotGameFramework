@@ -1,5 +1,3 @@
-# GGF
-
 <div align="center">
 
 **Godot 4.6.2 + C# (.NET 8) Game Framework**
@@ -620,11 +618,12 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 |------|------|------|
 | **Game Framework** | 核心框架来源，Unity 游戏框架 by Jiang Yin | [GitHub](https://github.com/EllanJiang/GameFramework) |
 | **Luban** | 游戏配置解决方案（Excel → C# + 二进制） | [GitHub](https://github.com/focus-creative-games/luban) |
+| **TEngine** | TEngine 是一个简单（新手友好、开箱即用）且强大的 Unity 框架全平台解决方案。对于需要一套上手快、文档清晰、高性能且可拓展性极强的商业级解决方案的开发者或团队来说，TEngine 是一个很好的选择。 | [GitHub](https://github.com/Alex-Rachel/TEngine.git) |
 | **Godot Engine** | 开源游戏引擎 | [GitHub](https://github.com/godotengine/godot) |
 | **Newtonsoft.Json** | 高性能 JSON 框架（本地 .dll 引用） | [GitHub](https://github.com/JamesNK/Newtonsoft.Json) |
 | **Ezpz Inspector** | Godot C# Inspector 增强插件 | [GitHub](https://github.com/Calcatz/ezpz-inspector) |
 | **CodeGraph** | 代码知识图谱 MCP 工具 | [GitHub](https://github.com/colbymchenry/codegraph) |
-
+| **leanclr-godot** | 与 leanclr-unity 类似，在 Godot 发布管线中集成 LeanCLR 运行时与 LeanAOT，使 GDScript / C# 游戏逻辑能以更小体积与更低内存发布到多平台（含 Web）。 | [GitHub](https://github.com/focus-creative-games/leanclr-godot.git) |
 ---
 
 ## 📄 License
