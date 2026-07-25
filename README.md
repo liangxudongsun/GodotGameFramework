@@ -150,7 +150,7 @@ CharacterBody2D + IEntity + IActor
 > 📖 详细文档：[UISystem.md](Godot/docs/UISystem.md)
 
 - ✅ 基于 `IUIManager` 的窗体管理
-- ✅ 4 个默认 UI 层级：Background / Normal / Popup / Tips
+- ✅ 默认 UI 层级： Normal
 - ✅ 界面组管理，支持深度排序 + 遮挡算法
 - ✅ `OpenUIForm(UIFormId)` Luban 配置驱动
 - ✅ Ge partial 提供 `Control, IUIForm` 框架样板，Logic partial 编写生命周期逻辑
