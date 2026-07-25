@@ -36,7 +36,7 @@ namespace GameLogic
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetLocalizationValue());
 			#endregion
-			await LevelManager.Instance.StartLevel("1-1");
+
 			m_LevelLabel.Text = $"{LevelManager.Instance.Level}-{LevelManager.Instance.WaveIndex + 1}";
 			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Fight);
 

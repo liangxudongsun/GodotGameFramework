@@ -1,12 +1,18 @@
 [gd_scene format=3 uid="uid://c2hxcrmwyhjkx"]
 
-[node name="GameOver" type="Control" unique_id=195321382]
+[ext_resource type="Script" uid="uid://btua5ixeid3d8" path="res://TheGame/GameScripts/GameProto/UIGe/GameOver.cs" id="1_pbmgy"]
+
+[node name="GameOver" type="Control" unique_id=195321382 node_paths=PackedStringArray("m_Overlay", "m_Title", "m_BackToMenu")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_pbmgy")
+m_Overlay = NodePath("m_Overlay")
+m_Title = NodePath("Panel/Margin/VBox/m_Title")
+m_BackToMenu = NodePath("Panel/Margin/VBox/m_BackToMenu")
 
 [node name="m_Overlay" type="ColorRect" parent="." unique_id=439735814]
 layout_mode = 1

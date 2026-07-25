@@ -53,8 +53,7 @@ public class ProcedureLaunch : ProcedureBase
         m_Components.TryUpdate(m_NeedComponents[9], GF.Localization != null, false);
         m_Components.TryUpdate(m_NeedComponents[10], GF.WebRequest != null, false);
         m_Components.TryUpdate(m_NeedComponents[11], GF.Download != null, false);
-        NodePool.Instance.Active(); // 启动节点池
-        LayerMask.Instance.Active(); // 启动层级工具
+
         if (m_Components.All(x => x.Value))
         {
             Log.Info($"[LaunchProcedure] 框架组件验证通过");

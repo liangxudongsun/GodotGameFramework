@@ -6,13 +6,13 @@ echo "当前目录: $(pwd)"
 export WORKSPACE="$(realpath ../../)"
 export LUBAN_DLL="${WORKSPACE}/Tools/Luban/Luban.dll"
 export CONF_ROOT="$(pwd)"
-export DATA_OUTPATH="${WORKSPACE}/UnityProject/Assets/AssetRaw/Configs/bytes/"
-export CODE_OUTPATH="${WORKSPACE}/UnityProject/Assets/GameScripts/HotFix/GameProto/GameConfig/"
+export DATA_OUTPATH="${WORKSPACE}/Godot/GodotProject/TheGame/DataTables/GameConfigs"
+export CODE_OUTPATH="${WORKSPACE}/Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/"
 
 cp -R "${CONF_ROOT}/CustomTemplate/ConfigSystem.cs" \
-   "${WORKSPACE}/UnityProject/Assets/GameScripts/HotFix/GameProto/ConfigSystem.cs"
+   "${WORKSPACE}/Godot/GodotProject/TheGame/GameScripts/GameProto/ConfigSystem.cs"
 cp -R "${CONF_ROOT}/CustomTemplate/ExternalTypeUtil.cs" \
-    "${WORKSPACE}/UnityProject/Assets/GameScripts/HotFix/GameProto/ExternalTypeUtil.cs"
+    "${WORKSPACE}/Godot/GodotProject/TheGame/GameScripts/GameProto/ExternalTypeUtil.cs"
 
 dotnet "${LUBAN_DLL}" \
     -t client \

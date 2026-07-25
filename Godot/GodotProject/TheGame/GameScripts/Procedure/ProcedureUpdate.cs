@@ -330,7 +330,7 @@ public class ProcedureUpdate : ProcedureBase
                 m_loginForm?.SetLogState("更新完成", 100);
                 await Task.Delay(500);
 
-                GF.UI.OpenQuestionTipsAsync("更新完成，是否重启？", () =>
+                GF.UI.OpenQuestionTipsAsync("更新完成，是否重启？", "退出", "确认", () =>
                 {
                     HotUpdateSafetyGuard.MarkStartupSuccess();
                     GameEntry.Shutdown(ShutdownType.Quit);
@@ -365,7 +365,7 @@ public class ProcedureUpdate : ProcedureBase
 
         m_loginForm?.SetLogState(message, 100);
 
-        GF.UI.OpenQuestionTipsAsync(message, () =>
+        GF.UI.OpenQuestionTipsAsync(message, "退出", "重试", () =>
         {
             tcs.TrySetResult(false); // 退出
         }, () =>
@@ -843,7 +843,7 @@ public class ProcedureUpdate : ProcedureBase
     /// </summary>
     private async Task TryLoadLocalSubpackagesAsync()
     {
-        string manifestPath = Path.Combine(SubpackDir, ResourceManager.GameFrameworkVersionData);
+        string manifestPath = Path.Combine(ProjectSettings.GlobalizePath("user://"), ResourceManager.GameFrameworkVersionData);
         if (!File.Exists(manifestPath))
         {
             Log.Info("[ProcedureUpdate] 本地子包清单不存在，跳过: {0}", manifestPath);

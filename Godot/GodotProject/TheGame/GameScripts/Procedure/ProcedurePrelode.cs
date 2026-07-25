@@ -9,6 +9,7 @@ using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Procedure;
 using GodotGameFramework;
+using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
@@ -70,7 +71,8 @@ public class ProcedurePrelode : ProcedureBase
         {
             Log.Fatal("[ProcedurePrelode] 加载声音组失败（.pck 可能缺失依赖资源）: {0}", ex);
         }
-
+        NodePool.Instance.Active(); // 启动节点池
+        LayerMask.Instance.Active(); // 启动层级工具
         await GF.Archive.LoadAsync();
         if (IsLoadAll())
         {

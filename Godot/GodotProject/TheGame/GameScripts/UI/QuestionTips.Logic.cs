@@ -48,11 +48,13 @@ namespace GameLogic
 			}
 		}
 
-		public void SetAction(string content, Action cancel, Action confirm)
+		public void SetAction(string content, string cancelTxt, string confirmTxt, Action cancel, Action confirm)
 		{
 			m_Label.Text = content;
 			m_Cancel = cancel;
 			m_Confirm = confirm;
+			m_Btn_Cancle.Text = cancelTxt;
+			m_Btn_Confirm.Text = confirmTxt;
 		}
 
 		/// <summary>

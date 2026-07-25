@@ -1,3 +1,4 @@
+using GameConfig;
 using GameConfig.Character;
 using GameConfig.Constant;
 using GameConfig.Entity;
@@ -9,6 +10,7 @@ using GodotGameFramework;
 using GodotGameFramework.Entity;
 using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
+using GodotGameFramework.UI;
 using System;
 using System.Linq;
 
@@ -159,11 +161,18 @@ public partial class CatEntity : ActorEntity
 			m_Anim.Play(m_IsMoving ? "Walk" : "Idle");
 		}
 	}
+
+	protected override void Die()
+	{
+		base.Die();
+		GF.UI.OpenUIForm(UIFormId.GameOver);
+	}
+
 	private void OnBodyEntered(Node2D body)
 	{
 		if (body is ActorEntity actor && !actor.IsDead)
 		{
-			if (actor.Team == EntityTeam.Enemy)
+			if (actor.Team == EntityTeam.Enemy && !IsDead)
 			{
 				Hurt(actor.Id, 20);
 			}

@@ -25,6 +25,10 @@ namespace GameConfig
         /// 设置界面
         /// </summary>
         SettingForm = 2,
+        /// <summary>
+        /// 结束界面
+        /// </summary>
+        GameOver = 3,
     }
 
 } 

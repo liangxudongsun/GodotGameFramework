@@ -299,7 +299,9 @@ Configs/                            ← Repo root (sibling to Godot/)
       角色.xlsx                     ← Character/actor configs
     Defines/                        ← Luban type definitions (XML)
     luban.conf                      ← Luban configuration
-    gen_code_bin_to_project.bat/sh  ← Generate C# code + binary data
+    gen_code_bin_to_project.bat/sh  ← 生成 C# 代码 + 二进制数据（Godot client）
+    gen_code_bin_to_project_lazyload.bat/sh  ← 同上 + 懒加载模板
+    gen_code_bin_to_server.bat/sh  ← 服务端代码生成
 ```
 
 Generated code: `TheGame/GameScripts/GameProto/GameConfig/` (e.g., `EntityConfig.cs`, `EntityId.cs`, `TbEntityConfig.cs`). Auto-generated `ResourcesCollectionConstant.cs` via the Resources editor plugin.

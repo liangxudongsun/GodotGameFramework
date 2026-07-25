@@ -1,18 +1,16 @@
-using GameConfig;
-using GameConfig.Constant;
 using GameFramework.UI;
 using Godot;
-using GodotGameFramework;
-using GodotGameFramework.Localization;
-using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
+using GodotGameFramework.Localization;
+using GodotGameFramework;
+using GameConfig;
 namespace GameLogic
 {
 	/// <summary>
-	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖，可安全编写业务逻辑）。
+	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
-	public partial class MenuForm
+	public partial class GameOver
 	{
 		/// <summary>
 		/// 初始化界面。
@@ -25,39 +23,40 @@ namespace GameLogic
 		/// <param name="userData">用户自定义数据。</param>
 		public void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
 		{
+			#region 框架逻辑
 			m_SerialId = serialId;
 			m_UIFormAssetName = uiFormAssetName;
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
 			UIStringKeys.ForEach(key => key.SetLocalizationValue());
+			#endregion
 			if (isNewInstance)
 			{
-				m_SettingButton.Pressed += OnSettingButtonPressed;
-				m_StartButton.Pressed += OnStartButtonPressed;
+				#region 界面逻辑
+				m_BackToMenu.Pressed += OnBackToMenuPressed;
+				#endregion
 			}
 		}
-		private async void OnStartButtonPressed()
+
+		private void OnBackToMenuPressed()
 		{
 			GF.UI.CloseUIForm(this);
-			await LevelManager.Instance.StartLevel("1-1");
+			LevelManager.Instance.ExitGame();
 		}
 
-
-		private void OnSettingButtonPressed()
-		{
-			GF.UI.OpenUIForm(UIFormId.SettingForm);
-		}
 		/// <summary>
 		/// 界面回收。
 		///
 		/// </summary>
 		public void OnRecycle()
 		{
+			#region 框架逻辑
 			m_SerialId = 0;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = true;
 			Visible = false;
+			#endregion
 		}
 
 		/// <summary>
@@ -65,8 +64,9 @@ namespace GameLogic
 		/// </summary>
 		public void OnOpen(object userData)
 		{
+			#region 框架逻辑
 			Visible = true;
-			GF.Sound.PlayBGM(ResourcesCollectionConstant.Music_Menu);
+			#endregion
 		}
 
 		/// <summary>
@@ -74,7 +74,9 @@ namespace GameLogic
 		/// </summary>
 		public void OnClose(bool isShutdown, object userData)
 		{
+			#region 框架逻辑
 			Visible = false;
+			#endregion
 		}
 
 		/// <summary>
@@ -130,7 +132,9 @@ namespace GameLogic
 		/// </summary>
 		public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
 		{
+			#region 框架逻辑
 			m_DepthInUIGroup = depthInUIGroup;
+			#endregion
 		}
 	}
 }

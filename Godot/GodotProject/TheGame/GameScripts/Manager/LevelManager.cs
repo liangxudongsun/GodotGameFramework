@@ -1,9 +1,13 @@
+using GameConfig;
 using GameConfig.Constant;
 using GameConfig.Entity;
 using GameConfig.Level;
+using GameLogic;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
+using GodotGameFramework.NodePool;
+using GodotGameFramework.UI;
 using GodotGameFrameworkCore.SingletonSystem;
 using System;
 using System.Linq;
@@ -11,6 +15,7 @@ using System.Threading.Tasks;
 
 public partial class LevelManager : SingletonNode<LevelManager>
 {
+    private MainForm m_MainForm;
     private LevelConfig m_LevelConfig;
     private Node2D m_Scene;
     private Line2D m_Line2D;
@@ -28,6 +33,7 @@ public partial class LevelManager : SingletonNode<LevelManager>
         Cat.GlobalPosition = spawnPoint.GlobalPosition;
         StartWave();
         Level = level;
+        m_MainForm = await GF.UI.OpenUIFormAsync<MainForm>(UIFormId.MainForm);
     }
 
     public async void StartWave(int waveIndex = 0)
@@ -53,6 +59,15 @@ public partial class LevelManager : SingletonNode<LevelManager>
         StartWave(WaveIndex);
     }
 
+
+    public void ExitGame()
+    {
+        GF.UI.CloseUIForm(m_MainForm);
+        GF.UI.OpenUIForm(UIFormId.MenuForm);
+        GF.Entity.HideAllLoadedEntities();
+        NodePool.ReleaseAll();
+        GF.Scene.UnloadScene(m_LevelConfig.Map);
+    }
 
 
 }

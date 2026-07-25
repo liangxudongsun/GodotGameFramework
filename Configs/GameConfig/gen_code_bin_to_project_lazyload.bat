@@ -4,11 +4,11 @@ echo %CD%
 set WORKSPACE=../..
 set LUBAN_DLL=%WORKSPACE%\Tools\Luban\Luban.dll
 set CONF_ROOT=.
-set DATA_OUTPATH=%WORKSPACE%/UnityProject/Assets/AssetRaw/Configs/bytes/
-set CODE_OUTPATH=%WORKSPACE%/UnityProject/Assets/GameScripts/HotFix/GameProto/GameConfig/
+set DATA_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/DataTables/GameConfigs
+set CODE_OUTPATH=%WORKSPACE%/Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/
 
-copy /y "%CONF_ROOT%\CustomTemplate\ConfigSystem.cs" "%WORKSPACE%\UnityProject\Assets\GameScripts\HotFix\GameProto\ConfigSystem.cs"
-copy /y "%CONF_ROOT%\CustomTemplate\ExternalTypeUtil.cs" "%WORKSPACE%\UnityProject\Assets\GameScripts\HotFix\GameProto\ExternalTypeUtil.cs"
+copy /y "%CONF_ROOT%\CustomTemplate\ExternalTypeUtil.cs" "%WORKSPACE%\Godot\GodotProject\TheGame\GameScripts\GameProto\ExternalTypeUtil.cs"
+copy /y "%CONF_ROOT%\CustomTemplate\ConfigSystem.cs" "%WORKSPACE%\Godot\GodotProject\TheGame\GameScripts\GameProto\ConfigSystem.cs"
 
 dotnet %LUBAN_DLL% ^
     -t client ^
@@ -18,6 +18,5 @@ dotnet %LUBAN_DLL% ^
     --customTemplateDir %CONF_ROOT%\CustomTemplate\CustomTemplate_Client_LazyLoad ^
     -x code.lineEnding=crlf ^
     -x outputCodeDir=%CODE_OUTPATH% ^
-    -x outputDataDir=%DATA_OUTPATH% 
+    -x outputDataDir=%DATA_OUTPATH%
 if not defined AI_MODE pause
-
