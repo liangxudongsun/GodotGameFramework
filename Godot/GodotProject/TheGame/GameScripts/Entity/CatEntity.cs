@@ -106,19 +106,40 @@ public partial class CatEntity : ActorEntity
 	{
 		Vector2 dir = GetAimDirection();
 
-		var entity = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan,
-			new BulletData
-			{
-				Direction = dir,
-				IsPlayerBullet = true,
-				Speed = 300f,
-			});
-
-		if (entity != null)
+		switch (m_Config.BulletId)
 		{
-			entity.GlobalPosition = m_ShotPos.GlobalPosition;
-			GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Shoot);
+			case EntityId.GanTan:
+				var entity1 = await GF.Entity.ShowEntityAsync<GanTanEntity>(EntityId.GanTan,
+				new BulletData
+				{
+					Direction = dir,
+					IsPlayerBullet = true,
+					Speed = 300f,
+				});
+
+				if (entity1 != null)
+				{
+					entity1.GlobalPosition = m_ShotPos.GlobalPosition;
+					GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Shoot);
+				}
+				break;
+			case EntityId.LightningBall:
+				var entity2 = await GF.Entity.ShowEntityAsync<LightningBall>(EntityId.LightningBall,
+					new BulletData
+					{
+						Direction = dir,
+						IsPlayerBullet = true,
+						Speed = 300f,
+					});
+
+				if (entity2 != null)
+				{
+					entity2.GlobalPosition = m_ShotPos.GlobalPosition;
+					GF.Sound.PlaySFX(ResourcesCollectionConstant.SFX_Shoot);
+				}
+				break;
 		}
+
 	}
 
 	private void KeybordMove()

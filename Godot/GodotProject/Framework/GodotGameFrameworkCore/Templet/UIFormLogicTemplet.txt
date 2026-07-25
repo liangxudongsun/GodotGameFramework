@@ -2,6 +2,7 @@ using GameFramework.UI;
 using Godot;
 using GodotGameFramework.UI;
 using System;
+using GodotGameFramework.Localization;
 namespace _NAMESPACE_
 {
 	/// <summary>

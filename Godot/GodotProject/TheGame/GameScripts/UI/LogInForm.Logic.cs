@@ -27,7 +27,7 @@ namespace GameLogic
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
-			UIStringKeys.ForEach(key => key.SetValue());
+			UIStringKeys.ForEach(key => key.SetLocalizationValue());
 			#endregion
 		}
 

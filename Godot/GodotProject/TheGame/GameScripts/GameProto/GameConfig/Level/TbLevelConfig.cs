@@ -19,10 +19,10 @@ public partial class TbLevelConfig
     
     public TbLevelConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, Level.LevelConfig>();
-        _dataList = new System.Collections.Generic.List<Level.LevelConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, Level.LevelConfig>(n);
+        _dataList = new System.Collections.Generic.List<Level.LevelConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             Level.LevelConfig _v;
             _v = global::GameConfig.Level.LevelConfig.DeserializeLevelConfig(_buf);
@@ -31,10 +31,10 @@ public partial class TbLevelConfig
         }
     }
 
-    public System.Collections.Generic.Dictionary<int, Level.LevelConfig> DataMap => _dataMap;
-    public System.Collections.Generic.List<Level.LevelConfig> DataList => _dataList;
+    public System.Collections.Generic.IReadOnlyDictionary<int, Level.LevelConfig> DataMap => _dataMap;
+    public System.Collections.Generic.IReadOnlyList<Level.LevelConfig> DataList => _dataList;
 
-    public Level.LevelConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public Level.LevelConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public Level.LevelConfig Get(int key) => _dataMap[key];
     public Level.LevelConfig this[int key] => _dataMap[key];
 

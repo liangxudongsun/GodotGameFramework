@@ -3669,3 +3669,38 @@ b471108 修改鲁班调用方式
 README.md
 ---
 
+## Session End: 20260725_163711
+### Uncommitted Changes
+"Configs/Localization/\346\234\254\345\234\260\345\214\226.xlsx"
+Godot/.codegraph/daemon.pid
+Godot/CLAUDE.md
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/UIFormLogicTemplet.txt
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Templet/UIFormTemplet.txt
+Godot/GodotProject/Framework/GodotGameFrameworkCore/UI/IStringKey.cs
+Godot/GodotProject/TheGame/DataTables/Localizations/ChineseSimplified.txt
+Godot/GodotProject/TheGame/DataTables/Localizations/English.txt
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/GameOver.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/GameOver.cs.uid
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/LogInForm.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/MainForm.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/MenuForm.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/QuestionTips.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/UIGe/SettingForm.cs
+Godot/GodotProject/TheGame/GameScripts/ObjectPool/NodePool.cs
+Godot/GodotProject/TheGame/GameScripts/UI/GameOver.Logic.cs
+Godot/GodotProject/TheGame/GameScripts/UI/GameOver.Logic.cs.uid
+Godot/GodotProject/TheGame/GameScripts/UI/LogInForm.Logic.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MainForm.Logic.cs
+Godot/GodotProject/TheGame/GameScripts/UI/MenuForm.Logic.cs
+Godot/GodotProject/TheGame/GameScripts/UI/QuestionTips.Logic.cs
+Godot/GodotProject/TheGame/GameScripts/UI/SettingForm.Logic.cs
+Godot/GodotProject/TheGame/UIs/GameOver.tscn
+Godot/GodotProject/TheGame/UIs/MainForm.tscn
+Godot/GodotProject/TheGame/UIs/MenuForm.tscn
+Godot/GodotProject/addons/TopMenu/GameFrameworkTopMenu.cs
+Godot/docs/CodeHotUpdateDesign.md
+Godot/docs/README.md
+Godot/docs/ResourceHotUpdateAudit.md
+Godot/docs/ResourceSystem.md
+---
+

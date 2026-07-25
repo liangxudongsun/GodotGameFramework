@@ -313,4 +313,4 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 - [ ] Package 模式的本地子包加载（读取安装目录 `subpackages/GameFrameworkVersion.dat`，`SubPack` 常量已预留）
 - [x] `GameFramework/Resource/` Unity 遗留文件清理（47 个文件已删除，保留 25 个实际使用文件）✅ 2026-07
 - [x] `LoadAssetDependencyAssetCallback`/`LoadSceneDependencyAssetCallback` 清理（Godot 自动管理资源依赖）✅ 2026-07
-- [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`）
+- [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`；⚠️ 已随代码热更方案搁置，等待华佗团队 Godot 适配）

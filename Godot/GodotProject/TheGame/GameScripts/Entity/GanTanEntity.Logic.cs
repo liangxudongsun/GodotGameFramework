@@ -91,7 +91,6 @@ namespace GameLogic
 				m_Direction = data.Direction.Normalized();
 				m_IsPlayerBullet = data.IsPlayerBullet;
 				m_Speed = data.Speed > 0 ? data.Speed : m_Speed;
-				// Node2D.Rotation 单位是弧度，Vector2.Angle() 即 Atan2(Y, X)
 				Rotation = m_Direction.Angle();
 			}
 		}

@@ -19,10 +19,10 @@ public partial class TbUIFormConfig
     
     public TbUIFormConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, UI.UIFormConfig>();
-        _dataList = new System.Collections.Generic.List<UI.UIFormConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, UI.UIFormConfig>(n);
+        _dataList = new System.Collections.Generic.List<UI.UIFormConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             UI.UIFormConfig _v;
             _v = global::GameConfig.UI.UIFormConfig.DeserializeUIFormConfig(_buf);
@@ -31,10 +31,10 @@ public partial class TbUIFormConfig
         }
     }
 
-    public System.Collections.Generic.Dictionary<int, UI.UIFormConfig> DataMap => _dataMap;
-    public System.Collections.Generic.List<UI.UIFormConfig> DataList => _dataList;
+    public System.Collections.Generic.IReadOnlyDictionary<int, UI.UIFormConfig> DataMap => _dataMap;
+    public System.Collections.Generic.IReadOnlyList<UI.UIFormConfig> DataList => _dataList;
 
-    public UI.UIFormConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public UI.UIFormConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public UI.UIFormConfig Get(int key) => _dataMap[key];
     public UI.UIFormConfig this[int key] => _dataMap[key];
 

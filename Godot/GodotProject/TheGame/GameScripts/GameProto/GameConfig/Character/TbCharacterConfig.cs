@@ -19,10 +19,10 @@ public partial class TbCharacterConfig
     
     public TbCharacterConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, Character.CharacterConfig>();
-        _dataList = new System.Collections.Generic.List<Character.CharacterConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, Character.CharacterConfig>(n);
+        _dataList = new System.Collections.Generic.List<Character.CharacterConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             Character.CharacterConfig _v;
             _v = global::GameConfig.Character.CharacterConfig.DeserializeCharacterConfig(_buf);
@@ -31,10 +31,10 @@ public partial class TbCharacterConfig
         }
     }
 
-    public System.Collections.Generic.Dictionary<int, Character.CharacterConfig> DataMap => _dataMap;
-    public System.Collections.Generic.List<Character.CharacterConfig> DataList => _dataList;
+    public System.Collections.Generic.IReadOnlyDictionary<int, Character.CharacterConfig> DataMap => _dataMap;
+    public System.Collections.Generic.IReadOnlyList<Character.CharacterConfig> DataList => _dataList;
 
-    public Character.CharacterConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public Character.CharacterConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public Character.CharacterConfig Get(int key) => _dataMap[key];
     public Character.CharacterConfig this[int key] => _dataMap[key];
 

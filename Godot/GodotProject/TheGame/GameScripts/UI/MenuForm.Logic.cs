@@ -3,6 +3,7 @@ using GameConfig.Constant;
 using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Localization;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
@@ -11,7 +12,7 @@ namespace GameLogic
 	/// <summary>
 	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖，可安全编写业务逻辑）。
 	/// </summary>
-	public partial class MenuForm : IStringKey
+	public partial class MenuForm
 	{
 		/// <summary>
 		/// 初始化界面。
@@ -29,7 +30,7 @@ namespace GameLogic
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
-			UIStringKeys.ForEach(key => key.SetValue());
+			UIStringKeys.ForEach(key => key.SetLocalizationValue());
 			if (isNewInstance)
 			{
 				m_SettingButton.Pressed += OnSettingButtonPressed;
@@ -130,13 +131,6 @@ namespace GameLogic
 		public void OnDepthChanged(int uiGroupDepth, int depthInUIGroup)
 		{
 			m_DepthInUIGroup = depthInUIGroup;
-		}
-
-		public void SetValue()
-		{
-			m_Title.Text = GF.Localization.GetString("BulletShoot");
-			m_Subtitle.Text = GF.Localization.GetString("Demo");
-			// m_StartButton.Text = GF.Localization.GetString("Start");
 		}
 	}
 }

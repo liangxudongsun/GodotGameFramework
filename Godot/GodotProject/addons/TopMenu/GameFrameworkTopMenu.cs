@@ -26,8 +26,10 @@ public partial class GameFrameworkTopMenu : EditorPlugin
     };
     private static readonly (string Label, string Define)[] Folder = new[]
     {
-        ("Data Path", ProjectSettings.GlobalizePath("res://")),
-        ("User Data Path", ProjectSettings.GlobalizePath("user://"))
+        ("Project Data Path", ProjectSettings.GlobalizePath("res://")),
+        ("User Data Path", ProjectSettings.GlobalizePath("user://")),
+        ("GameConfig Data Path", Path.Combine(ProjectSettings.GlobalizePath("res://"),"../../Configs/GameConfig/")),
+        ("Localization Data Path", Path.Combine(ProjectSettings.GlobalizePath("res://"),"../../Configs/Localization/"))
     };
 
     public override void _EnterTree()

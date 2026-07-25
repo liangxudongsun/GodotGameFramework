@@ -67,6 +67,5 @@ public sealed partial class EntityConfig : Luban.BeanBase
         + "}";
     }
 }
-
 }
 

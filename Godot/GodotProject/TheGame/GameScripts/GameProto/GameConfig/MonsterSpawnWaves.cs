@@ -43,6 +43,5 @@ public sealed partial class MonsterSpawnWaves : Luban.BeanBase
         + "}";
     }
 }
-
 }
 

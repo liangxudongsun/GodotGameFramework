@@ -19,7 +19,7 @@ public sealed partial class LevelConfig : Luban.BeanBase
         Id = _buf.ReadInt();
         Level = _buf.ReadString();
         Map = _buf.ReadString();
-        {int __n0 = System.Math.Min(_buf.ReadSize(), _buf.Size);Waves = new MonsterSpawnWaves[__n0];for(var __index0 = 0 ; __index0 < __n0 ; __index0++) { MonsterSpawnWaves __e0;__e0 = global::GameConfig.MonsterSpawnWaves.DeserializeMonsterSpawnWaves(_buf); Waves[__index0] = __e0;}}
+        {int __n0 = _buf.ReadSize(); Waves = new MonsterSpawnWaves[__n0];for(var __index0 = 0 ; __index0 < __n0 ; __index0++) { MonsterSpawnWaves __e0;__e0 = global::GameConfig.MonsterSpawnWaves.DeserializeMonsterSpawnWaves(_buf); Waves[__index0] = __e0;}}
     }
 
     public static LevelConfig DeserializeLevelConfig(ByteBuf _buf)
@@ -59,6 +59,5 @@ public sealed partial class LevelConfig : Luban.BeanBase
         + "}";
     }
 }
-
 }
 

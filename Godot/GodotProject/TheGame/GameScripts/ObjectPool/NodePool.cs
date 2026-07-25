@@ -303,6 +303,57 @@ public partial class NodePool : SingletonNode<NodePool>
             container.AddChild(node);
         s_NodeToContainer.Remove(id);
     }
+    /// <summary>
+    /// 回收所有已获取的节点到池中。
+    /// </summary>
+    public static void ReleaseAll()
+    {
+        // 先收集所有 ID，避免迭代时修改字典
+        var ids = new List<ulong>(s_NodeToContainer.Keys);
+        foreach (var id in ids)
+        {
+            // 可能已被前一轮 Release 清理
+            if (!s_NodeToContainer.ContainsKey(id))
+                continue;
+
+            var node = GodotObject.InstanceFromId(id) as Node;
+            if (node is IPoolable poolable)
+            {
+                Release(poolable);
+            }
+            else if (node == null)
+            {
+                // 节点已被外部释放，清理残留的追踪记录
+                s_NodeToContainer.Remove(id);
+            }
+        }
+    }
+    /// <summary>
+    /// 回收指定场景的所有已获取节点到池中。
+    /// </summary>
+    /// <param name="scenePath">场景资源路径（同时也是池名称）。</param>
+    public static void ReleaseAll(string scenePath)
+    {
+        if (string.IsNullOrEmpty(scenePath))
+            return;
+
+        var ids = new List<ulong>(s_NodeToContainer.Keys);
+        foreach (var id in ids)
+        {
+            if (!s_NodeToContainer.TryGetValue(id, out var container) || container.PoolName != scenePath)
+                continue;
+
+            var node = GodotObject.InstanceFromId(id) as Node;
+            if (node is IPoolable poolable)
+            {
+                Release(poolable);
+            }
+            else if (node == null)
+            {
+                s_NodeToContainer.Remove(id);
+            }
+        }
+    }
 
     // ── 容器查找 ──
 

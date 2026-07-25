@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download, Debugger, Archive.
 
-> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Debugger / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download / Archive + hot-update design & audit). See `docs/README.md` for the index. Prefer those docs over this file for system details.
+> 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Debugger / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download / Archive + 资源热更审计; C# 程序集热更方案已搁置等待华佗团队适配). See `docs/README.md` for the index. Prefer those docs over this file for system details.
 
 - **Godot .NET SDK**: `Godot.NET.Sdk/4.7.0` (NuGet)
 - **Build**: `cd GodotProject && dotnet build`
@@ -163,7 +163,7 @@ TheGame UIs: `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverl
 
 Procedures manage top-level game states. TheGame procedure chain:
 - `ProcedureLaunch` — validates all framework components, then → `ProcedureUpdate`
-- `ProcedureUpdate` — hot-update: version check, concurrent pack download via `GF.Download`, integrity verify, subpackage loading (see `docs/DownloadSystem.md`), then → `ProcedurePrelode`
+- `ProcedureUpdate` — resource hot-update (active): version check, concurrent pack download via `GF.Download`, integrity verify, subpackage loading (see `docs/DownloadSystem.md`), then → `ProcedurePrelode`；C# 程序集热更已搁置等待华佗团队 Godot 适配
 - `ProcedurePrelode` — loads entity/UI/sound groups and localization, then → `ProcedureGame`
 - `ProcedureGame` — gameplay loop, opens `MenuForm` on entry
 
@@ -360,7 +360,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ### Subpackage System (Updatable mode)
 
-`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Audit trail: `docs/ResourceHotUpdateAudit.md`.
+`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
 
 `PackVersionList` structure (`PackVersionList.cs`):
 ```csharp

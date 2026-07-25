@@ -1,20 +1,18 @@
 using GameConfig;
 using GameConfig.Constant;
-using GameConfig.Entity;
 using GameFramework.Event;
 using GameFramework.UI;
-using Godot;
 using GodotGameFramework;
-using GodotGameFramework.Entity;
+using GodotGameFramework.Localization;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
-using System;
+
 namespace GameLogic
 {
 	/// <summary>
 	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
-	public partial class MainForm : IStringKey
+	public partial class MainForm
 	{
 		private CatEntity m_Cat => LevelManager.Instance.Cat;
 		private float m_Interal = 0;
@@ -36,7 +34,7 @@ namespace GameLogic
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
-			UIStringKeys.ForEach(key => key.SetValue());
+			UIStringKeys.ForEach(key => key.SetLocalizationValue());
 			#endregion
 			await LevelManager.Instance.StartLevel("1-1");
 			m_LevelLabel.Text = $"{LevelManager.Instance.Level}-{LevelManager.Instance.WaveIndex + 1}";
@@ -171,11 +169,6 @@ namespace GameLogic
 			m_DepthInUIGroup = depthInUIGroup;
 		}
 
-		public void SetValue()
-		{
-			m_ScoreLabel.Text = GF.Localization.GetString("MainForm.Score");
-			m_TimerLabel.Text = $"{GF.Localization.GetString("MainForm.Timer")}{LevelManager.Instance.Timer}";
-		}
 		private void OnScoreChanged(object sender, GameEventArgs e)
 		{
 			m_ScoreLabel.Text = $"{GF.Localization.GetString("MainForm.Score")}{GF.Archive.CurrentData.Score.ToString()}";

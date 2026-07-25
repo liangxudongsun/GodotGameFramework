@@ -3,5 +3,8 @@
 ##type	int	string	string
 ##group			
 ##	index	键	值
-	1	BulletShoot	The BulletShoot
-	2	Demo	Godot GameFrameWork Demo Game
+	1	MonsterSurviver	Monster Surviver
+	2	MoveRule	WASD To Move Character
+	3	StartGame	Start
+	4	MainForm.Score	Score:
+	5	MainForm.Timer	Timer:

@@ -19,10 +19,10 @@ public partial class TbEntityConfig
     
     public TbEntityConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, Entity.EntityConfig>();
-        _dataList = new System.Collections.Generic.List<Entity.EntityConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, Entity.EntityConfig>(n);
+        _dataList = new System.Collections.Generic.List<Entity.EntityConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             Entity.EntityConfig _v;
             _v = global::GameConfig.Entity.EntityConfig.DeserializeEntityConfig(_buf);
@@ -31,10 +31,10 @@ public partial class TbEntityConfig
         }
     }
 
-    public System.Collections.Generic.Dictionary<int, Entity.EntityConfig> DataMap => _dataMap;
-    public System.Collections.Generic.List<Entity.EntityConfig> DataList => _dataList;
+    public System.Collections.Generic.IReadOnlyDictionary<int, Entity.EntityConfig> DataMap => _dataMap;
+    public System.Collections.Generic.IReadOnlyList<Entity.EntityConfig> DataList => _dataList;
 
-    public Entity.EntityConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public Entity.EntityConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public Entity.EntityConfig Get(int key) => _dataMap[key];
     public Entity.EntityConfig this[int key] => _dataMap[key];
 

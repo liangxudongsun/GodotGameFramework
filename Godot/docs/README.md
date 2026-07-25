@@ -41,8 +41,8 @@
 |------|------|
 | [WebRequestSystem.md](WebRequestSystem.md) | SendRequestAsync、超时约定、与 Download 模块的分工（小文本 vs 大文件） |
 | [DownloadSystem.md](DownloadSystem.md) | 下载模块全貌：任务队列/断点续传/校验/DownloadFileAsync/热更集成/错误语义表 |
-| [ResourceHotUpdateAudit.md](ResourceHotUpdateAudit.md) | 资源热更审计：风险项清单与修复状态（2026-07 复审，致命项全部修复） |
-| [CodeHotUpdateDesign.md](CodeHotUpdateDesign.md) | C# 程序集热更方案设计（ALC，未实施；下载/安全防护等前置能力已落地） |
+| [ResourceHotUpdateAudit.md](ResourceHotUpdateAudit.md) | 资源热更审计：风险项清单与修复状态（2026-07 复审，致命项全部修复 ✅，维持现状维护） |
+| [CodeHotUpdateDesign.md](CodeHotUpdateDesign.md) | ⚠️ **已搁置** — C# 程序集热更方案设计（ALC），等待华佗团队完成 Godot 热更适配后重启
 
 ## 其他
 

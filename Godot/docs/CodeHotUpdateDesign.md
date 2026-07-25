@@ -1,7 +1,8 @@
 # C# 程序集热更方案 (Windows + Android)
 
-> **实施状态（2026-07 核实）**：ALC 程序集热更（Bootstrap / HotUpdateManager / 壳+逻辑分离）**尚未实施**，本文档仍为方案设计。
-> 配套基础设施已先行落地，实施时可直接复用：
+> ⚠️ **搁置状态（2026-07-25）**：本文档描述的 ALC 程序集热更方案（Bootstrap / HotUpdateManager / 壳+逻辑分离）**已暂时搁置**，等待**华佗团队**完成对 Godot 的热更适配后再继续实施。以下为原设计方案，配套基础设施（下载通道、资源热更管线、崩溃安全守护）已先行落地，重启时可直接复用，详见下方"配套基础设施"。
+>
+> **配套基础设施（已落地，搁置期间不动）：**
 > - 统一下载通道 `GF.Download`（`GodotGameFrameworkCore/Download/`，断点续传 + 大小/SHA256 校验，详见 `DownloadSystem.md`）
 > - 资源热更管线 `ProcedureUpdate`（多包并发下载、版本比对、失败回退）
 > - 崩溃安全守护 `HotUpdateSafetyGuard`（`GodotGameFrameworkCore/HotUpdate/`，命名空间 `GodotGameFramework.HotUpdate` 已建立）
@@ -694,7 +695,9 @@ EOF
 
 ## 11. 实施路线图
 
-### Phase 1: 基础 ALC 加载（2-3 天）
+> ⚠️ **全路线图暂缓**（2026-07-25）：以下所有 Phase 等待华佗团队 Godot 热更适配完成后重启。配套基础设施（下载通道、资源热更管线、崩溃安全守护）已先行落地并持续维护。
+
+### Phase 1: 基础 ALC 加载（2-3 天）（搁置中）
 
 - [ ] 创建 `GodotProject.Bootstrap.csproj`（2026-07 核实：仓库中不存在该工程，此前勾选无效）
 - [ ] 实现 `HotUpdateLoadContext`
