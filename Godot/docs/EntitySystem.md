@@ -128,7 +128,7 @@ Luban 表 `TbEntityConfig`（Excel 源：`Configs/GameConfig/Datas/实体.xlsx`�
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `Id` | int | 表内主键 |
-| `EntityId` | enum `GameConfig.Entity.EntityId` | Cat=0 / GanTan=1 / Anger=2 |
+| `EntityId` | enum `GameConfig.Entity.EntityId` | Cat=0 / GanTan=1 / Anger=2 / LightningBall=3 |
 | `AssetPath` | string | `.tscn` 场景路径 |
 | `EntityGroupName` | string | 所属实体组 |
 | `Priority` | int | 加载优先级（⚠️ 扩展方法当前未传递此值，实际恒用默认 0） |
@@ -213,10 +213,10 @@ GF.Entity.HideEntity(this);        // → OnHide → OnRecycle → 回池，节�
 ## 5. TheGame 实体继承树
 
 ```
-Godot CharacterBody2D                     Godot Area2D
-    └── ActorEntity (IEntity, IActor)         └── GanTanEntity (IEntity)  ← 子弹
-         ├── CatEntity    ← 玩家猫                 ├─ Ge:    GameProto/EntityGe/GanTanEntity.cs（生成，勿改）
-         └── AngerEntity  ← 敌人                   └─ Logic: Entity/GanTanEntity.Logic.cs（手写）
+Godot CharacterBody2D                     Godot Area2D                             Godot Node2D
+    └── ActorEntity (IEntity, IActor)         ├── GanTanEntity (IEntity)  ← 子弹     └── DropItem (IPoolable) ← 掉落物
+         ├── CatEntity    ← 玩家猫            └── LightningBall (IEntity) ← 电球
+         └── AngerEntity  ← 敌人
 ```
 
 ### ActorEntity（角色基类，手写）
@@ -234,9 +234,11 @@ Godot CharacterBody2D                     Godot Area2D
 
 | 实体 | 基类 | 要点 |
 |------|------|------|
-| `CatEntity` | ActorEntity | 键盘移动（`ui_left/right/up/down`）、`PhysicsCheck2D` 圆形索敌取最近敌人方向、按 `AtkSpeed` 冷却发射 `GanTan`、`OnShow` 启动缩放呼吸 Tween |
+| `CatEntity` | ActorEntity | 键盘移动（`ui_left/right/up/down`）、`PhysicsCheck2D` 圆形索敌取最近敌人方向、按 `AtkSpeed` 冷却发射子弹（`GanTan` / `LightningBall`）、`OnShow` 启动缩放呼吸 Tween |
 | `AngerEntity` | ActorEntity | 追击目标玩家（范围外靠近/范围内射击）、`HSlider` 血条、`Die()` 经 `GF.Setting` 加 100 分 |
 | `GanTanEntity` | Area2D | `BulletData`（方向/速度/敌我）经 userData 注入；`BodyEntered` 命中 `ActorEntity` 按阵营伤害后自隐藏；8 秒超时自毁；`m_IsDead` 防复用期重复触发 |
+| `LightningBall` | Area2D | 电球子弹（与 GanTanEntity 并行，不同外观/速度），BodyEntered 命中后自销毁、穿透多个目标 |
+| `DropItem` | Node2D | 掉落物（实现 `IPoolable`），经 NodePool 管理；`DOMove` + GTween 完成回调自动归还池 |
 
 ---
 

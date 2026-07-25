@@ -204,8 +204,10 @@ int serialId = GF.Sound.PlaySound(assetName, groupName, priority, playSoundParam
 GF.Sound.PlayBGM(assetName);        // Music 组；先 StopAllLoadedSounds 停掉旧 BGM
 GF.Sound.PlaySFX(assetName);        // SFX 组
 GF.Sound.PlayUISound(assetName);    // UI 组
-GF.Sound.StopBGM();                 // ⚠️ 实际停止所有组的所有声音（见 FAQ）
-GF.Sound.StopBGM(fadeOutSeconds);
+GF.Sound.StopBGM();                 // 停止 Music 组
+GF.Sound.StopBGM(fadeOutSeconds);   // 淡出停止 Music 组
+GF.Sound.StopSFX();                 // 停止 SFX 组
+GF.Sound.SetVolume("Music", 0.5f);  // 设置指定 Bus 音量（0~1）
 
 // 停止 / 暂停 / 恢复（均有带淡变秒数的重载）
 GF.Sound.StopSound(serialId);              // 返回 bool；加载中→取消

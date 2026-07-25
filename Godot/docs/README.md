@@ -18,16 +18,16 @@
 | 文档 | 内容 |
 |------|------|
 | [ResourceSystem.md](ResourceSystem.md) | ResourceMode 现状、异步加载队列（Asset+Binary）、子包加载（热更+Package本地）、ExportInspector 导出工作流、ResourcesCollectionConstant |
-| [DataTableSystem.md](DataTableSystem.md) | Luban 管线（Excel→C#+二进制）、运行时懒加载、新增表步骤、Config 子包热更时序 |
+| [DataTableSystem.md](DataTableSystem.md) | Luban 管线（Excel→C#+二进制）、ConfigSystem 懒加载、新增表步骤、4 张配置表、Config 子包热更时序 |
 | [DataNodeSystem.md](DataNodeSystem.md) | 树形数据结构、路径访问语义、Variable 池化类型 |
-| [SettingSystem.md](SettingSystem.md) | ConfigFile → user://settings.cfg、Save/Load 语义、与 EasySave 的区别 |
+| [SettingSystem.md](SettingSystem.md) | ConfigFile → user://Settings.cfg、Save/Load 语义、与 EasySave 的区别 |
 | [LocalizationSystem.md](LocalizationSystem.md) | TSV 字典格式、语言决定链、IStringKey 刷新机制、LocalizationEditor 翻译工作流 |
 
 ## 游戏对象
 
 | 文档 | 内容 |
 |------|------|
-| [EntitySystem.md](EntitySystem.md) | 实体生命周期、实体组+实例池、EntityId 配置驱动、TheGame 继承树（ActorEntity/Cat/Anger/GanTan）、新增实体步骤 |
+| [EntitySystem.md](EntitySystem.md) | 实体生命周期、实体组+实例池、EntityId 配置驱动、TheGame 继承树（ActorEntity/Cat/Anger/GanTan/LightningBall/DropItem）、新增实体步骤 |
 | [UISystem.md](UISystem.md) | UIForm 生命周期、UI 组遮挡算法、OpenUIFormAsync、脚本生成器（Ge/Logic 双文件）工作流 |
 | [SoundSystem.md](SoundSystem.md) | 声音组与 Audio Bus 映射、代理抢占算法、PlaySoundParams、AudioStreamPlayer 桥接 |
 | [SceneSystem.md](SceneSystem.md) | 场景加载流程、实例挂载位置、LoadSceneAsync、与 ResourceComponent 的关系 |

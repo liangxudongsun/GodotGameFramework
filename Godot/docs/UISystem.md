@@ -23,7 +23,7 @@ UI 系统是 [Game Framework](https://gameframework.cn/) UI 模块的 Godot 移�
 - ✅ 界面实例对象池（关闭 ≠ 销毁，池满/过期才 `QueueFree`）
 - ✅ `OpenUIForm`（serialId 事件驱动）与 `OpenUIFormAsync`（TCS 可 await）两种消费方式
 - ✅ Luban 配置驱动：`OpenUIForm(UIFormId.MenuForm)` 由 `TbUIFormConfig` 解析资源路径与组名
-- ✅ `IStringKey` 本地化文本自动收集（`OnInit` 时统一 `SetValue()`）
+- ✅ `IStringKey` 本地化文本自动收集（`OnInit` 时统一 `SetLocalizationValue()`）
 - ✅ UIItem 池化基础设施（`UIItemBase` + `UIItemInstanceObject`）
 - ✅ 编辑器一键生成 UIForm 脚本 + `m_` 前缀子节点自动收集与 `[Export]` 赋值
 
@@ -87,11 +87,11 @@ UIManager(C# 事件) → UIComponent(转发) → EventComponent(全局事件, �
 | `GodotGameFrameworkCore/UI/UIGroupHelperBase.cs` / `DefaultUIGroupHelper.cs` | 组容器基类（CanvasLayer）/ 默认实现（Layer=Depth） |
 | `GodotGameFrameworkCore/UI/UIFormInstanceObject.cs` | 界面实例池对象（ObjectBase，Release 时真正销毁节点） |
 | `GodotGameFrameworkCore/UI/UIItemBase.cs` / `UIItemInstanceObject.cs` | UIItem 逻辑基类 / 池对象（OnSpawn 显示、OnUnspawn 隐藏、Release 销毁） |
-| `GodotGameFrameworkCore/UI/IStringKey.cs` | 本地化文本收集接口（`void SetValue()`） |
+| `GodotGameFrameworkCore/UI/IStringKey.cs` | 本地化文本收集接口（`void SetLocalizationValue()`） |
 | `GodotGameFrameworkCore/Templet/UIFormTemplet.txt` / `UIFormLogicTemplet.txt` | 脚本生成模板（Ge / Logic） |
 | `addons/ComponentInsoector/ScriptGenerateInspector.cs` | 编辑器脚本生成器（Inspector 按钮） |
 | `TheGame/GameScripts/Resources/ScriptGenerateRes.cs` + `TheGame/Resources/ScriptGenerateRes.tres` | 生成器配置 |
-| `TheGame/GameScripts/GameProto/UIGe/*.cs` | 已生成的 Ge 文件（MenuForm/MainForm/GameOver/LogInForm） |
+| `TheGame/GameScripts/GameProto/UIGe/*.cs` | 已生成的 Ge 文件（MenuForm/MainForm/LogInForm/QuestionTips/SettingForm） |
 | `TheGame/GameScripts/UI/*.Logic.cs` | 已生成的 Logic 文件（业务逻辑） |
 
 ---
@@ -125,7 +125,7 @@ OnRecycle()               ← 下一帧 UIManager.Update 出队时调用，随�
 public void OnInit(int serialId, ..., bool isNewInstance, object userData)
 {
     m_SerialId = serialId; /* ...框架字段赋值... */
-    UIStringKeys.ForEach(key => key.SetValue());     // 本地化刷新
+    UIStringKeys.ForEach(key => key.SetLocalizationValue());     // 本地化刷新
     if (isNewInstance)
     {
         m_StartButton.Pressed += OnStartButtonPressed;  // 仅新实例订阅一次
@@ -189,17 +189,17 @@ public List<IStringKey> UIStringKeys => m_UIStringKeys ??=
     this.FindChildrenOfType<IStringKey>() ?? new List<IStringKey>();
 ```
 
-Logic 模板在 `OnInit` 中统一调用 `UIStringKeys.ForEach(key => key.SetValue())`。TheGame 的实际用法是让**界面类自身**实现 `IStringKey`（如 `MenuForm : IStringKey`），在 `SetValue()` 中集中刷新文本：
+Logic 模板在 `OnInit` 中统一调用 `UIStringKeys.ForEach(key => key.SetLocalizationValue())`。TheGame 的实际用法是让**界面类自身**实现 `IStringKey`（如 `MenuForm : IStringKey`），在 `SetLocalizationValue()` 中集中刷新文本：
 
 ```csharp
-public void SetValue()
+public void SetLocalizationValue()
 {
     m_Title.Text    = GF.Localization.GetString("BulletShoot");
     m_Subtitle.Text = GF.Localization.GetString("Demo");
 }
 ```
 
-> 注意：由于收集只扫子树，界面自身的 `SetValue()` 不会被 `UIStringKeys` 收到，需要在别处（如切换语言事件）手动调用，或者制作实现 `IStringKey` 的自定义 Label 子节点脚本挂在树里。当前代码库中没有内置的 `IStringKey` Label 实现。
+> 注意：由于收集只扫子树，界面自身的 `SetLocalizationValue()` 不会被 `UIStringKeys` 收到，需要在别处（如切换语言事件）手动调用，或者使用实现了 `IStringKey` 的内置 `LabelTr` / `ButtonTr` 组件挂在树里（`GodotGameFrameworkCore/Localization/ButtonTr.cs` / `LabelTr.cs`）。
 
 ### 3.6 UIItem 池化（基础设施）
 
@@ -209,7 +209,7 @@ public void SetValue()
 - `OnUnspawn`：`Visible = false`（隐藏不销毁）
 - `Release`：`ItemLogic.OnRecycle()` → `QueueFree()`
 
-> ⚠️ **当前状态**：框架**尚未提供** `SpawnItem<TLogic>/UnspawnItem` 之类的封装 API（注释中提及但代码不存在），也没有任何活跃调用方——唯一示例 `TheGame/GameScripts/UI/ScorePopupItem.cs` 整体被注释。要使用需自行通过 `GF.ObjectPool` 创建 `IObjectPool<UIItemInstanceObject>` 并调用 `UIItemInstanceObject.Create(...)` 注册。
+> ⚠️ **当前状态**：框架**尚未提供** `SpawnItem<TLogic>/UnspawnItem` 之类的封装 API（注释中提及但代码不存在）。使用需自行通过 `GF.ObjectPool` 创建 `IObjectPool<UIItemInstanceObject>` 并调用 `UIItemInstanceObject.Create(...)` 注册。TheGame 当前仅通过 NodePool 管理池化 UI 元素（如 `DamagePop`），未使用 UIItem 池化路径。
 
 ---
 

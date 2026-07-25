@@ -147,7 +147,8 @@ BaseComponent.OnPreDestroy()（节点销毁通知）
 ```csharp
 GF.Base  GF.Event  GF.Fsm  GF.Procedure  GF.ObjectPool  GF.DataNode
 GF.Resource  GF.Entity  GF.UI  GF.Sound  GF.Localization
-GF.Setting  GF.Scene  GF.WebRequest  GF.Download  GF.Debugger   // 共 16 个
+GF.Setting  GF.Scene  GF.WebRequest  GF.Download  GF.Debugger
+GF.Archive   // 共 17 个（Archive 为 new() 惰性单例，不来自 GameEntry 组件注册表）
 ```
 
 > ✅（2026-07）`ShutdownType.Restart` 时 `GameEntry.OnInit` 自动调用 `GF.ClearCache()` 清除所有静态缓存，不再存在指向旧实例的问题。
@@ -242,10 +243,14 @@ var check = PhysicsCheck2D.Create(
     targetNode: this,                 // 检测中心，自动从结果排除
     shape: new CircleShape2D { Radius = 200f },
     collisionMask: 0,                 // 0 = 不限层
-    collideWithAreas: true);
+    collideWithAreas: true,
+    maxResults: 32,                   // 最大结果数
+    collideWithBodies: true,          // 是否检测刚体
+    margin: 0.0f);                    // 形状扩展边距
 
 if (check.IsColliding())              // IntersectShape，过滤不在树上/不可见节点
 {
+    int count = check.CollidingCount;              // 碰撞数量
     Node2D nearest = check.GetCollidingNodesSorted()[0];   // 按距离升序
 }
 check.DrawDebugLines();               // 仅可在 _Draw() 内调用

@@ -136,7 +136,7 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 
 ### 4.1 ProcedureLaunch（入口）
 
-`OnEnter` 检查 13 个框架组件（`Base / Event / Fsm / Setting / DataNode / Resource / Entity / UI / Sound / Localization / DataTable / WebRequest / Download`）是否都已注册（`GF.Xxx != null`）：全部通过 → `ChangeState<ProcedureUpdate>`；否则 `Log.Fatal` 列出缺失组件并停留。
+`OnEnter` 检查 12 个框架组件（`Base / Event / Fsm / Setting / DataNode / Resource / Entity / UI / Sound / Localization / WebRequest / Download`）是否都已注册（`GF.Xxx != null`）。全部通过后调用 `NodePool.Instance.Active()` 和 `LayerMask.Instance.Active()` 初始化节点池与物理层工具，然后 `ChangeState<ProcedureUpdate>`；否则 `Log.Fatal` 列出缺失组件并停留。
 
 ### 4.2 ProcedureUpdate（热更）
 
@@ -150,7 +150,7 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 
 ### 4.3 ProcedurePrelode（预载）
 
-`OnEnter` 同步完成 4 项并置标志位，全部成功后 `ChangeState<ProcedureGame>`：
+`OnEnter` 同步完成 5 项：
 
 | 项 | 动作 |
 |----|------|
@@ -158,8 +158,9 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 | UIGroup | 遍历 `GF.UI.UIGroupRes.Groups` → `AddUIGroup(name, depth)` |
 | EntityGroup | 遍历 `GF.Entity.EntityGroupRes.EntityGroups` → `AddEntityGroup(...)` |
 | SoundGroup | 遍历 `GF.Sound.SoundGroupRes.SoundGroups` → `AddSoundGroup(...)` |
+| Archive | `await GF.Archive.LoadAsync()` 加载存档数据 |
 
-任一组注册失败仅 `Log.Warning` 并 return —— 对应标志不置位，**流程会停留在 Prelode**（无重试机制，属已知边界）。
+任一组注册失败会 `Log.Warning` 记录日志，但**流程总是继续进入 `ProcedureGame`**（`finally` 块确保 `ChangeState<ProcedureGame>` 一定执行），带 `"部分模块加载失败，继续进入游戏。"` 警告。
 
 ### 4.4 ProcedureGame（玩法）
 

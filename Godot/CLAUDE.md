@@ -138,11 +138,11 @@ Entities directly inherit Godot node types and implement `IEntity` (no abstract 
 
 **TheGame project entity hierarchy:**
 ```
-CharacterBody2D (Godot)
-  └── ActorEntity : IEntity, IActor  ← ActorData (Hp/MaxHp), EntityTeam, PhysicsCheck2D, Die()
-       ├── CatEntity           ← Player cat: keyboard move, auto-aim, spawns GanTanEntity
-       ├── AngerEntity         ← Enemy
-       └── GanTanEntity        ← Projectile with BulletData (Direction, Speed, IsPlayerBullet)
+CharacterBody2D (Godot)                  Area2D (Godot)                    Node2D (Godot)
+  └── ActorEntity : IEntity, IActor        ├── GanTanEntity : IEntity        └── DropItem : IPoolable
+       ├── CatEntity   ← Player cat        └── LightningBall : IEntity            ← Collectible, GTween DOMove
+       └── AngerEntity ← Enemy
+  ActorData (Hp/MaxHp), EntityTeam, PhysicsCheck2D, Die()
 ```
 
 Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<T>(EntityId.Xxx, userData)` — config-driven from `TbEntityConfig`.

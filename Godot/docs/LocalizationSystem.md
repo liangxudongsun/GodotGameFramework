@@ -14,7 +14,7 @@
 | 纯 C# 层 | `GameFramework/Localization/` | `LocalizationManager`：字典存储、GetString(1~16 参数格式化)、Language 枚举、DataProvider 解析框架 | ❌ |
 | Godot 桥接层 | `GodotGameFrameworkCore/Localization/` | `LocalizationComponent`（组件 + TranslationServer 桥接）、`DefaultLocalizationHelper`（TSV 解析、系统语言检测）、`LocalizationHelperBase`（Language↔locale 映射） | ✅ |
 | 编辑器插件 | `addons/LocalizationEditor/` | Excel（`Configs/Localization/`）→ `.txt` 字典导出 | ✅（EditorPlugin） |
-| UI 刷新 | `GodotGameFrameworkCore/UI/IStringKey.cs` + UIForm 生成模板 | 界面文案收集与刷新（`UIStringKeys` / `SetValue()`） | ✅ |
+| UI 刷新 | `GodotGameFrameworkCore/UI/IStringKey.cs` + `GodotGameFrameworkCore/Localization/ButtonTr.cs` / `LabelTr.cs` + UIForm 生成模板 | 界面文案收集与刷新（`UIStringKeys` / `SetLocalizationValue()`） | ✅ |
 
 ### 能力清单
 
@@ -72,7 +72,9 @@ UI（MenuForm.SetValue 等）
 | `GodotGameFrameworkCore/Localization/LocalizationHelperBase.cs` | Node 基类；`GetLocaleByLanguage` / `GetLanguageByLocale` 静态映射 |
 | `GodotGameFrameworkCore/Localization/DefaultLocalizationHelper.cs` | TSV/二进制解析；`SystemLanguage` = `OS.GetLocale()` 反查 |
 | `GodotGameFrameworkCore/Localization/LocalizationComponent.cs` | 组件（`GF.Localization`）、ReadData、TranslationServer 桥接 |
-| `GodotGameFrameworkCore/UI/IStringKey.cs` | UI 文案刷新接口（唯一成员 `void SetValue()`） |
+| `GodotGameFrameworkCore/UI/IStringKey.cs` | UI 文案刷新接口（唯一成员 `void SetLocalizationValue()`） |
+| `GodotGameFrameworkCore/Localization/ButtonTr.cs` | Button 实现（`Button : IStringKey`，运行时自动刷新 Text） |
+| `GodotGameFrameworkCore/Localization/LabelTr.cs` | Label 实现（`Label : IStringKey`，运行时自动刷新 Text） |
 | `GodotGameFrameworkCore/Config/GameFolderConstant.cs` | `Localizations = "res://TheGame/DataTables/Localizations/{0}.txt"` |
 | `addons/LocalizationEditor/LocalizationEditorPlugin.cs` | Excel → TSV 导出（Tool 菜单项） |
 
@@ -122,15 +124,16 @@ GF.Localization.ReadData(Utility.Text.Format(
 
 > 注：即 CLAUDE.md 早期描述的 "UIStringLabelKey 机制"，实际接口名为 **`IStringKey`**。
 
-- 接口：`GodotGameFramework.UI.IStringKey`，唯一成员 `void SetValue()`——约定"把自己的文案从 `GF.Localization.GetString` 刷一遍"。
+- 接口：`GodotGameFramework.UI.IStringKey`，唯一成员 `void SetLocalizationValue()`——约定"把自己的文案从 `GF.Localization.GetString` 刷一遍"。
+- 内置实现：`LabelTr : Label, IStringKey` 和 `ButtonTr : Button, IStringKey`（`GodotGameFrameworkCore/Localization/`），运行时自动从 `GF.Localization` 刷新 Text 属性，**无需手写刷新逻辑**。
 - UIForm 生成模板（`UIFormTemplet.txt`）为每个界面生成属性 `List<IStringKey> UIStringKeys`：懒加载调用 `FindChildrenOfType<IStringKey>()`**递归收集所有实现 IStringKey 的子孙节点**（不含界面自身）。
-- Logic 模板在 `OnInit` 中调用 `UIStringKeys.ForEach(key => key.SetValue())`，界面初始化即完成子部件文案本地化。
-- TheGame 惯例（见 `MenuForm.Logic.cs`）：界面类自身也实现 `IStringKey`，把所有文案赋值集中写进 `SetValue()`：
+- Logic 模板在 `OnInit` 中调用 `UIStringKeys.ForEach(key => key.SetLocalizationValue())`，界面初始化即完成子部件文案本地化。
+- TheGame 惯例（见 `MenuForm.Logic.cs`）：界面类自身也实现 `IStringKey`，把所有文案赋值集中写进 `SetLocalizationValue()`：
 
 ```csharp
 public partial class MenuForm : IStringKey
 {
-    public void SetValue()
+    public void SetLocalizationValue()
     {
         m_Title.Text = GF.Localization.GetString("BulletShoot");
         m_Subtitle.Text = GF.Localization.GetString("Demo");
@@ -138,7 +141,7 @@ public partial class MenuForm : IStringKey
 }
 ```
 
-> ⚠️ `FindChildrenOfType` 只收集**子孙节点**，界面自身的 `SetValue()` 不会被 `UIStringKeys.ForEach` 调用到——需在 `OnInit`/`OnOpen` 中自行调用 `SetValue()`，或运行时切换语言后对所有打开界面手动触发刷新。
+> ⚠️ `FindChildrenOfType` 只收集**子孙节点**，界面自身的 `SetLocalizationValue()` 不会被 `UIStringKeys.ForEach` 调用到——需在 `OnInit`/`OnOpen` 中自行调用，或运行时切换语言后对所有打开界面手动触发刷新。
 
 ---
 
@@ -209,7 +212,7 @@ void GF.Localization.RemoveAllRawStrings();      // 清字典 + 注销 Translati
 那是历史遗留副本，插件**只读取仓库根 `Configs/Localization/`**（源码中 `res://` 上溯两级拼接），以该目录为唯一翻译源。
 
 **Q: 运行时切换语言后已打开的界面没变？**
-框架不自动刷新已实例化的控件。按 §3.2 重载字典后，需对每个打开的界面调用其 `SetValue()`（及 `UIStringKeys.ForEach(k => k.SetValue())`）。
+框架不自动刷新已实例化的控件。按 §3.2 重载字典后，需对每个打开的界面调用其 `SetLocalizationValue()`（及 `UIStringKeys.ForEach(k => k.SetLocalizationValue())`）。
 
 ---
 

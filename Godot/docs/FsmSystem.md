@@ -172,10 +172,10 @@ GF.Fsm.DestroyFsm(fsm);             // 按实例
 GF.Fsm.Count                                    // 状态机总数
 
 // 查询
-GF.Fsm.HasFsm<T>() / HasFsm<T>(name) / HasFsm(ownerType[, name])
+GF.Fsm.HasFsm<T>() / HasFsm<T>(name) / HasFsm(ownerType) / HasFsm(ownerType, name)
 GF.Fsm.GetFsm<T>() / GetFsm<T>(name)            // → IFsm<T>
-GF.Fsm.GetFsm(ownerType[, name])                // → FsmBase（非泛型）
-GF.Fsm.GetAllFsms()                             // → FsmBase[]
+GF.Fsm.GetFsm(ownerType) / GetFsm(ownerType, name)  // → FsmBase（非泛型）
+GF.Fsm.GetAllFsms() / GetAllFsms(List<FsmBase>)     // → FsmBase[] / 填充已有列表
 
 // 创建（4 重载：±name × params[]/List）
 IFsm<T> fsm = GF.Fsm.CreateFsm<T>(owner, params FsmState<T>[] states);

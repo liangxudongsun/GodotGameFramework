@@ -15,7 +15,7 @@
 | 纯 C# 层 | `GameFramework/Resource/` | `IResourceManager` 接口、`ResourceMode`、`HasAssetResult`、加载回调委托（`LoadAssetCallbacks` / `LoadBinaryCallbacks`） | ❌ |
 | Godot 桥接层 | `GodotGameFrameworkCore/Resource/` | `ResourceManager` 实现（ResourceLoader 线程加载 + 版本清单）、`ResourceComponent`、`PackVersionList`、加载任务 | ✅ |
 
-> ✅（2026-07）`GameFramework/Resource/` 下 Unity 原版遗留文件（47 个：`PackageVersionList.*`、`UpdatableVersionList.*`、各类 Serializer/EventArgs 等）已全部清理。实际生效的清单类型是 Godot 层的 `PackVersionList`（JSON 序列化）。保留 25 个实际使用的文件。
+> ✅（2026-07）`GameFramework/Resource/` 下 Unity 遗留文件（`PackageVersionList.*`、`LocalVersionList.*`、`Serializer` 等）仍保留在目录中（共约 150 个文件），未被清理。实际运行时使用的清单类型是 Godot 层的 `PackVersionList`（`GodotGameFrameworkCore/Resource/`，JSON 序列化），遗留文件仅在编译时参与但无运行时引用。
 
 ### ResourceMode 现状
 
@@ -201,7 +201,7 @@ public struct Pack {
 // 属性
 GF.Resource.ResourceMode                  // 当前资源模式（可读写，运行时改无意义）
 GF.Resource.UpdateSettingRes              // 热更配置（RemoteUrl / HotUpdatePath）
-GF.Resource.GetPackVersionList()          // 本地版本清单（Package 模式或清单缺失时为 null）
+GF.Resource.LocalPackVersionList          // 本地版本清单（Package 模式或清单缺失时为 null）
 
 // 同步加载
 byte[] data  = GF.Resource.LoadBinary("user://save/slot0.bytes");  // null = 不存在
@@ -289,8 +289,8 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 **Q: 大量并发加载会过载吗？**
 不会。`ResourceManager` 的 `LoadAssetAgent` 数量由 `ResourceComponent.AgentCount` 配置（默认 10，`TaskPool` 控制），同时最多提交同等数量的 `LoadThreadedRequest`，超出部分排队等待。
 
-**Q: Package 模式下能读到 `GetPackVersionList()` 吗？**
-不能，返回 `null`。Package 模式不读任何清单。判空后再使用。
+**Q: Package 模式下能读到版本清单吗？**
+不能。`LocalPackVersionList` 返回 `null`。Package 模式不读任何清单。判空后再使用。
 
 **Q: 热更子包加载失败怎么办？**
 `ProcedureUpdate.LoadDownloadedPacks` 逐包容错：损坏包删除并计失败，任一失败即回退 `user://` 版本清单（`.bak` 恢复），下次启动重新下载。游戏继续以旧资源运行。
@@ -308,9 +308,9 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 
 ## 7. 已知边界与后续计划
 
-- [ ] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制，替换主线程同步整读）
-- [x] `LoadAssetTask` 队列改为 TaskPool + 多 Agent 并发（消除队首阻塞，支持优先级调度；后续 Agent 数改为 `AgentCount` 配置，默认 10）✅ 2026-07
-- [ ] Package 模式的本地子包加载（读取安装目录 `subpackages/GameFrameworkVersion.dat`，`SubPack` 常量已预留）
-- [x] `GameFramework/Resource/` Unity 遗留文件清理（47 个文件已删除，保留 25 个实际使用文件）✅ 2026-07
+- [x] `LoadAssetTask` 队列改为 TaskPool + 多 Agent 并发（消除队首阻塞，支持优先级调度；Agent 数由 `AgentCount` 配置，默认 10）✅ 2026-07
+- [x] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制不再垄断主线程 IO）✅ 2026-07
+- [x] Package 模式的本地子包加载（`TryLoadLocalSubpackagesAsync`，读取安装目录 `subpackages/GameFrameworkVersion.dat`）✅ 2026-07
 - [x] `LoadAssetDependencyAssetCallback`/`LoadSceneDependencyAssetCallback` 清理（Godot 自动管理资源依赖）✅ 2026-07
+- [ ] Unity 遗留文件清理（`GameFramework/Resource/` 下约 150 个文件，仅部分被当前代码引用）
 - [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`；⚠️ 已随代码热更方案搁置，等待华佗团队 Godot 适配）

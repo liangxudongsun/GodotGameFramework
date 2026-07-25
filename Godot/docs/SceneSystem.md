@@ -141,6 +141,7 @@ Node2D map = GF.Scene.GetLoadedScene<Node2D>("res://TheGame/Scenes/Map.tscn");
 |------|--------|------|
 | `m_EnableLoadSceneSuccessEvent` | true | 转发加载成功全局事件 |
 | `m_EnableLoadSceneFailureEvent` | true | 转发加载失败全局事件 |
+| `m_EnableUnloadSceneSuccessEvent` | true | 转发卸载成功全局事件 |
 | `m_SceneHelperTypeName` | `GodotGameFramework.Scene.DefaultSceneHelper` | 场景辅助器类型名（反射创建，可替换） |
 
 ### 4.2 方法总览

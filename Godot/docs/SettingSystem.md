@@ -144,7 +144,7 @@ GF.Setting.SetObject("Key", obj);
 `SetXxx` 只写内存。正常退出（走模块 Shutdown）会自动保存，但调试中强停进程/崩溃不会。重要修改后手动 `GF.Setting.Save()`。
 
 **Q: 存储文件长什么样？能手改吗？**
-`user://settings.cfg` 是 Godot ConfigFile 文本（INI 风格，单节 `[Settings]`），可用文本编辑器直接查看/修改，便于调试。**没有加密与防篡改**——敏感数据需自定义辅助器。
+`user://Settings.cfg` 是 Godot ConfigFile 文本（INI 风格，单节 `[Settings]`），可用文本编辑器直接查看/修改，便于调试。**没有加密与防篡改**——敏感数据需自定义辅助器。
 
 **Q: 和 Godot 原生 ConfigFile / user:// 是什么关系？**
 默认辅助器**就是** ConfigFile + `user://` 的薄封装；框架价值在于统一 API、默认值重载、对象 JSON 存储、启动/关闭的自动 Load/Save，以及底层介质可整体替换。

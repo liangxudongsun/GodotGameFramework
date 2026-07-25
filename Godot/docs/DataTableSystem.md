@@ -1,22 +1,21 @@
-# 数据表系统 (DataTable Module + Luban 管线)
+# 数据表系统 (Luban 配置管线)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/DataTable/`、`Framework/GodotGameFrameworkCore/DataTable/`、`Framework/GodotGameFrameworkCore/Lib/LubanLib/`、`TheGame/GameScripts/GameProto/GameConfig/`（生成代码）｜ 配置源：仓库根 `Configs/GameConfig/`
-> 本文档描述 GGF 的数据表系统：Excel → Luban → C# + 二进制的完整管线、运行时加载机制、Tb 表访问 API 与新增表的完整步骤。
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/GameScripts/GameProto/GameConfig/`（生成代码）、`TheGame/GameScripts/GameProto/ConfigSystem.cs`（加载器）、`Framework/GodotGameFrameworkCore/Lib/LubanLib/`（运行时库）｜ 配置源：仓库根 `Configs/GameConfig/`
+> 本文档描述 GGF 的数据表系统：Excel → Luban → C# + 二进制的完整管线、运行时 `ConfigSystem` 懒加载机制、Tb 表访问 API 与新增表的完整步骤。
 
 ---
 
 ## 1. 概述
 
-数据表系统是 [Game Framework](https://gameframework.cn/) DataTable 模块的 Godot 移植，但**核心已重写为 [Luban](https://github.com/focus-creative-games/luban) 驱动**：原版"CSV 文本 + IDataRow 逐行解析"的机制被替换为"Luban 生成的强类型 `Tables` 类 + 二进制反序列化"。
+数据表系统采用 **[Luban](https://github.com/focus-creative-games/luban) 驱动**的强类型配置方案：策划编辑 Excel → Luban 一键生成 C# 代码 + 二进制数据 → 运行时 `ConfigSystem` 懒加载。
 
-| 层 | 位置 | 职责 | Godot 依赖 |
-|----|------|------|:--:|
-| 纯 C# 层 | `GameFramework/DataTable/` | `DataTableManager`：持有 Luban `Tables` 实例、懒加载、二进制读取回调 | ⚠️ 见下 |
-| Godot 桥接层 | `GodotGameFrameworkCore/DataTable/` | `DataTableComponent`：组件封装、注入 `ResourceComponent` | ✅ |
-| Luban 运行时 | `GodotGameFrameworkCore/Lib/LubanLib/` | `ByteBuf`（二进制读写）、`BeanBase`（Bean 基类）、`StringUtil` | ❌ |
+**当前不含框架层模块**（2026-07）：原版 Game Framework 的 `DataTableManager` / `DataTableComponent` 及 `GameFramework/DataTable/` 目录已移除。配置加载由 `ConfigSystem`（`TheGame/GameScripts/GameProto/ConfigSystem.cs`）直接负责，这是一个普通 C# 单例，不是 `GameFrameworkModule`，不注册到组件系统。
+
+| 组件 | 位置 | 职责 | Godot 依赖 |
+|------|------|------|:--:|
+| ConfigSystem | `TheGame/GameScripts/GameProto/ConfigSystem.cs` | 单例持有 `Tables` 实例、懒加载、`FileAccess` 读 `.bytes` | ✅ |
+| Luban 运行时 | `Framework/GodotGameFrameworkCore/Lib/LubanLib/` | `ByteBuf`（二进制读写）、`BeanBase`（Bean 基类）、`StringUtil` | ❌ |
 | 生成代码 | `TheGame/GameScripts/GameProto/GameConfig/` | `Tables` / `TbXxx` / `XxxConfig` / 枚举，由 Luban 生成，**勿手改** | ❌ |
-
-> ⚠️ **分层现状说明**：`DataTableManager.cs` 虽位于纯 C# 层，但直接 `using GodotGameFramework.Resource`（引用桥接层的 `ResourceComponent`）并依赖生成命名空间 `GameConfig`，**并未遵守"GameFramework 层零 Godot 依赖"的架构规则**。这是 Luban 化改造后的已知妥协，见 §6。
 
 ### 能力清单
 
@@ -41,7 +40,7 @@ Configs/GameConfig/Datas/*.xlsx（策划编辑）
     ├──► C# 代码 → Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/
     │        Tables.cs / TbEntityConfig.cs / EntityConfig.cs / EntityId.cs ...
     └──► 二进制数据 → Godot/GodotProject/TheGame/DataTables/GameConfigs/
-             entity_tbentityconfig.bytes / ui_tbuiformconfig.bytes / character_tbcharacterconfig.bytes
+             entity_tbentityconfig.bytes / ui_tbuiformconfig.bytes / character_tbcharacterconfig.bytes / level_tblevelconfig.bytes
 ```
 
 ### 2.2 运行期
@@ -50,38 +49,39 @@ Configs/GameConfig/Datas/*.xlsx（策划编辑）
 调用方（EntityExtension / UIExtension / 业务代码）
     │  ConfigSystem.Instance.Tables.TbXxx...
     ▼
-DataTableComponent (Godot 桥接层，场景节点 "DataTable")
-    │  OnInit: GetModule<IDataTableManager>() + SetResourcesComponent(GF.Resource)
-    ▼
-DataTableManager : GameFrameworkModule (核心层)
+ConfigSystem (普通 C# 单例，TheGame/GameScripts/GameProto/)
     │  Tables 属性首次访问 → Load() → new Tables(LoadByteBuf)
     │      LoadByteBuf(file):
     │        path = "res://TheGame/DataTables/GameConfigs/{file}.bytes"   ← GameFolderConstant.GameConfigs
-    │        bytes = ResourceComponent.LoadBinary(path)                   ← FileAccess 读取
-    │        return new ByteBuf(bytes)
+    │        FileAccess.Open → GetBuffer → new ByteBuf(bytes)
     ▼
 Tables 构造函数（Luban 生成）
     ├── TbUIFormConfig    = new(loader("ui_tbuiformconfig"))
     ├── TbCharacterConfig = new(loader("character_tbcharacterconfig"))
     ├── TbEntityConfig    = new(loader("entity_tbentityconfig"))
+    ├── TbLevelConfig     = new(loader("level_tblevelconfig"))
     └── ResolveRef()      ← 解析表间引用
 ```
+
+> **初始化时机**：`ProcedureLaunch.OnEnter` 中调用 `ConfigSystem.Instance.Load()` 显式触发初始化（在所有组件检查通过后）。由于 `Tables` 属性也有懒加载兜底，即使不显式调用，首次业务访问也会自动加载。
 
 ### 文件清单
 
 | 文件 | 职责 |
 |------|------|
-| `GameFramework/DataTable/IDataTableManager.cs` | 管理器接口（仅 2 个成员：`SetResourcesComponent` / `GetTables`） |
-| `GameFramework/DataTable/DataTableManager.cs` | Luban `Tables` 持有者，懒加载 + `LoadByteBuf` |
-| `GameFramework/DataTable/DataTableBase.cs` 等 | **原版 GF 数据表机制遗留代码，当前未接线**（见 §6） |
-| `GodotGameFrameworkCore/DataTable/DataTableComponent.cs` | 组件封装，注入 ResourceComponent |
-| `GodotGameFrameworkCore/DataTable/DefaultDataTableHelper.cs` | 原版 CSV/二进制解析辅助器，**当前无调用方** |
-| `GodotGameFrameworkCore/Lib/LubanLib/ByteBuf.cs` | Luban 二进制缓冲（ReadInt/ReadString/ReadSize…） |
-| `GodotGameFrameworkCore/Lib/LubanLib/BeanBase.cs` | 生成 Bean 的基类（`ITypeId`） |
-| `GodotGameFrameworkCore/Config/GameFolderConstant.cs` | `GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes"` |
+| `TheGame/GameScripts/GameProto/ConfigSystem.cs` | 单例加载器：`Load()` / `Tables` 属性（懒加载兜底） |
 | `TheGame/GameScripts/GameProto/GameConfig/Tables.cs` | 总入口（生成），聚合所有 TbXxx |
-| `TheGame/GameScripts/GameProto/ExternalTypeUtil.cs` | 外部类型转换（生成时从 `CustomTemplate/` 拷贝） |
+| `TheGame/GameScripts/GameProto/GameConfig/TbEntityConfig.cs` | 实体配置表（生成） |
+| `TheGame/GameScripts/GameProto/GameConfig/TbCharacterConfig.cs` | 角色配置表（生成） |
+| `TheGame/GameScripts/GameProto/GameConfig/TbUIFormConfig.cs` | UI 配置表（生成） |
+| `TheGame/GameScripts/GameProto/GameConfig/TbLevelConfig.cs` | 关卡配置表（生成） |
+| `TheGame/GameScripts/GameProto/GameConfig/EntityConfig.cs` | 实体行数据（生成） |
+| `TheGame/GameScripts/GameProto/GameConfig/EntityId.cs` | 实体 ID 枚举（生成） |
 | `TheGame/GameScripts/GameProto/GameConfig/vector2.cs` 等 | Luban 内建数学类型 |
+| `TheGame/GameScripts/GameProto/ExternalTypeUtil.cs` | 外部类型转换（生成时从 `CustomTemplate/` 拷贝） |
+| `Framework/GodotGameFrameworkCore/Config/GameFolderConstant.cs` | 路径常量：`GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes"` |
+| `Framework/GodotGameFrameworkCore/Lib/LubanLib/ByteBuf.cs` | Luban 二进制缓冲（ReadInt/ReadString/ReadSize…） |
+| `Framework/GodotGameFrameworkCore/Lib/LubanLib/BeanBase.cs` | 生成 Bean 的基类（`ITypeId`） |
 
 ---
 
@@ -152,19 +152,19 @@ if not defined AI_MODE pause      ← CI/脚本环境设置 AI_MODE 可跳过暂
 
 ### 4.1 初始化与懒加载
 
-- `DataTableComponent.OnInit()`（组件注册时）：获取 `IDataTableManager` 模块，调用 `SetResourcesComponent(GF.Resource)` 注入资源组件。**此时不读任何文件。**
-- 首次调用 `GetTables()`（即访问 `DataTableManager.Tables` 属性）→ `Load()` → `new Tables(LoadByteBuf)` → 一次性同步读入所有表的 `.bytes` 并反序列化。
-- **没有任何流程（Procedure）显式预加载数据表**：`ProcedureLaunch` 只触发 `ConfigSystem.Instance.Load()`；真正触发加载的是首个业务访问（如 `ProcedurePrelode` 之后 `EntityExtension.ShowEntity` 内部查 `TbEntityConfig`）。
-- `LoadByteBuf` 读不到文件会 `throw Exception`（快速失败），`Shutdown()` 只重置 `_init` 标记。
+- `ProcedureLaunch.OnEnter`（组件检查通过后）：调用 `ConfigSystem.Instance.Load()` → `new Tables(LoadByteBuf)` → 一次性同步读入所有表的 `.bytes` 并反序列化。
+- 此外，`ConfigSystem.Tables` 属性 getter 内部有懒加载兜底（`if (!_init) Load()`），即使流程层未显式调用，首次业务访问也会触发加载。
+- `LoadByteBuf` 使用 Godot `FileAccess` 读取文件，读不到会 `throw Exception`（快速失败）。
 
 ### 4.2 生成代码结构（以 EntityConfig 为例）
 
 ```csharp
-// Tables.cs — 总入口
+// Tables.cs — 总入口（当前 4 张表）
 public partial class Tables {
     public UI.TbUIFormConfig TbUIFormConfig { get; }
     public Character.TbCharacterConfig TbCharacterConfig { get; }
     public Entity.TbEntityConfig TbEntityConfig { get; }
+    public Level.TbLevelConfig TbLevelConfig { get; }
     public Tables(System.Func<string, ByteBuf> loader) { ...; ResolveRef(); }
 }
 
@@ -187,7 +187,7 @@ public sealed partial class EntityConfig : Luban.BeanBase {
 }
 
 // EntityId.cs — 枚举
-public enum EntityId { Cat = 0, GanTan = 1, Anger = 2 }
+public enum EntityId { Cat = 0, GanTan = 1, Anger = 2, LightningBall = 3 }
 ```
 
 ### 4.3 访问方式
@@ -227,17 +227,14 @@ m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList
 
 ## 6. 注意事项 / FAQ
 
-**Q: `DataTableBase` / `IDataTable<T>` / `IDataRow` / `DefaultDataTableHelper` 还能用吗？**
-✅（2026-07 已清理）这些原版 Game Framework"CSV 逐行解析"的遗留代码已删除。当前仅保留 Luban 驱动路径（`IDataTableManager` → `DataTableManager` → `Tables`）。新表一律走 Luban。
-
 **Q: 修改 Excel 后运行时数据没变？**
 必须重新执行生成脚本——运行时读的是 `.bytes` 二进制，不是 Excel。生成后无需重启 Godot 编辑器，但需要 `dotnet build`（若结构变化产生了新代码）。
 
 **Q: 表加载是什么时机？会卡顿吗？**
-首次 `GetTables()` 时同步加载**全部**表。当前表量小无感知；表规模变大后可考虑使用 `gen_code_bin_to_project_lazyload.bat` 生成懒加载版本代码（按表首次访问再读文件）。
+`ProcedureLaunch.OnEnter` 中显式调用 `ConfigSystem.Instance.Load()`，同步加载**全部**表。当前表量小无感知；表规模变大后可考虑使用 `gen_code_bin_to_project_lazyload.bat` 生成懒加载版本代码（按表首次访问再读文件）。
 
-**Q: `GameFramework/DataTable` 为什么依赖了 Godot 桥接层？**
-✅（2026-07 已修复）`DataTableManager` 已改为接收 `Func<string, byte[]>` 加载器，不再直接引用 `ResourceComponent`。路径格式化（`GameFolderConstant.GameConfigs`）移至 `DataTableComponent`，纯 C# 层零 Godot 依赖。
+**Q: 为什么没有 DataTableManager / DataTableComponent？**
+原版 Game Framework 的 DataTable 模块（`GameFramework/DataTable/`、`GodotGameFrameworkCore/DataTable/`）已于 2026-07 移除。当前 Luban 配置管线由 `ConfigSystem` 单例直接驱动，不再需要框架模块封装。Config 子包热更仍然支持（`ProcedureUpdate` 优先加载 Config 包），无需框架模块中介。
 
 **Q: 能在运行时增删行吗？**
 不能。生成代码所有字段 `readonly`，容器只读暴露。运行时可变数据请使用 DataNode（见 `DataNodeSystem.md`）或 Setting。
@@ -249,6 +246,6 @@ Luban 内建 `vector2/vector3` 等数学类型与 Godot `Vector2/Vector3` 之间
 
 ## 7. 已知边界与后续计划
 
-- [x] `DataTableManager` 解耦 `ResourceComponent` 具体类型（恢复纯 C# 层洁净）✅ 2026-07
-- [x] 清理原版 CSV 数据表遗留代码（6 个文件：DataTableBase、DataTableTable、IDataRow、IDataTable、IDataTableHelper、DefaultDataTableHelper）✅ 2026-07
+- [x] `ConfigSystem` 已替代原版 DataTable 框架模块（2026-07）
 - [ ] 表规模增长后切换 lazyload 生成模式
+- [ ] 当前仅 4 张表（UIForm / Character / Entity / Level），新增表按 §5 步骤添加
