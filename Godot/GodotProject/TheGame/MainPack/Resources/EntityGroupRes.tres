@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="EntityGroupRes" format=3 uid="uid://djctqe5r5p4nl"]
 
-[ext_resource type="Script" uid="uid://bcjqdjyxhxoth" path="res://TheGame/MainPack/Scripts/Resources/EntityGroupRes.cs" id="1_4midd"]
-[ext_resource type="Script" uid="uid://dccgem7jwjwwl" path="res://TheGame/MainPack/Scripts/Resources/EntityGroup.cs" id="1_sgywv"]
+[ext_resource type="Script" uid="uid://dccgem7jwjwwl" path="res://TheGame/MainPack/Scripts/Resources/EntityGroup.cs" id="1_klg0y"]
+[ext_resource type="Script" uid="uid://bcjqdjyxhxoth" path="res://TheGame/MainPack/Scripts/Resources/EntityGroupRes.cs" id="2_jsk7b"]
 
 [sub_resource type="Resource" id="Resource_qojtf"]
-script = ExtResource("1_sgywv")
+script = ExtResource("1_klg0y")
 Name = "Actor"
 ReleaseInterval = 300.0
 Capacity = 300
@@ -12,7 +12,7 @@ ExpireTime = 300.0
 metadata/_custom_type_script = "uid://dccgem7jwjwwl"
 
 [sub_resource type="Resource" id="Resource_qt15u"]
-script = ExtResource("1_sgywv")
+script = ExtResource("1_klg0y")
 Name = "Bullet"
 ReleaseInterval = 300.0
 Capacity = 300
@@ -20,6 +20,6 @@ ExpireTime = 300.0
 metadata/_custom_type_script = "uid://dccgem7jwjwwl"
 
 [resource]
-script = ExtResource("1_4midd")
+script = ExtResource("2_jsk7b")
 EntityGroups = Array[Object]([SubResource("Resource_qojtf"), SubResource("Resource_qt15u")])
 metadata/_custom_type_script = "uid://bcjqdjyxhxoth"
