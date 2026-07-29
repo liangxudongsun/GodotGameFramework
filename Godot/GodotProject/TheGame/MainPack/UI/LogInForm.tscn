@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://deh62p265j7dw"]
 
-[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_7kksp"]
-[ext_resource type="Script" uid="uid://o72loh1qprtc" path="res://TheGame/GameScripts/GameProto/UIGe/LogInForm.cs" id="2_0y1ir"]
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_7kksp"]
+[ext_resource type="Script" uid="uid://o72loh1qprtc" path="res://TheGame/MainPack/Scripts/UI/LogInForm.cs" id="2_0y1ir"]
 
 [node name="LogInForm" type="Control" unique_id=1234650829 node_paths=PackedStringArray("m_State", "m_HSlider")]
 layout_mode = 3

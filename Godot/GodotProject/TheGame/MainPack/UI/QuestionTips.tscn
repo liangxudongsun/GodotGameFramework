@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://crcncc5xxpa8b"]
 
-[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_xsd77"]
-[ext_resource type="Script" uid="uid://bg1ajegc6pt2m" path="res://TheGame/GameScripts/GameProto/UIGe/QuestionTips.cs" id="2_xsd77"]
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_xsd77"]
+[ext_resource type="Script" uid="uid://bg1ajegc6pt2m" path="res://TheGame/MainPack/Scripts/UI/QuestionTips.cs" id="2_xsd77"]
 
 [node name="QuestionTips" type="Control" unique_id=1234650829 node_paths=PackedStringArray("m_Label", "m_Btn_Cancle", "m_Btn_Confirm")]
 layout_mode = 3

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://igqtb6nv6bph"]
 
-[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_5smej"]
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_5smej"]
 [ext_resource type="Script" uid="uid://m1s35hw3uogn" path="res://TheGame/GameScripts/GameProto/UIGe/MenuForm.cs" id="1_62wwx"]
 [ext_resource type="Texture2D" uid="uid://by0r8h0k6ic3e" path="res://TheGame/Sprites/UI/ui_stage_background.png" id="3_0m4r4"]
 [ext_resource type="Texture2D" uid="uid://sb4yykpbox28" path="res://TheGame/Sprites/UI/ui_button_gray.png" id="3_5smej"]

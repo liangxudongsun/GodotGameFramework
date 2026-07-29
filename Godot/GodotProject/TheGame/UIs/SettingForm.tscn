@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cxk5si2bumjh2"]
 
-[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="1_bo7kd"]
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_bo7kd"]
 [ext_resource type="Script" uid="uid://cxkmx8m0u72rx" path="res://TheGame/GameScripts/GameProto/UIGe/SettingForm.cs" id="1_h3k5r"]
-[ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/Fonts/simhei.ttf" id="2_h3k5r"]
+[ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/MainPack/Fonts/simhei.ttf" id="2_h3k5r"]
 [ext_resource type="Texture2D" uid="uid://by0r8h0k6ic3e" path="res://TheGame/Sprites/UI/ui_stage_background.png" id="3_bo7kd"]
 [ext_resource type="Texture2D" uid="uid://dphasocyrj2j4" path="res://TheGame/Sprites/UI/ui_button_blue.png" id="5_sqeo7"]
 
