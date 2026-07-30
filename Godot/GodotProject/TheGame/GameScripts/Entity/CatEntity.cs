@@ -47,6 +47,7 @@ public partial class CatEntity : ActorEntity
 			m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 			m_ShotPos = GetNode<Node2D>("ShotPos");
 			m_HitBox.BodyEntered += OnBodyEntered;
+			GF.Localization.Language = GameFramework.Localization.Language.English;
 		}
 		if (m_Check != null)
 		{
