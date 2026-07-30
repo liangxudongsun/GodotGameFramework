@@ -1,0 +1,49 @@
+{
+  "Version": "1.0.5",
+  "Packs": [
+    {
+      "Name": "AudioBundle",
+      "Size": 1449824,
+      "Hash": "fc2d3ec583e16a0233010d3f5ea1f93a1e7d413cda425c0d5aa11d465b4a454f",
+      "Url": "http://192.168.124.5:58696/subpackages/AudioBundle.pck",
+      "Type": 0
+    },
+    {
+      "Name": "DataTableBundle",
+      "Size": 1860,
+      "Hash": "05034ba80c4cc6bcf8c719babdc974f90a9e7bcb2da8864f0cdf658484cfb81b",
+      "Url": "http://192.168.124.5:58696/subpackages/DataTableBundle.pck",
+      "Type": 0
+    },
+    {
+      "Name": "EntityBundle",
+      "Size": 9648,
+      "Hash": "6202e411b289964c9bf8e5462a970d9f7faabbc5b5bfd458d52fdfc10230bfc5",
+      "Url": "http://192.168.124.5:58696/subpackages/EntityBundle.pck",
+      "Type": 0
+    },
+    {
+      "Name": "ScenesBundle",
+      "Size": 3396,
+      "Hash": "3dbe2513730f9de0af7fc6125429efd576897703e20319df126206859b6e0d55",
+      "Url": "http://192.168.124.5:58696/subpackages/ScenesBundle.pck",
+      "Type": 0
+    },
+    {
+      "Name": "SpritesBundle",
+      "Size": 1534096,
+      "Hash": "ea62dcad946dd2eb27a47fb6fb7f50744f31dcbe3a45ebe7222ce9c4be9c10a8",
+      "Url": "http://192.168.124.5:58696/subpackages/SpritesBundle.pck",
+      "Type": 0
+    },
+    {
+      "Name": "UIsBundle",
+      "Size": 17464,
+      "Hash": "c78899aeb20d9c93e96cee6c61f4d60cb7d8bf3370edaf81f8d81d0d651723a8",
+      "Url": "http://192.168.124.5:58696/subpackages/UIsBundle.pck",
+      "Type": 0
+    }
+  ],
+  "MinAppVersion": null,
+  "ForceUpdate": false
+}
